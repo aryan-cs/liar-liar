@@ -1,0 +1,36 @@
+# LaTeX build artifacts
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+docs/*.aux
+docs/*.log
+docs/*.bbl
+docs/*.blg
+docs/*.out
+docs/*.toc
+
+# macOS
+.DS_Store
+
+# Editor / tooling junk
+.research/
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Results (only commit summaries explicitly)
+results/raw/
+results/cache/
