@@ -124,7 +124,7 @@ where $J_{\mathcal{N}_\gamma}(z) \in \R^{d \times d}$ is the Jacobian of RMSNorm
 J_{\mathcal{N}_\gamma}(z) = \frac{1}{\sigma(z)}\,\diag(\gamma)\left(I_d - \frac{z z^\top}{d\,\sigma(z)^2}\right),
 \label{eq:rmsjacobian}
 \end{equation}
-with $\sigma(z) := \sqrt{d^{-1}\|z\|_2^2 + \varepsilon}$. \Cref{eq:rmsjacobian} is the standard formula \cite{xu2024rmsnorm}.
+with $\sigma(z) := \sqrt{d^{-1}\|z\|_2^2 + \varepsilon}$. \Cref{eq:rmsjacobian} follows from differentiating \Cref{eq:rmsnorm} term by term, treating $\sigma(z)$ as the scalar function of $z$ defined above.
 
 \subsection{Effective unembedding}
 
@@ -637,11 +637,6 @@ Biao Zhang and Rico Sennrich.
 Jimmy Lei Ba, Jamie Ryan Kiros, and Geoffrey E.\ Hinton.
 \newblock Layer normalization.
 \newblock \emph{arXiv:1607.06450}, 2016.
-
-\bibitem{xu2024rmsnorm}
-Mingjie Xu, Yuxin Yang, Tieyong Zeng, and Wei Liu.
-\newblock On the analytic properties of RMSNorm in deep learning.
-\newblock \emph{arXiv:2403.04143}, 2024.
 
 \bibitem{elhage2021mathematical}
 Nelson Elhage, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben Mann, Amanda Askell, Yuntao Bai, Anna Chen, Tom Conerly, Nova DasSarma, Dawn Drain, Deep Ganguli, Zac Hatfield-Dodds, Danny Hernandez, Andy Jones, Jackson Kernion, Liane Lovitt, Kamal Ndousse, Dario Amodei, Tom Brown, Jack Clark, Jared Kaplan, Sam McCandlish, and Chris Olah.

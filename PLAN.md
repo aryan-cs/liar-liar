@@ -222,7 +222,7 @@ We target submission to NeurIPS 2026 (deadline late summer per the standard cale
 ## 8. Repository layout
 
 ```
-steering-rebels/
+liar-liar/
 ├── README.md                  five-minute orientation
 ├── PLAN.md                    this file
 ├── docs/
