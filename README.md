@@ -8,6 +8,16 @@ This repository hosts the formal apparatus and the experimental program for a pr
 
 ---
 
+## In simple terms
+
+There is a popular safety technique that nudges language models toward more honest answers by tweaking their internal state mid-computation. The benchmark numbers look great — but two very different mechanisms could be producing them. Either the nudge is moving a deep concept of honesty inside the model, or it is just making words like *lie* and *deceive* less likely to come out. Same benchmark scores, very different implications for safety.
+
+This project builds a mathematical test that tells the two apart. We project the nudge so its direct effect on those specific words is exactly zero, then ask whether honest behaviour still survives. If it does, the nudge was moving something real. If not, the technique was word suppression all along.
+
+The proof shows why the test is well-defined; the plan specifies the models, benchmarks, and experiments that put a number on the answer.
+
+---
+
 ## What is the question, in one paragraph?
 
 Representation-engineering (RepE) interventions add a contrastively constructed vector to a transformer's residual stream at a middle layer, and the reported effect is a reduction in deceptive, sycophantic, or refusal-violating behavior. The published numbers do not distinguish two very different mechanisms. **Shallow.** The vector tilts the final logit head against tokens like *lie*, *trick*, *false*, *deceive*. The intervention works because deception-coded words become improbable; no semantic concept is involved. **Deep.** The vector moves an upstream representation that downstream attention and feed-forward layers consume, producing behavior that survives vocabulary substitution, paraphrase, and translation. The concept of deception is genuinely represented mid-stream and the intervention manipulates it. The two mechanisms predict the same headline score on TruthfulQA and very different out-of-distribution generalization. The field has assumed the second; nothing in the standard experimental setup distinguishes them.
