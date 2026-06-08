@@ -112,7 +112,7 @@ liar-liar/
 ## How to read the documents
 
 1. **[README.md](README.md)** *(this file)*. Orientation.
-2. **[PLAN.md](PLAN.md)**. The experimental program: models, steering constructions, token-set designs, evaluation suite, OOD probes, baselines, computational budget, and timeline.
+2. **[PLAN.md](PLAN.md)**. The experimental program: models, steering constructions, token-set designs, evaluation suite, OOD probes, and baselines.
 3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus: the impossibility of the global formulation, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work positioning, and the limitations.
 
 The load-bearing sections of the proof are **§4** (Token-Conditional Orthogonalization), which defines the construction, and **§6** (Direct-Versus-Indirect Path Decomposition), which justifies the depth statistic. §3 shows why the construction must be token-conditional; §9 positions the work against the closest prior projections.
@@ -158,7 +158,7 @@ cd docs && latexmk -pdf proof.tex
 | MASK and Liars' Bench full evaluation | pending |
 | OOD generalization block (paraphrase, translation, vocab substitution) | pending |
 | Path patching and SAE attribution on the deep outliers | pending |
-| Writeup for NeurIPS 2026 or ICLR 2027 | pending |
+| Writeup and submission | pending |
 
 ---
 

@@ -151,10 +151,6 @@ A separate experimental block tests whether $\rho$ tracks generalization.
 3. **Magnitude rescaling.** Run $\alpha v_{\text{dec}}$ for $\alpha \in [0.5, 2]$. Linear behavior is the small-perturbation check.
 4. **No-projection control.** Run $v_{\text{dec}}$ with the rank-one $\hat{d}_{HD}$ direction *amplified* rather than removed. Under the deep account this should amplify behavior; under the shallow account it should saturate.
 
-### 4.9 Computational budget
-
-The hardware available is one H200 plus an M4 Pro for orchestration. The eight checkpoints, each at three steering constructions, three token-set constructions, and seven benchmarks, with three OOD probes, give roughly 1500 evaluation runs. Each run is bounded by the benchmark size (largest is Liars' Bench at 72,863 examples) and not by the model size. Estimated H200-hours: 200 to 300 with batching and vLLM serving, of which the Liars' Bench passes are the bulk. We budget 400 H200-hours for the headline and OOD experiments plus 150 H200-hours for ablations.
-
 ---
 
 ## 5. Analysis plan
@@ -193,8 +189,6 @@ Three tiers, ordered by ambition.
 2. *Empirical finding.* A consistent value of $\rho$ across models and benchmarks, whether small, large, or intermediate. Each outcome adjudicates the deep-versus-shallow question for honesty steering.
 3. *Stronger result.* A relationship between $\rho$ and an external property such as model size, post-training regime, or OOD generalization.
 
-Target venue: NeurIPS 2026 or ICLR 2027.
-
 ---
 
 ## 7. Risks and mitigations
@@ -206,7 +200,6 @@ Target venue: NeurIPS 2026 or ICLR 2027.
 | The intervention layer $\ell^\star$ choice drives $\rho$ | Report sensitivity within $\pm 2$ layers; if the result is layer-fragile, that is itself interesting and we report it |
 | Benchmark contamination | Use Liars' Bench as the headline (released Nov 2025, post-cutoff for most checkpoints) and report TruthfulQA only as calibration |
 | The hughvd repository or Venkatesh-Kurapath paper turns out to scoop a specific finding | Position our contribution as the deception-specific instantiation; reframe rather than abandon |
-| Hardware bottleneck on Liars' Bench | Subsample to 8,000 examples for the primary table; full set for the chosen vectors that pass the primary cut |
 
 ---
 
@@ -232,26 +225,7 @@ liar-liar/
 
 ---
 
-## 9. Timeline
-
-Single H200, twelve weeks.
-
-| Week | Milestone |
-|---|---|
-| 1 | Implementation of $\widetilde{W}_U$, $P_T$, the four steering constructions, the three token-set constructions, on Llama-2-7B as the first vehicle |
-| 2 | Calibration on TruthfulQA, sanity checks against published RepE/CAA/ITI numbers, full $\rho$ table on Llama-2-7B |
-| 3 | Extension to Llama-2-13B, Mistral-7B, Gemma-2-9B |
-| 4 | Llama-3-8B, Qwen-2.5-7B, Qwen-2.5-14B; first complete headline boxplot |
-| 5 | MASK and DeceptionBench full runs |
-| 6 | Liars' Bench full run, sandbagging eval, sleeper-agent probe |
-| 7 | OOD block: paraphrase, translation, vocabulary substitution |
-| 8 | Path patching, SAE feature attribution, tuned-lens visualization on the top deep outliers |
-| 9 to 10 | Writeup, error checking, ablations, response to internal feedback |
-| 11 | Submission |
-
----
-
-## 10. Reading order
+## 9. Reading order
 
 For a reviewer or collaborator reading cold:
 
