@@ -1,4 +1,4 @@
-# Liar, Liar: A Causal Test of Deep Versus Shallow Deception in Language Models
+# Liar, Liar: Beyond Vocabulary Suppression
 
 **Research plan.** Token-conditional unembedding orthogonalization as a quantitative decomposition of representation-engineering steering vectors into a direct-readout component and a downstream-propagation component, applied to deception.
 

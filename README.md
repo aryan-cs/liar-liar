@@ -1,6 +1,6 @@
 # liar-liar
 
-> **Liar, Liar.** A causal test of deep versus shallow deception in language models, via token-conditional unembedding orthogonalization.
+> **Liar, Liar: Beyond Vocabulary Suppression.** A causal test of whether honesty steering manipulates an upstream representation or merely tilts the readout against deception-coded tokens, via token-conditional unembedding orthogonalization.
 >
 > [Read the proof (PDF)](docs/proof.pdf) · [Read the plan](PLAN.md) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
 
@@ -174,9 +174,7 @@ A formal preprint will follow the empirical results. For now, please cite the re
 
 ```
 @misc{gupta2026liarliar,
-  title  = {Liar, Liar: A Causal Test of Deep Versus Shallow Deception in
-            Language Models via Token-Conditional Unembedding
-            Orthogonalization},
+  title  = {Liar, Liar: Beyond Vocabulary Suppression},
   author = {Aryan Gupta},
   email  = {aryan.cs.app@gmail.com},
   year   = {2026},
