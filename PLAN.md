@@ -10,12 +10,9 @@ The earlier research-plan file in this workspace (`docs/PLAN_steering_rebels_leg
 
 ## 1. The question
 
-When a representation-engineering (RepE) intervention reduces deceptive behavior on a benchmark, two very different mechanisms can produce the measured effect.
+When a representation-engineering (RepE) intervention reduces deceptive behavior on a benchmark, two distinct mechanisms can produce the measured effect. Under the *shallow* mechanism, the steering vector tilts the final logit head against a small lexicon of deception-coded tokens; the benchmark score improves because tokens such as *lie*, *trick*, *false*, *deceive* are suppressed and tokens such as *honest*, *true* are promoted, with no semantic concept involved. Under the *deep* mechanism, the steering vector moves an upstream representation that downstream attention and feed-forward layers consume, producing behavior that is stable across vocabulary choices, languages, and registers.
 
-1. **Shallow.** The steering vector tilts the final logit head against a small lexicon of deception-coded tokens. The benchmark score improves because tokens like *lie*, *trick*, *false*, *deceive* are suppressed and tokens like *honest*, *true* are promoted. No semantic concept is involved.
-2. **Deep.** The steering vector moves an upstream representation that downstream attention and feed-forward layers consume, producing behavior that is consistent across vocabulary choices, languages, and registers. The concept of deception is genuinely represented mid-stream and the intervention manipulates it.
-
-The two mechanisms predict the same headline number on TruthfulQA. They predict different OOD generalization, different transfer across paraphrases, different responses to vocabulary substitution, and different mechanisms under interpretability tools. The field has implicitly assumed the deep account without designing experiments that adjudicate.
+The two mechanisms predict identical TruthfulQA scores and differ under prompt paraphrase, translation, vocabulary substitution, and interpretability probes. The standard experimental setup does not adjudicate.
 
 We isolate the two contributions by construction. Given a steering vector `v_dec`, project it onto the orthogonal complement of the span of the unembedding rows for a chosen deception-coded token set $T$. The projected vector $v^\perp$ has, by construction, zero direct logit contribution at every token in $T$. Whatever behavioral effect $v^\perp$ produces must propagate through downstream attention and feed-forward layers. The ratio of $v^\perp$'s behavioral effect to $v_{\text{dec}}$'s behavioral effect is a depth-of-representation statistic.
 
@@ -24,8 +21,6 @@ The proof in `docs/proof.tex` works out the linear algebra, including the RMSNor
 ---
 
 ## 2. Position relative to prior work
-
-We surface overlaps up front rather than burying them.
 
 ### 2.1 Direct precedents
 
@@ -39,11 +34,11 @@ We surface overlaps up front rather than burying them.
 | hughvd unembedding-steering-benchmark (GitHub, 2024) | Token unembedding rows on Gemma-2-9b, sentiment as worked example | Method development |
 | **This work** | Effective unembedding rows on a deception-coded token set $T$, with RMSNorm correction | Honesty/deception case on modern deception benchmarks, depth statistic |
 
-The most important non-obvious overlaps are:
+Three of these overlaps are load-bearing for the novelty positioning:
 
-- **Venkatesh and Kurapath (2026)** prove steering vectors are non-identifiable: orthogonal perturbations within the Jacobian null space leave behavior unchanged. Their null space is $\ker(W_U J_{\mathcal{N}} M^{(\ell^\star \to L)})$. Ours is the readout-restricted version $\ker(W_U J_{\mathcal{N}})[T,:]$. The two are motivationally adjacent. We cite them as the closest theoretical precedent for non-identifiability arguments and the surrounding cited evidence on steering brittleness.
-- **Nadaf (2026)** demonstrates the off-readout steering channel exists for function vectors. Our project asks whether the same channel mediates honesty/deception steering specifically, on the deception-specific benchmarks introduced in 2025, with a quantitative depth measurement.
-- **hughvd's repository** implements unembedding-orthogonal steering on Gemma-2-9b for sentiment. We extend the construction to the honesty/deception case on Llama-2, Llama-3, Mistral, Qwen, and Gemma checkpoints, with a principled token-set design, RMSNorm correction, and evaluation on benchmarks that were not yet available when the repository was last updated.
+- **Venkatesh and Kurapath (2026)** prove steering vectors are non-identifiable: orthogonal perturbations within the Jacobian null space leave behavior unchanged. Their null space is $\ker(W_U J_{\mathcal{N}} M^{(\ell^\star \to L)})$; ours is the readout-restricted version $\ker(W_U J_{\mathcal{N}})[T,:]$. We cite them as the closest theoretical precedent.
+- **Nadaf (2026)** demonstrates the off-readout steering channel for function vectors. We ask whether the same channel mediates honesty/deception steering, on the deception-specific benchmarks introduced in 2025, with a quantitative measurement.
+- **hughvd's repository** implements unembedding-orthogonal steering on Gemma-2-9b for sentiment. We extend the construction to honesty/deception steering on Llama-2, Llama-3, Mistral, Qwen, and Gemma, with a token-set design, the RMSNorm correction, and evaluation on benchmarks released after the repository was last updated.
 
 ### 2.2 Adjacent work we will not duplicate
 
@@ -51,17 +46,15 @@ The most important non-obvious overlaps are:
 - **Tan et al. (NeurIPS 2024)** show steering vectors generalize poorly out of distribution. Our work explains a possible mechanism for that finding by quantifying the readout-aligned fraction.
 - **The Marks and Tegmark (2023) mass-mean direction** is the readout-side construction we use to instantiate the rank-one variant of our projection.
 
-### 2.3 The honest novelty gap
+### 2.3 The novelty gap
 
-The novelty is not the projection machinery (LEACE, Arditi, hughvd), not the observation that off-readout steering exists (Nadaf), not the non-identifiability of steering vectors (Venkatesh and Kurapath). The contribution is the specific instrument applied to the specific question.
+Each component has precedent: the projection machinery (LEACE, Arditi, hughvd), the off-readout steering channel (Nadaf), and the non-identifiability of steering vectors (Venkatesh and Kurapath). The contribution is the application to deception on the modern deception benchmarks. Five components:
 
-1. The depth statistic $\rho(v_{\text{dec}}, T)$ and its per-prompt sister $\rho_\eta$, defined as the ratio of orthogonalized to original behavioral effect, reported alongside cross-set stability $\sigma_T$.
-2. The RMSNorm-corrected effective unembedding $\widetilde{W}_U^\star$ as the projection target. Prior work projects against raw $W_U$ or against learned probe directions, ignoring the post-norm correction.
-3. Application to honesty and deception specifically, on MASK (Ren et al., 2025), Liars' Bench (Kretschmar et al., 2025), and DeceptionBench (Jiang et al., 2025), with TruthfulQA as a calibration baseline.
-4. Quantitative comparison of $\rho$ across the LAT, CAA, ITI, and Marks-Tegmark mass-mean constructions on identical models, scoring them by how much of their effect lives in the readout-aligned subspace.
-5. A claim about OOD generalization: under the deep alternative, $\rho$ should be roughly stable under prompt paraphrase and across languages; under the shallow null it should collapse on either.
-
-This is a narrow, specific, well-defined contribution that does not require asserting we are first to do anything. We are first to put these particular pieces together on the deception case.
+1. The depth statistic $\rho(v_{\text{dec}}, T)$ and its per-prompt variant $\rho_\eta$, defined as the ratio of orthogonalized to original behavioral effect, reported alongside the cross-set stability $\sigma_T$.
+2. The RMSNorm-corrected effective unembedding $\widetilde{W}_U^\star$ as the projection target. Prior work projects against raw $W_U$ or against learned probe directions and ignores the post-norm correction.
+3. Application to honesty and deception steering, evaluated on MASK (Ren et al., 2025), Liars' Bench (Kretschmar et al., 2025), and DeceptionBench (Jiang et al., 2025), with TruthfulQA as the calibration baseline.
+4. Quantitative comparison of $\rho$ across the LAT, CAA, ITI, and Marks-Tegmark mass-mean constructions on identical models, ranking them by readout-aligned fraction.
+5. An OOD prediction: under the deep alternative, $\rho$ should be stable under prompt paraphrase and translation; under the shallow null it should collapse on either.
 
 ---
 
@@ -93,17 +86,15 @@ Open-weight, instruction-tuned, with publicly inspectable architecture.
 | Qwen2.5 | 7B-Instruct, 14B-Instruct | 152,064 | 3584 / 5120 | RMSNorm | 28 / 48 |
 | Gemma-2 | 9B-it | 256,128 | 3584 | RMSNorm | 42 |
 
-These cover a range of vocabulary sizes (a robustness check for shallow effects, which scale with $|T| / V$), residual widths (a check on whether subspace dimension matters), and post-training regimes (Llama-3 versus Llama-2 differ substantially in honesty-related RLHF).
+This set spans the relevant axes of variation: vocabulary size (the magnitude of any shallow effect scales with $|T|/V$), residual width (which controls the dimension of the projected subspace), and post-training regime (Llama-3 and Llama-2 differ substantially in honesty-related RLHF).
 
-We exclude GPT-2 family models from the headline because they use full LayerNorm rather than RMSNorm and require the centering-null treatment in §11.3 of the proof. A GPT-2-XL run is included only as a LayerNorm sanity check.
-
-We do not run on closed-weight frontier models. The intervention requires access to residual stream activations.
+GPT-2 family models are excluded from the headline because they use full LayerNorm and require the centering-null treatment from §11.3 of the proof; a single GPT-2-XL run is included as a LayerNorm sanity check. Closed-weight frontier models are not run: the intervention requires residual stream access.
 
 ### 4.2 Steering vector constructions
 
 We compare four canonical constructions of $v_{\text{dec}}$, all at a single intervention layer $\ell^\star$ in the middle third of the network (the standard regime for RepE):
 
-1. **Mean-difference (CAA, Rimsky et al. 2024).** Honest-prompted vs deceptive-prompted continuations, mean residual difference at layer $\ell^\star$. The bread-and-butter.
+1. **Mean-difference (CAA, Rimsky et al. 2024).** Honest-prompted versus deceptive-prompted continuations, mean residual difference at layer $\ell^\star$.
 2. **LAT principal component (Zou et al. 2023).** Honest/deceptive contrast pairs, take the first principal component of the difference matrix at layer $\ell^\star$.
 3. **ITI per-head truthful direction (Li et al. 2023).** Train per-head linear probes on a TruthfulQA-derived contrast set, take the mass-mean direction in the top-$K$ heads by probe accuracy. Collapse to a single residual-stream direction by averaging across selected heads for comparability with the other constructions.
 4. **Marks-Tegmark mass-mean (2023).** Difference of activation means on a true/false statement dataset, evaluated at $\ell^\star$.
@@ -140,8 +131,8 @@ For each model, $\ell^\star$ is selected to maximize $|\Delta(v_{\text{dec}})|$ 
 | MASK (Ren et al. 2025) | Whether models say what they believe under pressure | Disentangles knowing from saying. The cleanest honesty test. |
 | Liars' Bench (Kretschmar et al. 2025) | Cross-lie-type generalization of detectors and interventions | Tests whether the intervention generalizes across lie genres. |
 | DeceptionBench (Jiang et al. 2025) | Context-conditional deception across scenarios | Tests intent representation, not surface tokens. |
-| Sandbagging eval (van der Weij et al. 2024, WMDP-style) | Strategic capability hiding | The hardest test of upstream representation: the lie is silence. |
-| Sleeper-agent defection probe (MacDiarmid et al. 2024) | Trigger-conditional deception | Adversarial: the intervention should suppress defection, not surface words. |
+| Sandbagging eval (van der Weij et al. 2024, WMDP-style) | Strategic capability hiding | Tests upstream representation directly: there is no surface vocabulary to suppress. |
+| Sleeper-agent defection probe (MacDiarmid et al. 2024) | Trigger-conditional deception | Adversarial: the intervention is meant to suppress the defection behavior, not vocabulary correlated with it. |
 
 We report $\Delta(v_{\text{dec}})$, $\Delta(v^\perp)$, $\rho$, $\rho_\eta$, and $\sigma_T$ on each benchmark, each model, and each vector construction.
 
@@ -194,15 +185,15 @@ These do not have to converge for the headline result to land. They are how we i
 
 ---
 
-## 6. What success looks like
+## 6. Success criteria
 
-Three levels.
+Three tiers, ordered by ambition.
 
-1. **Method paper.** A clean experimental design, a well-defined statistic, careful baselines, and headline numbers. The contribution is a tool the field can use.
-2. **Empirical finding.** $\rho$ is small or large or intermediate, consistently and across models. Each outcome is publishable and adjudicates the deep-versus-shallow question for honesty steering specifically.
-3. **Stronger result.** A relationship between $\rho$ and a downstream property (capability, OOD generalization, model size, post-training quality) that is interesting on its own.
+1. *Method.* The construction, the depth statistic, baselines, and headline numbers on the eight checkpoints. The contribution is a tool other groups can apply.
+2. *Empirical finding.* A consistent value of $\rho$ across models and benchmarks, whether small, large, or intermediate. Each outcome adjudicates the deep-versus-shallow question for honesty steering.
+3. *Stronger result.* A relationship between $\rho$ and an external property such as model size, post-training regime, or OOD generalization.
 
-We target submission to NeurIPS 2026 (deadline late summer per the standard calendar) or ICLR 2027.
+Target venue: NeurIPS 2026 or ICLR 2027.
 
 ---
 
@@ -243,7 +234,7 @@ liar-liar/
 
 ## 9. Timeline
 
-Aggressive but feasible on one H200.
+Single H200, twelve weeks.
 
 | Week | Milestone |
 |---|---|
@@ -262,12 +253,10 @@ Aggressive but feasible on one H200.
 
 ## 10. Reading order
 
-For a reviewer or collaborator coming to this cold, the order to read is:
+For a reviewer or collaborator reading cold:
 
-1. This file, sections 1 to 3, for what the question is and where it sits in the literature.
-2. `docs/proof.pdf` sections 3 to 5, for the mathematical apparatus (the impossibility, the conditional construction, the rank-one variant).
-3. This file, sections 4 to 5, for the experimental program.
-4. `docs/proof.pdf` sections 6 to 7, for the direct/indirect decomposition and the test statistic.
-5. `docs/proof.pdf` section 9, for the prior-work comparison.
-
-Empirical disagreement is welcome on sections 4 and 5 of this file. The mathematics in `docs/proof.pdf` is closed.
+1. This file, §1–3, for the question and its position in the literature.
+2. `docs/proof.pdf` §3–5, for the mathematical apparatus: the impossibility, the conditional construction, the rank-one variant.
+3. This file, §4–5, for the experimental program.
+4. `docs/proof.pdf` §6–7, for the direct/indirect decomposition and the test statistic.
+5. `docs/proof.pdf` §9, for the prior-work positioning.

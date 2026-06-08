@@ -10,23 +10,23 @@ This repository hosts the formal apparatus and the experimental program for a pr
 
 ## In simple terms
 
-There is a popular safety technique that nudges language models toward more honest answers by tweaking their internal state mid-computation. The benchmark numbers look great — but two very different mechanisms could be producing them. Either the nudge is moving a deep concept of honesty inside the model, or it is just making words like *lie* and *deceive* less likely to come out. Same benchmark scores, very different implications for safety.
+A class of safety techniques nudges language models toward more honest answers by adding a vector to the model's internal state mid-computation. The reported benchmark gains do not distinguish two mechanisms. The vector may be moving an upstream representation of honesty that the rest of the model reads and acts on, or it may be making words like *lie* and *deceive* less likely at the output. Both produce the same headline scores.
 
-This project builds a mathematical test that tells the two apart. We project the nudge so its direct effect on those specific words is exactly zero, then ask whether honest behaviour still survives. If it does, the nudge was moving something real. If not, the technique was word suppression all along.
+This project constructs the test that separates the two. We project the vector orthogonal to the readout direction for a chosen set of honesty-coded words, so its direct effect on those words is zero, then measure how much honest behavior survives. Whatever survives came from somewhere other than vocabulary suppression.
 
-The proof shows why the test is well-defined; the plan specifies the models, benchmarks, and experiments that put a number on the answer.
+The proof develops the construction. The plan specifies the models, benchmarks, and experiments that quantify the surviving effect.
 
 ---
 
 ## What is the question, in one paragraph?
 
-Representation-engineering (RepE) interventions add a contrastively constructed vector to a transformer's residual stream at a middle layer, and the reported effect is a reduction in deceptive, sycophantic, or refusal-violating behavior. The published numbers do not distinguish two very different mechanisms. **Shallow.** The vector tilts the final logit head against tokens like *lie*, *trick*, *false*, *deceive*. The intervention works because deception-coded words become improbable; no semantic concept is involved. **Deep.** The vector moves an upstream representation that downstream attention and feed-forward layers consume, producing behavior that survives vocabulary substitution, paraphrase, and translation. The concept of deception is genuinely represented mid-stream and the intervention manipulates it. The two mechanisms predict the same headline score on TruthfulQA and very different out-of-distribution generalization. The field has assumed the second; nothing in the standard experimental setup distinguishes them.
+Representation-engineering (RepE) interventions add a contrastively constructed vector to a transformer's residual stream at a middle layer; the reported effect is a reduction in deceptive, sycophantic, or refusal-violating behavior. The published numbers do not separate two distinct mechanisms. Under the *shallow* account, the vector tilts the final logit head against tokens such as *lie*, *trick*, *false*, *deceive*, and the intervention works because deception-coded words become improbable, with no semantic concept involved. Under the *deep* account, the vector moves an upstream representation that downstream attention and feed-forward layers consume, producing behavior that survives vocabulary substitution, paraphrase, and translation. The two accounts predict identical TruthfulQA scores and divergent out-of-distribution generalization. The field has implicitly assumed the second, and the standard experimental setup does not adjudicate.
 
 ---
 
 ## What this repository contributes
 
-We separate the two mechanisms by construction. For a chosen deception-coded token set $T$, construct the orthogonal complement of the rows of the effective unembedding matrix indexed by $T$. Project the steering vector $v_{\text{dec}}$ onto this complement to obtain $v^{\perp}$. By construction, $v^{\perp}$ has zero direct logit contribution at every token in $T$. Inject it at the same middle layer as the original. Whatever behavioral change $v^{\perp}$ produces cannot come from direct readout at $T$; it must propagate through downstream attention and feed-forward layers. The ratio of $v^{\perp}$'s behavioral effect to $v_{\text{dec}}$'s behavioral effect is a quantitative depth-of-representation statistic.
+We separate the two mechanisms by construction. For a chosen deception-coded token set $T$, take the orthogonal complement of the rows of the effective unembedding matrix indexed by $T$ and project the steering vector $v_{\text{dec}}$ onto it to obtain $v^{\perp}$. The projected vector has zero direct logit contribution at every token in $T$. Injecting $v^{\perp}$ at the original intervention layer, any change in behavior cannot run through direct readout at $T$ and must propagate through downstream attention and feed-forward layers. The ratio of $v^{\perp}$'s behavioral effect to $v_{\text{dec}}$'s is the depth statistic.
 
 The proof at [`docs/proof.pdf`](docs/proof.pdf) develops:
 
@@ -34,7 +34,7 @@ The proof at [`docs/proof.pdf`](docs/proof.pdf) develops:
 2. The RMSNorm-corrected effective unembedding $\widetilde{W}_U^\star$, the actual object the post-norm readout maps from. Prior work projects against raw $W_U$; this is subtly wrong.
 3. The minimum-norm characterization of the projection. The construction is the unique closest perturbation of $v_{\text{dec}}$ that produces zero direct effect on $T$, in the style of LEACE adapted to the token-conditional setting.
 4. The direct-versus-indirect path decomposition that makes the test statistic meaningful.
-5. A careful comparison to the closest precedents: LEACE, the Arditi refusal-direction orthogonalization, the Park-Choe-Veitch causal-inner-product duality, the Venkatesh-Kurapath non-identifiability result, and the Nadaf function-vector decoding gap.
+5. The positioning against the closest precedents: LEACE, the Arditi refusal-direction orthogonalization, the Park-Choe-Veitch causal-inner-product duality, the Venkatesh-Kurapath non-identifiability result, and the Nadaf function-vector decoding gap.
 
 The companion [`PLAN.md`](PLAN.md) specifies the experimental program: which checkpoints, which steering constructions, which token sets, which benchmarks, which OOD probes, and what each empirical outcome would mean.
 
@@ -42,7 +42,7 @@ The companion [`PLAN.md`](PLAN.md) specifies the experimental program: which che
 
 ## On the novelty gap
 
-We surface overlaps up front rather than burying them. The closest prior work is:
+The closest prior work is:
 
 - **LEACE** (Belrose et al., NeurIPS 2023). Minimum-norm projection that erases linear concept information from a representation. Same projection machinery, different subspace target.
 - **Arditi et al.** (NeurIPS 2024). Project a refusal direction out of every matrix that writes to the residual stream. Same orthogonalization idiom, dual subspace.
@@ -50,11 +50,11 @@ We surface overlaps up front rather than burying them. The closest prior work is
 - **Nadaf** (arXiv:2604.02608, April 2026). Function vectors steer model behavior in cases where the logit lens cannot decode the steered output, demonstrating the off-readout channel exists for the function-vector setting.
 - **hughvd's unembedding-steering-benchmark** (GitHub, 2024). Implements the unembedding-orthogonal steering construction on Gemma-2-9B with sentiment as the worked example.
 
-The contribution here is the specific instrument applied to the specific question: the depth statistic $\rho$ and its cross-set stability $\sigma_T$, the RMSNorm correction, application to honesty and deception steering vectors specifically, and evaluation on the deception benchmarks that did not yet exist when the closest precedents were published (MASK in March 2025, Liars' Bench in November 2025, DeceptionBench in October 2025). We are first to put these particular pieces together on this particular question; we are not first to project a steering vector against a subspace.
+The contribution is the application of this projection to deception steering on the modern deception benchmarks (MASK, Liars' Bench, DeceptionBench), the RMSNorm correction, and a quantitative summary via $\rho$ and $\sigma_T$.
 
 ---
 
-## The construction in thirty seconds
+## Construction at a glance
 
 ```mermaid
 flowchart LR
@@ -76,7 +76,7 @@ flowchart LR
     R --> Rho
 ```
 
-For a steering vector that is mostly *direct logit attribution at $T$*, the projected vector $v^{\perp}$ has near-zero behavioral effect and $\rho \approx 0$. For a steering vector that is mostly *indirect propagation through downstream layers*, $v^{\perp}$ preserves the behavioral effect and $\rho \approx 1$. The expected real-world finding is intermediate, and the empirical questions are then quantitative: how large is $\rho$, how stable across $T$ choices, and how does it track OOD generalization.
+If $v_{\text{dec}}$ acts primarily through direct logit attribution at $T$, the projected vector $v^{\perp}$ has near-zero behavioral effect and $\rho \approx 0$. If $v_{\text{dec}}$ acts primarily through indirect propagation, $v^{\perp}$ preserves the effect and $\rho \approx 1$. The expected outcome is intermediate; the empirical questions are the value of $\rho$, its stability across $T$ choices, and its relationship to out-of-distribution generalization.
 
 ---
 
@@ -111,11 +111,11 @@ liar-liar/
 
 ## How to read the documents
 
-1. **[README.md](README.md)** *(this file)*. Five-minute orientation.
-2. **[PLAN.md](PLAN.md)**. The experimental program. Models, steering constructions, token-set designs, evaluation suite, OOD probes, baselines, computational budget, timeline. Approximately twenty-minute read.
-3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus. Why the global formulation is impossible, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work comparison, the limitations.
+1. **[README.md](README.md)** *(this file)*. Orientation.
+2. **[PLAN.md](PLAN.md)**. The experimental program: models, steering constructions, token-set designs, evaluation suite, OOD probes, baselines, computational budget, and timeline.
+3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus: the impossibility of the global formulation, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work positioning, and the limitations.
 
-If you only have time for two sections of the proof, read **§4 (Token-Conditional Orthogonalization)** for the construction and **§6 (Direct-Versus-Indirect Path Decomposition)** for why the depth statistic is meaningful. The impossibility argument in §3 is the reason the construction has to take the form it does; the prior-work comparison in §9 is where the contribution is positioned.
+The load-bearing sections of the proof are **§4** (Token-Conditional Orthogonalization), which defines the construction, and **§6** (Direct-Versus-Indirect Path Decomposition), which justifies the depth statistic. §3 shows why the construction must be token-conditional; §9 positions the work against the closest prior projections.
 
 ---
 
@@ -164,9 +164,7 @@ cd docs && latexmk -pdf proof.tex
 
 ## A note on framing
 
-The construction is operational. We do not claim that a steering vector encodes the concept of deception in any rich semantic sense, and we do not claim that the test statistic $\rho$ is a measure of consciousness, intent, or understanding. We measure the proportion of a steering vector's behavioral effect that survives token-conditional readout suppression. That is a quantitative claim about the model's representational geometry, and nothing more.
-
-The right places to push back are: (i) on the formal commitments in `docs/proof.pdf`, particularly the minimum-norm characterization (Theorem 8.1) and the direct/indirect decomposition identity (Theorem 6.1); (ii) on the choice of token sets, intervention layers, and benchmarks in `PLAN.md` §4. Empirical disagreement is welcome but, given that the experiments have not yet been run, premature.
+The construction is operational. $\rho$ measures the proportion of a steering vector's behavioral effect that survives token-conditional readout suppression: a claim about the geometry of the residual stream. Disagreement should target the formal commitments (Theorems 6.1 and 8.1 in `docs/proof.pdf`) or the experimental design (`PLAN.md` §4); empirical claims await the experiments.
 
 ---
 
@@ -175,7 +173,7 @@ The right places to push back are: (i) on the formal commitments in `docs/proof.
 A formal preprint will follow the empirical results. For now, please cite the repository.
 
 ```
-@misc{gupta2026steeringrebels,
+@misc{gupta2026liarliar,
   title  = {Liar, Liar: A Causal Test of Deep Versus Shallow Deception in
             Language Models via Token-Conditional Unembedding
             Orthogonalization},
