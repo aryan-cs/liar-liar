@@ -2,7 +2,7 @@
 
 > **Liar, Liar: Beyond Vocabulary Suppression.** A causal test of whether honesty steering manipulates an upstream representation or merely tilts the readout against deception-coded tokens, via token-conditional unembedding orthogonalization.
 >
-> [Read the proof (PDF)](docs/proof.pdf) · [Read the plan](PLAN.md) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
+> [Read the proof (PDF)](docs/proof.pdf) · [Read the plan](PLAN.md) · [License: CC BY-NC-ND 4.0](LICENSE) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
 
 This repository hosts the formal apparatus and the experimental program for a project on whether representation-engineering steering vectors for deception actually manipulate an upstream concept or merely tilt the readout against a small lexicon of behavior-coded tokens. The mathematical machinery is in `docs/proof.tex` (compiled to `docs/proof.pdf`); the experimental program is in `PLAN.md`.
 
