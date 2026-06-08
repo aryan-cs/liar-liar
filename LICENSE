@@ -1,0 +1,97 @@
+Liar, Liar: Beyond Vocabulary Suppression
+Copyright (c) 2026 Aryan Gupta
+
+This work, including the formal proof in `docs/proof.tex` and
+`docs/proof.pdf`, the experimental program in `PLAN.md`, the framing
+material in `README.md`, and any associated diagrams or auxiliary
+documents in this repository, is licensed under the Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International License
+(CC BY-NC-ND 4.0).
+
+The canonical, legally binding text of this license is available at:
+
+    https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode
+
+A human-readable summary (the "Commons Deed") is available at:
+
+    https://creativecommons.org/licenses/by-nc-nd/4.0/
+
+What this means in plain language:
+
+  You are free to:
+
+    SHARE the material in any medium or format, provided you comply
+    with the terms below.
+
+  Under the following terms:
+
+    ATTRIBUTION. You must give appropriate credit to the author, provide
+    a link to the license, and indicate if changes were made. You may
+    do so in any reasonable manner, but not in any way that suggests
+    the licensor endorses you or your use.
+
+    NONCOMMERCIAL. You may not use the material for commercial purposes.
+    Commercial use includes any use primarily intended for or directed
+    toward commercial advantage or monetary compensation.
+
+    NODERIVATIVES. If you remix, transform, translate, summarize, or
+    otherwise build upon the material, you may not distribute the
+    modified material without explicit prior written permission from
+    the author.
+
+    NO ADDITIONAL RESTRICTIONS. You may not apply legal terms or
+    technological measures that legally restrict others from doing
+    anything the license permits.
+
+What is NOT permitted without prior written permission from the author:
+
+  - Republishing this work or substantial portions of it on a third-party
+    platform, in a journal, in a textbook, in a book chapter, in a
+    technical report, or in a preprint server other than as an authored
+    citation or quotation under fair use.
+
+  - Using the formal apparatus, including the test statistic, the
+    construction, or the proof, as the technical contribution of a
+    derivative work that is distributed.
+
+  - Using the material in the training corpus of a commercial model.
+
+  - Translating the documents and redistributing the translation.
+
+  - Producing summaries, condensations, or rewritten versions and
+    distributing them.
+
+  - Any commercial use whatsoever, including but not limited to use
+    inside a for-profit research lab's internal materials that are then
+    distributed externally.
+
+Permitted without prior permission:
+
+  - Reading, quoting, and citing the work in academic publications under
+    standard fair-use and attribution conventions, with a clear citation
+    that includes the author name, the repository URL, and the title.
+
+  - Sharing a link to this repository.
+
+  - Discussion of the ideas in a non-commercial setting, with attribution.
+
+Notices:
+
+  No warranties are given. The license may not give you all of the
+  permissions necessary for your intended use. For example, other
+  rights such as publicity, privacy, or moral rights may limit how
+  you use the material.
+
+  You do not have to comply with the license for elements of the
+  material in the public domain or where your use is permitted by an
+  applicable exception or limitation under applicable law.
+
+Future code release:
+
+  When experimental code accompanying this work is released in this
+  repository, it will carry a separate license file appropriate for
+  software, applied only to the code directory; the documents in this
+  repository will remain under CC BY-NC-ND 4.0.
+
+For permission requests outside the terms of this license, contact:
+aryan.cs.app@gmail.com
