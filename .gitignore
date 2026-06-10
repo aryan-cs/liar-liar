@@ -34,3 +34,9 @@ venv/
 # Results (only commit summaries explicitly)
 results/raw/
 results/cache/
+
+# Heavy run-time artifacts (H200-local; fetched selectively)
+.hf_cache/
+data/
+logs/
+artifacts/stage0/
