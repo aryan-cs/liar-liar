@@ -40,3 +40,6 @@ results/cache/
 data/
 logs/
 artifacts/stage0/
+
+# Loop monitor state (local only)
+.loop_state/
