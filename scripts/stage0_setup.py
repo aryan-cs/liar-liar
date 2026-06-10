@@ -59,7 +59,7 @@ def main() -> None:
     # --- TruthfulQA MC + splits ---
     tqa_path = DATA / "truthfulqa_mc.json"
     if not tqa_path.exists():
-        ds = load_dataset("truthful_qa", "multiple_choice")["validation"]
+        ds = load_dataset("truthfulqa/truthful_qa", "multiple_choice")["validation"]
         rows = [dict(r) for r in ds]
         rng = random.Random(SEED)
         order = list(range(len(rows)))
