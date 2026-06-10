@@ -90,9 +90,9 @@ def projector_perp(A: torch.Tensor) -> torch.Tensor:
 
     Computed via the Moore-Penrose pseudoinverse:
         P^perp = I - A^+ A
-    For numerical stability, uses SVD on A directly.
+    For numerical stability, uses SVD on A in float64.
     """
-    A = A.to(torch.float32)
+    A = A.to(torch.float64)
     d = A.shape[1]
     # Compact SVD
     _U, S, Vh = torch.linalg.svd(A, full_matrices=False)

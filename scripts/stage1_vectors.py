@@ -155,12 +155,13 @@ def main() -> None:
     vectors: dict[str, torch.Tensor] = {"v_dec": v_dec, "v_mm": v_mm}
     certs: dict[str, dict] = {}
     for name, ids in sets_for_projection.items():
-        A = token_subspace(W_tilde, ids).cpu()  # (k, d)
+        A = token_subspace(W_tilde, ids).cpu().double()  # (k, d) float64
         P = projector_perp(A)
-        vp = (P @ v_dec.float()).contiguous()
+        vp64 = P @ v_dec.double()
+        vp = vp64.float().contiguous()
         vectors[f"v_perp_{name}"] = vp
-        direct_before = float((A @ v_dec.float()).abs().max())
-        direct_after = float((A @ vp).abs().max())
+        direct_before = float((A @ v_dec.double()).abs().max())
+        direct_after = float((A @ vp64).abs().max())
         certs[name] = {
             "k": len(ids),
             "max_direct_before": direct_before,
