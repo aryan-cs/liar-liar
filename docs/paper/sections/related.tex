@@ -1,0 +1,13 @@
+\section{Related work}\label{sec:related}
+
+\paragraph{Activation steering.}
+Representation engineering adds contrastively constructed vectors to the residual stream to modulate high-level behavior \citep{zou2023repe}; contrastive activation addition \citep{rimsky2024caa} and inference-time intervention \citep{li2023iti} are the canonical honesty-adjacent instantiations, and \citet{arditi2024refusal} show refusal is mediated by a single direction that can be removed from every writing matrix. \citet{tan2024analysing} document that steering vectors often generalize poorly out of distribution; our depth statistic offers a mechanism-level account of when that should happen.
+
+\paragraph{Concept erasure.}
+LEACE \citep{belrose2023leace} gives the minimum-norm affine map that removes linear decodability of a concept, following iterative nullspace projection \citep{ravfogel2020inlp} and rank-constrained adversarial erasure \citep{ravfogel2022rlace}. Our projection is structurally the LEACE construction with two changes: the erased subspace is read directly off the model's effective unembedding rather than learned from labels, and the constraint is zero direct logit contribution on a token set rather than zero probe accuracy.
+
+\paragraph{Unembedding geometry.}
+\citet{park2024linear} formalize the duality between context-side and unembedding-side concept directions under a causal inner product; our rank-one variant projects against the unembedding-side honesty direction, and our Mahalanobis-weighted variant recovers their inner product. \citet{marks2024geometry} construct truth directions by mass-mean differences, which we use both as an alternative steering vector and as the readout-side direction of the rank-one test. The direct logit-attribution path through the residual stream is the lens of \citet{elhage2021mathematical} and \citet{nostalgebraist2020logitlens}.
+
+\paragraph{Closest precedents.}
+Three works overlap most directly. \citet{venkatesh2026nonid} prove steering vectors are non-identifiable up to perturbations in the null space of the full activation-to-logit Jacobian; our subspace is the readout-restricted version, and where they establish ambiguity we measure what the ambiguity carries. \citet{nadaf2026function} show function vectors steer behavior the logit lens cannot decode, establishing the off-readout channel in the in-context-learning setting. The unembedding-steering benchmark of \citet{hughvd2024benchmark} implements $\WU$-orthogonal steering for sentiment on Gemma-2-9B. None applies the construction to honesty steering, none corrects for the RMSNorm Jacobian, and none reports a quantitative depth decomposition with certificates; those are the contributions here.

@@ -1,0 +1,119 @@
+% Liar, Liar: Beyond Vocabulary Suppression
+% Compile: tectonic main.tex
+\documentclass[10pt]{article}
+
+% -- Fonts --
+\usepackage[T1]{fontenc}
+\renewcommand{\rmdefault}{ptm}    % Times
+\renewcommand{\sfdefault}{phv}    % Helvetica
+
+% -- Geometry --
+\usepackage[
+  textheight=9in,
+  textwidth=5.5in,
+  top=1in,
+  headheight=12pt,
+  headsep=25pt,
+  footskip=30pt,
+  centering
+]{geometry}
+
+% -- Paragraph style --
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5.5pt}
+
+% -- Colors --
+\usepackage{xcolor}
+\definecolor{primary}{HTML}{7B2D26}
+\definecolor{secondary}{HTML}{B8973A}
+
+% -- Figure palette --
+\definecolor{figAqua}{HTML}{63FBC5}
+\definecolor{figBlue}{HTML}{00B6EB}
+\definecolor{figPurple}{HTML}{8000FF}
+\definecolor{figRed}{HTML}{FF0000}
+\definecolor{figOrange}{HTML}{FFB360}
+\definecolor{figYellow}{HTML}{D6DD81}
+
+% -- Typography --
+\usepackage{microtype}
+
+% -- Essentials --
+\usepackage{amsmath, amssymb, bm}
+\usepackage{graphicx, subcaption}
+\usepackage{booktabs, array}
+\usepackage{enumitem}
+\usepackage[round]{natbib}
+
+% -- Links (after natbib) --
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, citecolor=primary, linkcolor=primary, urlcolor=primary}
+
+% -- Section heading styles --
+\usepackage{titlesec}
+\titleformat{\section}{\large\bf\raggedright}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bf\raggedright}{\thesubsection}{0.6em}{}
+\titlespacing{\paragraph}{0pt}{6pt}{1em}
+\titleformat{\paragraph}[runin]{\normalsize\bf}{}{0pt}{}
+
+% -- Caption spacing --
+\usepackage{caption}
+\captionsetup[figure]{skip=7pt, font=small}
+\captionsetup[table]{skip=7pt, font=small}
+
+% -- Math notation --
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\WU}{W_{U}}
+\newcommand{\WUt}{\widetilde{W}_{U}}
+\newcommand{\vdec}{v_{\mathrm{dec}}}
+\newcommand{\vperp}{v^{\perp}}
+\newcommand{\vpar}{v^{\parallel}}
+\newcommand{\PT}{P_{T}}
+\newcommand{\PTperp}{P_{T}^{\perp}}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\spann}{span}
+\DeclareMathOperator{\diag}{diag}
+
+% -- Author block helpers --
+\newcommand{\authorentry}[2]{\textbf{#1}\textsuperscript{\textcolor{primary}{#2}}}
+\newcommand{\afflabel}[2]{\textsuperscript{\textcolor{primary}{#1}}{\small #2}}
+
+\begin{document}
+
+% -- Title block --
+\begingroup
+\centering
+{\noindent\rule{\textwidth}{4pt}\par}
+\vspace{10pt}
+{\LARGE\bf Liar, Liar: Beyond Vocabulary Suppression\par}
+\vspace{10pt}
+{\authorentry{Aryan Gupta}{1}\par}
+\vspace{4pt}
+{\afflabel{1}{University of Illinois Urbana-Champaign}\par}
+{\small\texttt{aryang9@illinois.edu}\par}
+\vspace{4pt}
+{\small\textcolor{secondary}{\texttt{github.com/aryan-cs/liar-liar}}\par}
+\vspace{6pt}
+{\noindent\rule{\textwidth}{1pt}\par}
+\endgroup
+\vspace{8pt}
+
+% -- Abstract --
+\begin{quote}
+\vspace{-0.5ex}
+\input{sections/abstract}
+\end{quote}
+
+\input{sections/intro}
+\input{sections/related}
+\input{sections/method}
+\input{sections/setup}
+\input{sections/results}
+\input{sections/discussion}
+\input{sections/limitations}
+\input{sections/conclusion}
+
+\bibliographystyle{plainnat}
+\input{sections/bibliography}
+
+\end{document}

@@ -1,0 +1,22 @@
+\section{Experimental setup}\label{sec:setup}
+
+\paragraph{Model.}
+All experiments use Llama-3-8B-Instruct \citep{grattafiori2024llama3} ($L=32$, $d=4096$, $V=128{,}256$, RMSNorm) in bfloat16. Projections and certificates are computed in float64.
+
+\paragraph{Data and splits.}
+TruthfulQA \citep{lin2022truthfulqa} provides the behavioral benchmark in its multiple-choice form (817 questions). A seeded shuffle assigns 120 questions to a validation slice used only for the layer/strength sweep, 200 to construct mass-mean statements, and the remaining 497 to the held-out test slice on which every headline number is computed. Steering vectors are built from 256 Alpaca instructions \citep{taori2023alpaca} rendered under an honest and a deceptive system prompt; a further 128 disjoint instructions feed the statistical token set. Steering-vector data and evaluation data share no prompts.
+
+\paragraph{Steering vectors.}
+The CAA vector is the mean difference of final-token residuals between honest- and deceptive-prompted renderings, computed per layer. The intervention layer and strength are selected on the validation slice over $\ell \in \{10,12,14,16\}$, $\alpha \in \{4,8,12\}$ by MC2 improvement, giving $\ell^{*}=10$, $\alpha^{*}=8$. A Marks--Tegmark mass-mean vector \citep{marks2024geometry} built from true/false statement contrasts at $\ell^{*}$ provides a second construction.
+
+\paragraph{Scoring.}
+TruthfulQA MC follows the original protocol: the total log-probability of each answer choice under the prompt \texttt{Q: \{question\}\textbackslash nA:}, with MC1 the accuracy of the argmax choice and MC2 the normalized probability mass on true choices. The intervention is applied at every token position. At the answer position we additionally record the logits of every token in the union of all token sets, from which the honest-shift $\eta$ and the spillover readouts are computed without further forward passes.
+
+\paragraph{Conditions.}
+The headline matrix evaluates: baseline; $\vdec$; $\vperp$ for aligned-$k$ with $k \in \{16, 64, 256, 1024\}$; $\vperp$ for the curated and statistical sets; the parallel component $\vpar$ (aligned-64); the norm-matched $\vperp$ (aligned-64); random 64-dimensional projections (three seeds); and the mass-mean vector. All conditions share $\ell^{*}$ and $\alpha^{*}$.
+
+\paragraph{Out-of-distribution probe.}
+The first 150 test questions are paraphrased by the unsteered model (greedy decoding, meaning-preserving instruction) and rescored under baseline, $\vdec$, and $\vperp$ (aligned-64), giving an OOD depth ratio $\rho_{\mathrm{OOD}}$. The spillover readout evaluates $\eta$ on stem-disjoint synonym sets that were never projected out.
+
+\paragraph{Reproducibility.}
+The pipeline is four checkpointed stages with fixed seeds; all code, token lists, and the formal proof are in the repository. The zero-direct-effect certificates $\max_t |(A\vperp)_t|$ are reported alongside the results.

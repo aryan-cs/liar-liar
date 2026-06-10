@@ -1,0 +1,61 @@
+\section{Method}\label{sec:method}
+
+\subsection{Setup and notation}
+
+Let $\mathcal{M}$ be a decoder-only transformer with $L$ layers, residual width $d$, and vocabulary size $V$. The residual stream $h^{(\ell)}_i \in \R^d$ is updated additively by each block, and the logits at the final position are
+\begin{equation}
+\bm{\ell}(h^{(L)}_n) = \WU \cdot \mathrm{RMSNorm}_\gamma(h^{(L)}_n),
+\qquad
+\mathrm{RMSNorm}_\gamma(z) = \gamma \odot \frac{z}{\sqrt{d^{-1}\|z\|_2^2 + \varepsilon}},
+\label{eq:readout}
+\end{equation}
+with $\WU \in \R^{V \times d}$ the unembedding and $\gamma \in \R^d$ a learned gain \citep{zhang2019rmsnorm}. A steering intervention adds a vector $\alpha\,\vdec$ to the residual stream at a middle layer $\ell^{*}$ at every position. We use the contrastive mean-difference construction \citep{rimsky2024caa,zou2023repe}: given prompts rendered under an honest and a deceptive system prompt, $\vdec$ is the difference of mean final-token residuals at $\ell^{*}$.
+
+\paragraph{Effective unembedding.}
+For a perturbation $\delta z$ at the readout point $z$, the first-order logit response is governed not by $\WU$ but by the composition with the RMSNorm Jacobian,
+\begin{equation}
+\WUt(z) := \WU \, J_{\gamma}(z), \qquad
+J_{\gamma}(z) = \frac{1}{\sigma(z)}\,\diag(\gamma)\!\left(I_d - \frac{z z^{\top}}{d\,\sigma(z)^2}\right),
+\label{eq:effective}
+\end{equation}
+where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Projecting against raw $\WU$ rows, as in prior unembedding-orthogonal constructions, leaves a residual direct effect through the gain and the rank-one term. We average $J_{\gamma}$ over a calibration set of readout points and write $\WUt^{*}$ for the resulting matrix.
+
+\subsection{Token-conditional orthogonalization}
+
+A global version of the test --- a perturbation invisible to \emph{every} token --- is impossible: for every model we consider, $V > d$ and $\WU$ has full column rank, so $\ker(\WU) = \{0\}$ (Proposition~3.1 of the supplementary proof). The construction must restrict the readout to a chosen token set.
+
+Fix a deception-coded token set $T \subset \{1,\dots,V\}$ with $k = |T| \ll d$, and let $A = \WUt^{*}[T,:] \in \R^{k \times d}$ be the corresponding rows. With $A^{+}$ the Moore--Penrose pseudoinverse,
+\begin{equation}
+\PTperp = I_d - A^{+}A, \qquad \vperp = \PTperp\,\vdec, \qquad \vpar = \vdec - \vperp .
+\label{eq:projection}
+\end{equation}
+By construction $A\,\vperp = 0$: the projected vector has exactly zero first-order logit contribution at every token in $T$. Among all vectors satisfying that constraint, $\vperp$ is the one closest to $\vdec$ in Euclidean norm (the LEACE-style minimum-norm characterization; Theorem~8.1 of the supplementary proof, after \citealp{belrose2023leace}).
+
+\subsection{Direct and indirect paths}
+
+Writing $M^{(\ell^{*} \to L)}$ for the summed Jacobian of all attention and MLP contributions downstream of $\ell^{*}$, the first-order logit response to an injected $v$ decomposes as
+\begin{equation}
+\Delta\bm{\ell} \;=\; \underbrace{\WUt^{*}\, v}_{\text{direct}} \;+\; \underbrace{\WUt^{*} M^{(\ell^{*} \to L)}\, v}_{\text{indirect}} \;+\; O(\|v\|^2).
+\label{eq:decomp}
+\end{equation}
+For $v = \vperp$ the direct term vanishes on $T$ identically, so any change in the $T$-restricted logits --- and, to the extent that behavior on a deception benchmark is mediated by $T$, any change in measured behavior --- must travel through downstream computation (Theorem~6.1 of the supplementary proof).
+
+\subsection{The depth statistic}
+
+Let $\beta(v)$ be a benchmark score under intervention $v$ and $\Delta(v) = \beta(v) - \beta(0)$. The depth statistic is
+\begin{equation}
+\rho(\vdec, T) \;=\; \frac{\Delta(\vperp)}{\Delta(\vdec)} .
+\label{eq:rho}
+\end{equation}
+Under a pure vocabulary-suppression account, $\rho \approx 0$ once $T$ exhausts the readout-aligned mass of $\vdec$; under a pure upstream-concept account, $\rho \approx 1$. We report $\rho$ with paired bootstrap confidence intervals, its stability $\sigma_T$ across independent constructions of $T$, and a per-prompt analogue $\rho_\eta$ defined on the honest-shift
+\begin{equation}
+\eta(v) = \big[\mu_{T^{+}}(v) - \mu_{T^{-}}(v)\big] - \big[\mu_{T^{+}}(0) - \mu_{T^{-}}(0)\big],
+\label{eq:eta}
+\end{equation}
+where $\mu_{T^{\pm}}$ is the mean logit over honest-coded ($T^{+}$) and deceptive-coded ($T^{-}$) tokens at the answer position.
+
+\paragraph{Token-set constructions.}
+We instantiate $T$ three ways. \emph{Curated}: a fixed lexicon of 32 honest and 32 deceptive lemmas expanded to single-token surface variants. \emph{Statistical}: the top-32 tokens per side by mean first-position logit shift between honest- and deceptive-prompted contexts on held-out prompts. \emph{Aligned-$k$}: the top-$k$ tokens by $|\WUt^{*}\vdec|$ --- the $k$ tokens the steering vector moves most through the direct path. The aligned construction is the strongest form of the test: it removes exactly the direct-readout content of $\vdec$ itself, and sweeping $k$ traces how the surviving effect $\rho(k)$ decays as more of the direct path is excised.
+
+\paragraph{Controls.}
+Three controls separate the unembedding subspace from generic perturbation. (i) \emph{Random projection}: project out a random $k$-dimensional subspace (three seeds), matching the dimension count of the aligned-64 set. (ii) \emph{Norm matching}: rescale $\vperp$ to $\|\vdec\|$, separating direction from magnitude. (iii) \emph{Parallel injection}: inject $\vpar$ alone, the readout-aligned rank-$\le k$ component; under the suppression account this component should carry the behavioral effect.
