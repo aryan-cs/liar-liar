@@ -1,0 +1,28 @@
+{
+  "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+  "gate": 1.5,
+  "seed": 0,
+  "aligned_ks": [
+    16,
+    64,
+    256,
+    1024
+  ],
+  "rand_k": 64,
+  "families": {
+    "dec": {
+      "layer": 12,
+      "alpha": 3.0,
+      "val_mc2_delta": 0.04192135829579818,
+      "ppl_ratio": 1.300103122398977,
+      "val_eta": 2.1651068439086276
+    },
+    "mm": {
+      "layer": 12,
+      "alpha": 4.0,
+      "val_mc2_delta": 0.18246158759911463,
+      "ppl_ratio": 1.1535026515380515,
+      "val_eta": 1.2218134082232912
+    }
+  }
+}

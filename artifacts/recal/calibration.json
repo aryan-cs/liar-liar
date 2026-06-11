@@ -1,0 +1,271 @@
+{
+  "base_nll": 3.4499903545780803,
+  "base_mc2": 0.45705310277950945,
+  "gate": 1.5,
+  "grid": [
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 0.5,
+      "nll_ratio": 1.0004004556146873,
+      "val_mc2": 0.4627179273145034,
+      "val_mc2_delta": 0.005664824534993951,
+      "val_eta": 1.0966217843194803,
+      "alpha_vnorm": 1.1928088665008545,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 1.0,
+      "nll_ratio": 1.006559034833047,
+      "val_mc2": 0.45750052267258046,
+      "val_mc2_delta": 0.0004474198930710105,
+      "val_eta": 1.3410173448423544,
+      "alpha_vnorm": 2.385617733001709,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 1.5,
+      "nll_ratio": 1.0146296049781776,
+      "val_mc2": 0.451572605623012,
+      "val_mc2_delta": -0.005480497156497455,
+      "val_eta": 1.5998247640828291,
+      "alpha_vnorm": 3.5784265995025635,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 2.0,
+      "nll_ratio": 1.0470088217818525,
+      "val_mc2": 0.44749035854384506,
+      "val_mc2_delta": -0.009562744235664389,
+      "val_eta": 1.8208704940974711,
+      "alpha_vnorm": 4.771235466003418,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 3.0,
+      "nll_ratio": 1.300103122398977,
+      "val_mc2": 0.49897446107530763,
+      "val_mc2_delta": 0.04192135829579818,
+      "val_eta": 2.1651068439086276,
+      "alpha_vnorm": 7.156853199005127,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 4.0,
+      "nll_ratio": 2.328743998628074,
+      "val_mc2": 0.5714561935185721,
+      "val_mc2_delta": 0.11440309073906268,
+      "val_eta": 2.223683751622836,
+      "alpha_vnorm": 9.542470932006836,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 0.5,
+      "nll_ratio": 1.0048474928479674,
+      "val_mc2": 0.47594582764633664,
+      "val_mc2_delta": 0.018892724866827193,
+      "val_eta": 1.316188775996367,
+      "alpha_vnorm": 2.0387473106384277,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 1.0,
+      "nll_ratio": 1.0678757936919308,
+      "val_mc2": 0.49764122016082113,
+      "val_mc2_delta": 0.040588117381311684,
+      "val_eta": 1.8776223522921403,
+      "alpha_vnorm": 4.0774946212768555,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 1.5,
+      "nll_ratio": 1.2437133180773419,
+      "val_mc2": 0.4967680625365614,
+      "val_mc2_delta": 0.03971495975705197,
+      "val_eta": 2.360449980944395,
+      "alpha_vnorm": 6.116241931915283,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 2.0,
+      "nll_ratio": 1.6615540382811362,
+      "val_mc2": 0.5132705123573797,
+      "val_mc2_delta": 0.0562174095778703,
+      "val_eta": 2.5418723503748577,
+      "alpha_vnorm": 8.154989242553711,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 3.0,
+      "nll_ratio": 5.2172591656326786,
+      "val_mc2": 0.6114856474095303,
+      "val_mc2_delta": 0.15443254463002082,
+      "val_eta": 2.9172718385855356,
+      "alpha_vnorm": 12.232483863830566,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 4.0,
+      "nll_ratio": 18.577902831333937,
+      "val_mc2": 0.6332716496111812,
+      "val_mc2_delta": 0.17621854683167176,
+      "val_eta": 3.6615471382935842,
+      "alpha_vnorm": 16.309978485107422,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 0.5,
+      "nll_ratio": 1.0151424469149595,
+      "val_mc2": 0.509771052002924,
+      "val_mc2_delta": 0.052717949223414606,
+      "val_eta": 1.0512723284463088,
+      "alpha_vnorm": 0.7098250985145569,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 1.0,
+      "nll_ratio": 1.0315848743693945,
+      "val_mc2": 0.5578970912691138,
+      "val_mc2_delta": 0.10084398848960435,
+      "val_eta": 1.1548382950325806,
+      "alpha_vnorm": 1.4196501970291138,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 1.5,
+      "nll_ratio": 1.0450794501509248,
+      "val_mc2": 0.5888427758635415,
+      "val_mc2_delta": 0.13178967308403206,
+      "val_eta": 1.223692307372888,
+      "alpha_vnorm": 2.1294753551483154,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 2.0,
+      "nll_ratio": 1.054804399526485,
+      "val_mc2": 0.6161747188556691,
+      "val_mc2_delta": 0.15912161607615966,
+      "val_eta": 1.2619861334562301,
+      "alpha_vnorm": 2.8393003940582275,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 3.0,
+      "nll_ratio": 1.087103614431616,
+      "val_mc2": 0.6257192504057535,
+      "val_mc2_delta": 0.16866614762624405,
+      "val_eta": 1.3002721733103195,
+      "alpha_vnorm": 4.258950710296631,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 4.0,
+      "nll_ratio": 1.1535026515380515,
+      "val_mc2": 0.6395146903786241,
+      "val_mc2_delta": 0.18246158759911463,
+      "val_eta": 1.2218134082232912,
+      "alpha_vnorm": 5.678600788116455,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 0.5,
+      "nll_ratio": 1.0044063405567243,
+      "val_mc2": 0.4890520915447356,
+      "val_mc2_delta": 0.031998988765226166,
+      "val_eta": 0.9938582627723614,
+      "alpha_vnorm": 0.8395781517028809,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 1.0,
+      "nll_ratio": 1.0141311649895024,
+      "val_mc2": 0.5118594937361511,
+      "val_mc2_delta": 0.05480639095664169,
+      "val_eta": 1.0701593649884065,
+      "alpha_vnorm": 1.6791563034057617,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 1.5,
+      "nll_ratio": 1.0287005343389473,
+      "val_mc2": 0.5256253346584845,
+      "val_mc2_delta": 0.06857223187897504,
+      "val_eta": 1.1284417130673925,
+      "alpha_vnorm": 2.5187344551086426,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 2.0,
+      "nll_ratio": 1.0576360887321872,
+      "val_mc2": 0.534942844779448,
+      "val_mc2_delta": 0.07788974199993853,
+      "val_eta": 1.1649035318444172,
+      "alpha_vnorm": 3.3583126068115234,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 3.0,
+      "nll_ratio": 1.220953069714172,
+      "val_mc2": 0.5692794659102195,
+      "val_mc2_delta": 0.11222636313071005,
+      "val_eta": 1.186468038459619,
+      "alpha_vnorm": 5.037468910217285,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 4.0,
+      "nll_ratio": 1.6328917236562397,
+      "val_mc2": 0.6363122223981752,
+      "val_mc2_delta": 0.17925911961866575,
+      "val_eta": 1.1809793446213006,
+      "alpha_vnorm": 6.716625213623047,
+      "coherent": false
+    }
+  ]
+}
