@@ -2,9 +2,11 @@
 
 > **Liar, Liar: Beyond Vocabulary Suppression.** A causal test of whether honesty steering manipulates an upstream representation or merely tilts the readout against deception-coded tokens, via token-conditional unembedding orthogonalization.
 >
-> [Read the proof (PDF)](docs/proof.pdf) · [Read the plan](PLAN.md) · [License: CC BY-NC-ND 4.0](LICENSE) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
+> [Read the paper (PDF)](docs/paper/main.pdf) · [Read the proof (PDF)](docs/proof.pdf) · [License: CC BY-NC-ND 4.0](LICENSE) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
 
-This repository hosts the formal apparatus and the experimental program for a project on whether representation-engineering steering vectors for deception actually manipulate an upstream concept or merely tilt the readout against a small lexicon of behavior-coded tokens. The mathematical machinery is in `docs/proof.tex` (compiled to `docs/proof.pdf`); the experimental program is in `PLAN.md`.
+This repository hosts the paper, the formal apparatus, the experimental pipeline, and the results for a project on whether representation-engineering steering vectors for honesty actually manipulate an upstream concept or merely tilt the readout against a small lexicon of behavior-coded tokens. The paper is `docs/paper/main.pdf`; the mathematical machinery is in `docs/proof.tex` (compiled to `docs/proof.pdf`); the original experimental program is preserved in `PLAN.md`.
+
+**The experiments are complete, and the answer is a double dissociation.** On Llama-3-8B-Instruct: the popular contrastive (CAA) honesty vector shifts honesty-coded *words* by over a logit without improving truthfulness at any coherent steering strength, and its apparent benchmark gains arise only after generation has collapsed (held-out perplexity 69x baseline) — a regime where the naive analysis also fabricates a confident "deep effect" verdict. The mass-mean vector improves truthfulness for real (test ΔMC2 +0.073, 95% CI [+0.038, +0.108], at perplexity ratio 1.15), and that gain survives certified excision of its entire direct vocabulary readout: ρ = 0.95 [0.79, 1.13], indistinguishable from random-subspace controls, stable from 16 to 1024 excised directions, and intact under paraphrase (ρ_OOD = 0.97). Where honesty steering works it is not vocabulary suppression, and where it is vocabulary-level it does not work.
 
 ---
 
@@ -14,7 +16,7 @@ A class of safety techniques nudges language models toward more honest answers b
 
 This project constructs the test that separates the two. We project the vector orthogonal to the readout direction for a chosen set of honesty-coded words, so its direct effect on those words is zero, then measure how much honest behavior survives. Whatever survives came from somewhere other than vocabulary suppression.
 
-The proof develops the construction. The plan specifies the models, benchmarks, and experiments that quantify the surviving effect.
+The proof develops the construction; the paper reports the experiments. The result: for the steering construction that genuinely improves truthfulness, essentially *all* of the effect survives — honesty steering, where it works, is not a vocabulary trick. And the construction most widely used in practice turns out not to improve truthfulness at all once you require the model to remain coherent: it changes the words, not the truthfulness.
 
 ---
 
@@ -50,7 +52,7 @@ The closest prior work is:
 - **Nadaf** (arXiv:2604.02608, April 2026). Function vectors steer model behavior in cases where the logit lens cannot decode the steered output, demonstrating the off-readout channel exists for the function-vector setting.
 - **hughvd's unembedding-steering-benchmark** (GitHub, 2024). Implements the unembedding-orthogonal steering construction on Gemma-2-9B with sentiment as the worked example.
 
-The contribution is the application of this projection to deception steering on the modern deception benchmarks (MASK, Liars' Bench, DeceptionBench), the RMSNorm correction, and a quantitative summary via $\rho$ and $\sigma_T$.
+The contribution is the application of this projection to honesty steering with machine-precision zero-direct-effect certificates, the RMSNorm correction, the coherence-gated operating-point protocol and random-subspace control that make the statistic interpretable, and the head-to-head two-family decomposition summarized via $\rho$, $\sigma_T$, and $\rho_{\mathrm{OOD}}$.
 
 ---
 
@@ -76,7 +78,9 @@ flowchart LR
     R --> Rho
 ```
 
-If $v_{\text{dec}}$ acts primarily through direct logit attribution at $T$, the projected vector $v^{\perp}$ has near-zero behavioral effect and $\rho \approx 0$. If $v_{\text{dec}}$ acts primarily through indirect propagation, $v^{\perp}$ preserves the effect and $\rho \approx 1$. The expected outcome is intermediate; the empirical questions are the value of $\rho$, its stability across $T$ choices, and its relationship to out-of-distribution generalization.
+If $v_{\text{dec}}$ acts primarily through direct logit attribution at $T$, the projected vector $v^{\perp}$ has near-zero behavioral effect and $\rho \approx 0$. If $v_{\text{dec}}$ acts primarily through indirect propagation, $v^{\perp}$ preserves the effect and $\rho \approx 1$.
+
+**Measured outcome** (Llama-3-8B-Instruct, 497 held-out TruthfulQA questions): for the mass-mean vector, $\rho = 0.95$ at aligned-64 ($\sigma_T = 0.08$ across token-set constructions, $\rho_{\mathrm{OOD}} = 0.97$ under paraphrase), with random-subspace controls at the same level — the effect is deep, and the readout subspace is not even special. For the CAA vector the depth question is moot: its denominator is statistically zero at every coherent operating point. The logit lens shows downstream layers re-synthesizing the suppressed $T$-readout within two blocks of the injection site.
 
 ---
 
@@ -85,26 +89,26 @@ If $v_{\text{dec}}$ acts primarily through direct logit attribution at $T$, the 
 ```
 liar-liar/
 ├── README.md                  ← you are here
-├── PLAN.md                    ← experimental program
-└── docs/
-    ├── proof.tex              ← formal apparatus (LaTeX source)
-    ├── proof.pdf              ← compiled proof
-    └── PLAN_steering_rebels_legacy.md   ← prior plan for a separate project, preserved
-```
-
-When code lands, the expected structure is:
-
-```
-liar-liar/
+├── PLAN.md                    ← original experimental program (the executed subset is in the paper)
+├── docs/
+│   ├── paper/                 ← the paper (main.tex + sections + auto-generated tables)
+│   ├── proof.tex              ← formal apparatus (LaTeX source)
+│   └── proof.pdf              ← compiled proof
 ├── liar/                      ← Python package
-│   ├── unembedding/           ← W_U row extraction, RMSNorm Jacobian, P_T construction
-│   ├── steering/              ← CAA, LAT, ITI, mass-mean implementations
-│   ├── tokenset/              ← curated, statistical, probe-derived T constructions
-│   ├── eval/                  ← MASK, Liars' Bench, DeceptionBench, TruthfulQA harnesses
-│   └── ood/                   ← paraphrase, translation, vocab-substitution probes
-├── experiments/               ← per-model run scripts and configs
-├── results/                   ← persisted per-run JSON and per-model summary parquets
-└── tests/
+│   ├── unembedding.py         ← effective unembedding, RMSNorm Jacobian, P_T construction
+│   ├── steering.py            ← CAA and mass-mean vectors
+│   ├── tokenset.py            ← curated, statistical, aligned-k T constructions
+│   ├── eval.py                ← TruthfulQA MC scoring, held-out NLL, eta capture
+│   ├── lens.py                ← layer-wise T-readout trajectories
+│   └── model.py               ← loading, residual capture, steering hooks
+├── scripts/                   ← staged pipeline (GPU stages + Mac-side analysis)
+│   ├── stage_recal.py         ← coherence-gated calibration + projection variants
+│   ├── stage2_recal.py        ← headline condition matrix
+│   ├── stage3_recal.py        ← paraphrase OOD + lens
+│   ├── stage4_recal.py        ← analysis, figures, tables, paper number macros
+│   └── probe_faithfulness.py  ← broken-instrument evidence (norms, PPL, generations)
+├── figures/                   ← generated figures
+└── results/                   ← per-question results and summary_recal.json
 ```
 
 ---
@@ -112,8 +116,9 @@ liar-liar/
 ## How to read the documents
 
 1. **[README.md](README.md)** *(this file)*. Orientation.
-2. **[PLAN.md](PLAN.md)**. The experimental program: models, steering constructions, token-set designs, evaluation suite, OOD probes, and baselines.
+2. **[docs/paper/main.pdf](docs/paper/main.pdf)**. The paper: the broken-instrument demonstration, the two-family decomposition, the depth verdict, and the lens evidence, with all numbers generated from the artifacts in this repository.
 3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus: the impossibility of the global formulation, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work positioning, and the limitations.
+4. **[PLAN.md](PLAN.md)**. The original experimental program, preserved as designed; the executed subset and the deviations from it are documented in the paper's setup section.
 
 The load-bearing sections of the proof are **§4** (Token-Conditional Orthogonalization), which defines the construction, and **§6** (Direct-Versus-Indirect Path Decomposition), which justifies the depth statistic. §3 shows why the construction must be token-conditional; §9 positions the work against the closest prior projections.
 
@@ -151,26 +156,26 @@ cd docs && latexmk -pdf proof.tex
 | Token-conditional construction proved well-defined and minimum-norm | done |
 | RMSNorm correction worked out | done |
 | Prior-work comparison written and citations verified | done |
-| Experimental program defined | done |
-| Reference implementation of $P_T^\perp$ and the four steering constructions | pending |
-| Calibration on Llama-2-7B against published RepE/CAA/ITI numbers | pending |
-| Full headline boxplot on the eight target checkpoints | pending |
-| MASK and Liars' Bench full evaluation | pending |
-| OOD generalization block (paraphrase, translation, vocab substitution) | pending |
-| Path patching and SAE attribution on the deep outliers | pending |
-| Writeup and submission | pending |
+| Reference implementation of $P_T^\perp$ and both steering constructions | done |
+| Coherence-gated calibration and the broken-instrument demonstration | done |
+| Full condition matrix (both families, all projections and controls) on Llama-3-8B-Instruct | done |
+| Paraphrase OOD block and logit-lens re-synthesis trajectories | done |
+| Zero-direct-effect certificates (max residual direct effect $7 \times 10^{-15}$ logits) | done |
+| Paper written with every number generated from artifacts | done |
+| Replication at other scales and model families | future work |
+| Free-form (non-teacher-forced) honesty evaluation under steering | future work |
 
 ---
 
 ## A note on framing
 
-The construction is operational. $\rho$ measures the proportion of a steering vector's behavioral effect that survives token-conditional readout suppression: a claim about the geometry of the residual stream. Disagreement should target the formal commitments (Theorems 6.1 and 8.1 in `docs/proof.pdf`) or the experimental design (`PLAN.md` §4); empirical claims await the experiments.
+The construction is operational. $\rho$ measures the proportion of a steering vector's behavioral effect that survives token-conditional readout suppression: a claim about the geometry of the residual stream. Disagreement should target the formal commitments (Theorems 6.1 and 8.1 in `docs/proof.pdf`), the experimental design (Section 4 of the paper), or the artifacts themselves — every number in the paper is generated from the per-question results in `results/` by `scripts/stage4_recal.py`, and the zero-direct-effect certificates ship with the vectors.
 
 ---
 
 ## Citation
 
-A formal preprint will follow the empirical results. For now, please cite the repository.
+The paper is at [docs/paper/main.pdf](docs/paper/main.pdf). Until a preprint number exists, please cite the repository.
 
 ```
 @misc{gupta2026liarliar,

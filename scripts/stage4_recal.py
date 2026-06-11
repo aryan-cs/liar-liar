@@ -213,6 +213,7 @@ def main() -> None:
     (ROOT / "results" / "summary_recal.json").write_text(json.dumps(summary, indent=2, default=float))
     make_figures(summary, calib, cfg, certs)
     make_tables(summary, certs, cfg)
+    make_numbers(summary, calib, cfg, certs, rng)
     print("[stage4r] complete")
 
 
@@ -293,6 +294,171 @@ def make_figures(summary, calib, cfg, certs):
         plt.close(fig)
 
 
+def _fmt(x, nd=3, sign=False):
+    s = f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
+    return s.replace("-", "$-$").replace("+", "$+$") if sign else s
+
+
+def _ci(lo, hi, nd=3):
+    return f"[{_fmt(lo, nd, sign=True)}, {_fmt(hi, nd, sign=True)}]"
+
+
+def make_numbers(summary, calib, cfg, certs, rng):
+    """Single source of truth: every headline number in the paper is a macro
+    generated here from the artifacts. numbers.tex is \\input by main.tex."""
+    L = []
+
+    def cmd(name, val):
+        L.append(f"\\newcommand{{\\{name}}}{{{val}}}")
+
+    # --- certificates ---
+    worst = max(c["max_direct_after"] for c in certs.values() if "max_direct_after" in c)
+    pre = max(c["max_direct_before"] for c in certs.values() if "max_direct_before" in c)
+    exp = int(np.ceil(np.log10(worst)))
+    cmd("CertWorst", f"$10^{{{exp}}}$")
+    cmd("CertPre", _fmt(pre, 2))
+
+    # --- recal per family ---
+    fam_macros = {"dec": "Dec", "mm": "Mm"}
+    for fam, F in fam_macros.items():
+        f = summary["families"].get(fam)
+        if not f:
+            continue
+        op = f["operating_point"]
+        cmd(f"{F}Layer", op["layer"])
+        cmd(f"{F}Alpha", f"{op['alpha']:g}")
+        cmd(f"{F}PplRatio", _fmt(op["ppl_ratio"], 2))
+        cmd(f"{F}ValDelta", _fmt(op["val_mc2_delta"], 3, sign=True))
+        d = f["delta_vdec_mc2"]
+        cmd(f"{F}TestDelta", _fmt(d["point"], 3, sign=True))
+        cmd(f"{F}TestDeltaCI", _ci(*d["ci"]))
+        d1 = f["delta_vdec_mc1"]
+        cmd(f"{F}TestDeltaMcOne", _fmt(d1["point"], 3, sign=True))
+        cmd(f"{F}TestDeltaMcOneCI", _ci(*d1["ci"]))
+        for cond, tag in (("v_perp_al64", "RhoAlSixtyFour"), ("v_perp_cur", "RhoCur"),
+                          ("v_perp_stat", "RhoStat"), ("v_perp_al64_nm", "RhoNm"),
+                          ("v_perp_al1024", "RhoAlBig"), ("v_par_al64", "RhoPar")):
+            c = f["conditions"].get(cond, {})
+            if "rho" in c:
+                cmd(f"{F}{tag}", _fmt(c["rho"], 2))
+                cmd(f"{F}{tag}CI", _ci(*c["rho_ci"], nd=2))
+        c = f["conditions"].get("v_par_al64", {})
+        if c:
+            cmd(f"{F}ParDelta", _fmt(c["delta_mc2"], 3, sign=True))
+        rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
+              if f"v_rand_s{s}" in f["conditions"] and "rho" in f["conditions"].get(f"v_rand_s{s}", {})]
+        if rr:
+            cmd(f"{F}RhoRandMean", _fmt(float(np.mean(rr)), 2))
+            cmd(f"{F}RhoRandMin", _fmt(min(rr), 2))
+            cmd(f"{F}RhoRandMax", _fmt(max(rr), 2))
+        amr = f.get("aligned_minus_random_rho")
+        if amr:
+            cmd(f"{F}AlignedMinusRandom", _fmt(amr["point"], 2, sign=True))
+            cmd(f"{F}AlignedMinusRandomCI", _ci(*amr["ci"], nd=2))
+        if f.get("sigma_T") is not None:
+            cmd(f"{F}SigmaT", _fmt(f["sigma_T"], 3))
+        for ro, tag in (("curated", "EtaCur"), ("spillover", "EtaSpill")):
+            e = f.get("eta", {}).get(ro, {})
+            if "rho_eta" in e:
+                cmd(f"{F}{tag}Rho", _fmt(e["rho_eta"], 2))
+                cmd(f"{F}{tag}RhoCI", _ci(*e["rho_eta_ci"], nd=2))
+            if "delta_vdec" in e:
+                cmd(f"{F}{tag}DeltaVdec", _fmt(e["delta_vdec"], 2, sign=True))
+                cmd(f"{F}{tag}DeltaVperp", _fmt(e["delta_vperp"], 2, sign=True))
+        p = f.get("paraphrase", {})
+        if "rho_ood" in p:
+            cmd(f"{F}RhoOod", _fmt(p["rho_ood"], 2))
+            cmd(f"{F}RhoOodCI", _ci(*p["rho_ood_ci"], nd=2))
+        if "delta_vdec" in p:
+            cmd(f"{F}OodDeltaVdec", _fmt(p["delta_vdec"], 3, sign=True))
+            cmd(f"{F}OodDeltaVperp", _fmt(p["delta_vperp"], 3, sign=True))
+
+    # --- baseline ---
+    base = load_jsonl(RES / "baseline.jsonl")
+    if base:
+        cmd("BaseMcTwo", _fmt(float(np.mean([r["mc2"] for r in base])), 3))
+        cmd("BaseMcOne", _fmt(float(np.mean([r["mc1"] for r in base])), 3))
+        cmd("NTest", len(base))
+
+    # --- naive operating point (old run, broken instrument) ---
+    old = ROOT / "results" / "stage2_old"
+    ob = load_jsonl(old / "baseline.jsonl")
+    od = load_jsonl(old / "v_dec.jsonl")
+    if ob and od:
+        for key, tag in (("mc2", "NaiveDecDelta"), ("mc1", "NaiveDecDeltaMcOne")):
+            bb, vv = align(ob, od, key)
+            e = boot_mean(vv - bb, rng)
+            cmd(tag, _fmt(e[0], 3, sign=True))
+            cmd(f"{tag}CI", _ci(e[1], e[2]))
+        b2, v2 = align(ob, od, "mc2")
+        d_dec = v2 - b2
+        for cond, tag in (("v_perp_al64", "NaiveRhoAlSixtyFour"),):
+            rows = load_jsonl(old / f"{cond}.jsonl")
+            if rows:
+                _, cc = align(ob, rows, "mc2")
+                r = boot_ratio(cc - b2, d_dec, rng)
+                cmd(tag, _fmt(r[0], 2))
+                cmd(f"{tag}CI", _ci(r[1], r[2], nd=2))
+        rr = []
+        for s in range(3):
+            rows = load_jsonl(old / f"v_rand_s{s}.jsonl")
+            if rows:
+                _, cc = align(ob, rows, "mc2")
+                rr.append(float((cc - b2).mean() / d_dec.mean()))
+        if rr:
+            cmd("NaiveRhoRandMean", _fmt(float(np.mean(rr)), 2))
+
+    # --- probe (broken-instrument physical evidence) ---
+    probe_path = RES / "probe.json"
+    if probe_path.exists():
+        probe = json.loads(probe_path.read_text())
+        pc = probe["conditions"]
+        if "naive/dec" in pc:
+            cmd("NaiveNormRatio", _fmt(pc["naive/dec"]["norm_ratio_to_median_h"], 2))
+            cmd("NaivePplRatio", _fmt(pc["naive/dec"]["ppl_ratio"], 2))
+            cmd("NaiveLayer", pc["naive/dec"]["layer"])
+            cmd("NaiveAlpha", f"{pc['naive/dec']['alpha']:g}")
+        if "gated/dec" in pc:
+            cmd("DecNormRatio", _fmt(pc["gated/dec"]["norm_ratio_to_median_h"], 2))
+        if "gated/mm" in pc:
+            cmd("MmNormRatio", _fmt(pc["gated/mm"]["norm_ratio_to_median_h"], 2))
+
+    (TAB / "numbers.tex").write_text("\n".join(L) + "\n")
+    print(f"[stage4r] wrote {len(L)} macros to tables/numbers.tex")
+    if probe_path.exists():
+        make_generations(json.loads(probe_path.read_text()))
+
+
+def _tex_escape(s: str) -> str:
+    for a, b in [("\\", r"\textbackslash{}"), ("&", r"\&"), ("%", r"\%"), ("$", r"\$"),
+                 ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
+                 ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}")]:
+        s = s.replace(a, b)
+    return s.replace("\n", r" \textbackslash n ")
+
+
+def make_generations(probe):
+    """Appendix table of greedy generations at each operating point."""
+    labels = [("baseline", "baseline (no intervention)"),
+              ("naive/dec", "CAA at the naive operating point "
+               f"($\\ell{{=}}{probe['conditions']['naive/dec']['layer']}$, "
+               f"$\\alpha{{=}}{probe['conditions']['naive/dec']['alpha']:g}$)"),
+              ("gated/dec", "CAA at the gated operating point"),
+              ("gated/mm", "mass-mean at the gated operating point")]
+    prompts = list(probe["generations"]["baseline"].keys())[:2]
+    out = []
+    for p in prompts:
+        out.append(f"\\paragraph{{Prompt.}} \\emph{{{_tex_escape(p)}}}")
+        out.append("\\begin{description}[leftmargin=1.2em, itemsep=2pt]")
+        for key, lab in labels:
+            g = probe["generations"].get(key, {}).get(p, "")
+            g = _tex_escape(g[:260]) + (r"\,\ldots" if len(g) > 260 else "")
+            out.append(f"\\item[{lab}:] {{\\small\\texttt{{{g}}}}}")
+        out.append("\\end{description}")
+    (TAB / "generations.tex").write_text("\n".join(out) + "\n")
+    print("[stage4r] wrote tables/generations.tex")
+
+
 def make_tables(summary, certs, cfg):
     order = ["v_dec", "v_perp_al16", "v_perp_al64", "v_perp_al256", "v_perp_al1024",
              "v_perp_cur", "v_perp_stat", "v_par_al64", "v_perp_al64_nm",
@@ -303,16 +469,27 @@ def make_tables(summary, certs, cfg):
            "v_perp_stat": r"$v^{\perp}$ stat", "v_par_al64": r"$v^{\parallel}$ al-64",
            "v_perp_al64_nm": r"$v^{\perp}$ al-64 nm", "v_rand_s0": "rand s0",
            "v_rand_s1": "rand s1", "v_rand_s2": "rand s2"}
+    head = {
+        "dec": (r"\emph{CAA} \quad ($\ell^{*}{=}\DecLayer$, $\alpha^{*}{=}\DecAlpha$, "
+                r"PPL ratio \DecPplRatio; baseline MC2 $= \BaseMcTwo$)"),
+        "mm": (r"\emph{mass-mean} \quad ($\ell^{*}{=}\MmLayer$, $\alpha^{*}{=}\MmAlpha$, "
+               r"PPL ratio \MmPplRatio)"),
+    }
+    lines = [r"\begin{tabular}{lccc}", r"\toprule",
+             r"condition & MC2 & $\Delta$MC2 & $\rho$ \\", r"\midrule"]
     for fam, f in summary["families"].items():
-        lines = []
+        lines += [rf"\multicolumn{{4}}{{l}}{{{head[fam]}}} \\", r"\midrule"]
         for cond in order:
             c = f["conditions"].get(cond)
             if not c:
                 continue
-            rho = (f"{c['rho']:.2f} [{c['rho_ci'][0]:.2f}, {c['rho_ci'][1]:.2f}]"
+            rho = (f"${c['rho']:.2f}$ \\,{{\\scriptsize $[{c['rho_ci'][0]:.2f},\\, {c['rho_ci'][1]:.2f}]$}}"
                    if "rho" in c else "---")
-            lines.append(f"{lab[cond]} & {c['mc2']:.3f} & {c['delta_mc2']:+.3f} & {rho} \\\\")
-        (TAB / f"results_{fam}.tex").write_text("\n".join(lines) + "\n")
+            lines.append(f"{lab[cond]} & ${c['mc2']:.3f}$ & ${c['delta_mc2']:+.3f}$ & {rho} \\\\")
+        lines.append(r"\midrule")
+    lines[-1] = r"\bottomrule"
+    lines.append(r"\end{tabular}")
+    (TAB / "results_matrix.tex").write_text("\n".join(lines) + "\n")
 
 
 if __name__ == "__main__":
