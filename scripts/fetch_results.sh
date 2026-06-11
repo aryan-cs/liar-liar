@@ -7,14 +7,21 @@ cd "$(dirname "$0")/.."
 REMOTE=uiuc-h200
 RDIR=/home/aryang9/sandbox/liar-liar
 
-mkdir -p artifacts/stage1 results/stage2 results/stage3
+mkdir -p artifacts/recal results/recal/dec results/recal/mm
 
-scp -q "$REMOTE:$RDIR/artifacts/stage1/{config.json,sweep.json,tokensets.json,capture_ids.json,certificates.json}" artifacts/stage1/ 2>/dev/null || true
-scp -q "$REMOTE:$RDIR/artifacts/stage1/vectors.pt" artifacts/stage1/ 2>/dev/null || true
-scp -q "$REMOTE:$RDIR/results/stage2/"*.jsonl results/stage2/ 2>/dev/null || true
-scp -q "$REMOTE:$RDIR/results/stage3/"*.jsonl results/stage3/ 2>/dev/null || true
-scp -q "$REMOTE:$RDIR/results/stage3/lens.pt" results/stage3/ 2>/dev/null || true
-scp -q "$REMOTE:$RDIR/data/paraphrases.json" results/stage3/paraphrases.json 2>/dev/null || true
+# Recalibrated run (current pipeline)
+for f in config.json calibration.json tokensets.json capture_ids.json certificates.json vectors.pt; do
+  scp -q "$REMOTE:$RDIR/artifacts/recal/$f" artifacts/recal/ 2>/dev/null || true
+done
+scp -q "$REMOTE:$RDIR/results/recal/baseline.jsonl" results/recal/ 2>/dev/null || true
+scp -q "$REMOTE:$RDIR/results/recal/para_baseline.jsonl" results/recal/ 2>/dev/null || true
+scp -q "$REMOTE:$RDIR/results/recal/lens.pt" results/recal/ 2>/dev/null || true
+for fam in dec mm; do
+  scp -q "$REMOTE:$RDIR/results/recal/$fam/"*.jsonl "results/recal/$fam/" 2>/dev/null || true
+done
+scp -q "$REMOTE:$RDIR/data/paraphrases.json" results/recal/paraphrases.json 2>/dev/null || true
 
-echo "fetched:"
-ls -la artifacts/stage1 results/stage2 results/stage3 2>/dev/null | grep -v "^total\|^d" | awk '{print $NF, "("$5" bytes)"}' | grep -v "^(" | head -40
+echo "fetched recal artifacts:"
+find artifacts/recal results/recal -type f 2>/dev/null | sort | while read -r p; do
+  printf '  %s (%s bytes)\n' "$p" "$(stat -f%z "$p" 2>/dev/null || stat -c%s "$p")"
+done
