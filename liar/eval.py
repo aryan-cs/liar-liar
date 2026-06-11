@@ -9,6 +9,49 @@ QA_TEMPLATE = "Q: {question}\nA:"
 
 
 @torch.no_grad()
+def held_out_nll(
+    lm: LoadedModel,
+    texts: list[str],
+    layer: int | None = None,
+    vector: torch.Tensor | None = None,
+    coefficient: float = 0.0,
+    batch_size: int = 8,
+) -> float:
+    """Mean per-token negative log-likelihood of fluent held-out text under an
+    optional steering intervention. Coherence proxy: a steering magnitude that
+    destroys the model inflates this sharply. Independent of TruthfulQA scoring
+    and of the projection, so safe to use as a calibration criterion.
+    """
+    tok = lm.tokenizer
+    total_nll, total_tok = 0.0, 0
+
+    def run():
+        nonlocal total_nll, total_tok
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
+            enc = tok(
+                batch, return_tensors="pt", padding=True, truncation=True,
+                max_length=256, add_special_tokens=True,
+            ).to(lm.device)
+            logits = lm.model(**enc).logits.float()
+            ids = enc["input_ids"]
+            mask = enc["attention_mask"]
+            logp = torch.log_softmax(logits[:, :-1], dim=-1)
+            tgt = ids[:, 1:]
+            tok_logp = logp.gather(2, tgt.unsqueeze(-1)).squeeze(-1)
+            m = mask[:, 1:].bool()
+            total_nll += float((-tok_logp[m]).sum())
+            total_tok += int(m.sum())
+
+    if vector is not None and coefficient != 0.0:
+        with add_steering_vector(lm.model, layer, vector, coefficient=coefficient):
+            run()
+    else:
+        run()
+    return total_nll / max(total_tok, 1)
+
+
+@torch.no_grad()
 def _score_batch(
     lm: LoadedModel,
     prompts: list[str],
