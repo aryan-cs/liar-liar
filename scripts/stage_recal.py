@@ -141,7 +141,12 @@ def main() -> None:
 
     # --- token sets (shared) ---
     tp, tm, sp, sm = curated_honesty_tokens(tok)
-    stat_p, stat_m, _ = statistical_token_set(lm, alpaca[N_CALIB + N_HELDOUT : N_CALIB + N_HELDOUT + 128], k=32)
+    # The 400-instruction Alpaca pool leaves exactly 48 instructions after the
+    # 256 CAA prompts and the 96 held-out fluency texts. Slice the remainder
+    # explicitly and fail loudly if the pool ever shrinks.
+    stat_block = alpaca[N_CALIB + N_HELDOUT:]
+    assert len(stat_block) == 48, f"statistical-token-set pool changed: {len(stat_block)} != 48"
+    stat_p, stat_m, _ = statistical_token_set(lm, stat_block, k=32)
 
     # --- coherence + behavioral calibration ---
     write_progress(OUT, "running", 3, 6, {"step": "calibrate"})

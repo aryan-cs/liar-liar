@@ -611,6 +611,17 @@ def make_numbers(summary, calib, cfg, certs, rng):
         if "gated/mm" in pc:
             cmd("MmNormRatio", _fmt(pc["gated/mm"]["norm_ratio_to_median_h"], 2))
 
+    # --- MC1-based robustness of the mm depth statistic ---
+    mm_dec = load_jsonl(RES / "mm" / "v_dec.jsonl")
+    mm_perp = load_jsonl(RES / "mm" / "v_perp_al64.jsonl")
+    if base and mm_dec and mm_perp:
+        b1, v1 = align(base, mm_dec, "mc1")
+        d_dec1 = v1 - b1
+        _, c1 = align(base, mm_perp, "mc1")
+        r = boot_ratio(c1 - b1, d_dec1, rng)
+        cmd("MmRhoAlSixtyFourMcOne", _fmt(r[0], 2))
+        cmd("MmRhoAlSixtyFourMcOneCI", _ci(r[1], r[2], nd=2))
+
     (TAB / "numbers.tex").write_text("\n".join(L) + "\n")
     print(f"[stage4r] wrote {len(L)} macros to tables/numbers.tex")
     if probe_path.exists():
