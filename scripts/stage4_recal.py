@@ -217,79 +217,267 @@ def main() -> None:
     print("[stage4r] complete")
 
 
+FAM_COLOR = {"dec": "#00B6EB", "mm": "#8000FF"}
+COL_PAR = "#E08214"      # parallel component
+COL_RAND = "#8C8C8C"     # random controls
+COL_GATE = "#C0392B"     # coherence gate / incoherent region
+COL_VDEC = "#1A1A1A"     # the unprojected vector in per-condition plots
+
+CONDITION_ROWS = [
+    ("v_dec", r"$v$ (unprojected)"),
+    ("v_perp_al16", r"$v^{\perp}$ aligned-16"),
+    ("v_perp_al64", r"$v^{\perp}$ aligned-64"),
+    ("v_perp_al256", r"$v^{\perp}$ aligned-256"),
+    ("v_perp_al1024", r"$v^{\perp}$ aligned-1024"),
+    ("v_perp_cur", r"$v^{\perp}$ curated"),
+    ("v_perp_stat", r"$v^{\perp}$ statistical"),
+    ("v_perp_al64_nm", r"$v^{\perp}$ al-64, norm-matched"),
+    ("v_par_al64", r"$v^{\parallel}$ aligned-64"),
+    ("v_rand_s0", "random-64, seed 0"),
+    ("v_rand_s1", "random-64, seed 1"),
+    ("v_rand_s2", "random-64, seed 2"),
+]
+
+
+def _delta_ci(base, rows, rng, key="mc2"):
+    bb, cc = align(base, rows, key)
+    d = cc - bb
+    return boot_mean(d, rng)
+
+
 def make_figures(summary, calib, cfg, certs):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    plt.rcParams.update({"font.size": 9, "axes.spines.top": False,
-                         "axes.spines.right": False, "figure.dpi": 150, "savefig.bbox": "tight"})
+    plt.rcParams.update({
+        "font.size": 8.5, "axes.titlesize": 9.5, "axes.labelsize": 8.5,
+        "axes.spines.top": False, "axes.spines.right": False,
+        "figure.dpi": 200, "savefig.bbox": "tight",
+        "axes.grid": True, "grid.alpha": 0.22, "grid.linewidth": 0.5,
+        "legend.frameon": False, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
+    })
+    rng = np.random.default_rng(7)
+    base = load_jsonl(RES / "baseline.jsonl")
+    fams = list(summary["families"].keys())
 
-    # calibration curve: ppl ratio + MC2 delta vs alpha, gate line
-    fig, axes = plt.subplots(1, 2, figsize=(6.4, 2.7))
-    for ax, fam in zip(axes, ["dec", "mm"]):
+    # ---- Figure: calibration trade-off (PPL gate, top; val MC2 delta, bottom) ----
+    fig, axes = plt.subplots(2, 2, figsize=(6.6, 4.4), sharex=True)
+    for ci_, fam in enumerate(["dec", "mm"]):
         grid = [r for r in calib["grid"] if r["family"] == fam]
         layers = sorted({r["layer"] for r in grid})
-        for li, layer in enumerate(layers):
+        op = cfg["families"][fam]
+        ax_p, ax_m = axes[0][ci_], axes[1][ci_]
+        for layer, ls in zip(layers, ["-", "--"]):
             g = sorted([r for r in grid if r["layer"] == layer], key=lambda r: r["alpha"])
             al = [r["alpha"] for r in g]
-            ax.plot(al, [r["nll_ratio"] for r in g], "o-", color=PALETTE[li],
-                    label=f"L{layer} PPL", ms=3)
-        ax.axhline(cfg["gate"], ls="--", color=PALETTE[3], lw=0.9)
-        ax.text(al[0], cfg["gate"] + 0.03, "coherence gate", fontsize=6.5, color=PALETTE[3])
-        ax.set_xlabel(r"$\alpha$")
-        ax.set_title(FAM_LABEL[fam], fontsize=9)
-        ax.set_ylabel("held-out PPL ratio")
-        ax.legend(frameon=False, fontsize=6.5)
+            col = FAM_COLOR[fam]
+            ax_p.plot(al, [r["nll_ratio"] for r in g], ls, marker="o", ms=3.5,
+                      color=col, alpha=1.0 if layer == op["layer"] else 0.45,
+                      label=f"layer {layer}")
+            ax_m.plot(al, [r["val_mc2_delta"] for r in g], ls, marker="o", ms=3.5,
+                      color=col, alpha=1.0 if layer == op["layer"] else 0.45)
+            for r in g:
+                if not r["coherent"]:
+                    ax_m.plot(r["alpha"], r["val_mc2_delta"], "x", color=COL_GATE,
+                              ms=7, mew=1.6, zorder=5)
+        ax_p.set_yscale("log")
+        ax_p.axhline(cfg["gate"], ls=":", color=COL_GATE, lw=1.2)
+        ax_p.axhspan(cfg["gate"], ax_p.get_ylim()[1] * 20, color=COL_GATE, alpha=0.06, lw=0)
+        ax_p.text(0.55, cfg["gate"] * 1.12, "incoherent (gate 1.5)", fontsize=6.8, color=COL_GATE)
+        opr = [r for r in grid if r["layer"] == op["layer"] and r["alpha"] == op["alpha"]][0]
+        ax_m.plot(op["alpha"], opr["val_mc2_delta"], "*", color="#1A1A1A", ms=13, zorder=6,
+                  label="selected operating point")
+        ax_m.axhline(0, ls=":", color="gray", lw=0.8)
+        ax_p.set_title(FAM_LABEL[fam])
+        ax_m.set_xlabel(r"steering strength $\alpha$")
+        if ci_ == 0:
+            ax_p.set_ylabel("held-out PPL ratio (log)")
+            ax_m.set_ylabel(r"validation $\Delta$MC2")
+        ax_p.legend(fontsize=7, loc="upper left")
+        if ci_ == 0:
+            ax_m.legend(fontsize=7, loc="upper left")
+    fig.align_ylabels()
     fig.savefig(FIG / "calibration.pdf")
     plt.close(fig)
 
-    # rho(k) for both families with random band
-    fig, ax = plt.subplots(figsize=(4.4, 3.0))
-    for fi, fam in enumerate(summary["families"]):
+    # ---- Figure: forest plot of paired test-set deltas with 95% CIs ----
+    fig, axes = plt.subplots(1, 2, figsize=(6.8, 3.5), sharey=True)
+    ylocs = np.arange(len(CONDITION_ROWS))[::-1]
+    for ci_, fam in enumerate(fams):
+        ax = axes[ci_]
+        fdir = RES / fam
+        for (cond, lab), y in zip(CONDITION_ROWS, ylocs):
+            rows = load_jsonl(fdir / f"{cond}.jsonl")
+            if not rows:
+                continue
+            m, lo, hi = _delta_ci(base, rows, rng)
+            if cond == "v_dec":
+                col, mfc, ms_ = COL_VDEC, COL_VDEC, 5.5
+            elif cond.startswith("v_rand"):
+                col, mfc, ms_ = COL_RAND, "white", 4.5
+            elif cond == "v_par_al64":
+                col, mfc, ms_ = COL_PAR, COL_PAR, 5
+            else:
+                col, mfc, ms_ = FAM_COLOR[fam], "white", 5
+            ax.errorbar(m, y, xerr=[[m - lo], [hi - m]], fmt="o", color=col,
+                        mfc=mfc, mew=1.3, ms=ms_, capsize=2.4, lw=1.3)
+        ax.axvline(0, ls=":", color="gray", lw=1.0)
+        ax.set_title(FAM_LABEL[fam])
+        ax.set_xlabel(r"$\Delta$MC2 vs. baseline (95% CI)")
+    axes[0].set_yticks(ylocs)
+    axes[0].set_yticklabels([lab for _, lab in CONDITION_ROWS], fontsize=8)
+    axes[0].grid(axis="y", alpha=0)
+    axes[1].grid(axis="y", alpha=0)
+    fig.savefig(FIG / "forest.pdf")
+    plt.close(fig)
+
+    # ---- Figure: rho(k) per family with random-control band ----
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9))
+    for ax, fam in zip(axes, fams):
         f = summary["families"][fam]
+        col = FAM_COLOR[fam]
         pts, lo, hi = [], [], []
         for k in ALIGNED_KS:
-            c = f["conditions"].get(f"v_perp_al{k}")
-            if c and "rho" in c:
-                pts.append(c["rho"]); lo.append(c["rho_ci"][0]); hi.append(c["rho_ci"][1])
-            else:
-                pts.append(np.nan); lo.append(np.nan); hi.append(np.nan)
-        col = PALETTE[1] if fam == "dec" else PALETTE[2]
-        ax.plot(ALIGNED_KS, pts, "o-", color=col, label=f"{FAM_LABEL[fam]} $v^\\perp$ aligned")
-        ax.fill_between(ALIGNED_KS, lo, hi, color=col, alpha=0.15, lw=0)
+            c = f["conditions"].get(f"v_perp_al{k}", {})
+            pts.append(c.get("rho", np.nan))
+            lo.append(c.get("rho_ci", [np.nan, np.nan])[0])
+            hi.append(c.get("rho_ci", [np.nan, np.nan])[1])
+        ax.plot(ALIGNED_KS, pts, "o-", color=col, ms=4.5, lw=1.5, zorder=4,
+                label=r"$v^{\perp}$ aligned-$k$")
+        ax.fill_between(ALIGNED_KS, lo, hi, color=col, alpha=0.16, lw=0)
         rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
               if f"v_rand_s{s}" in f["conditions"]]
         if rr:
-            ax.errorbar([64], [np.mean(rr)], yerr=[[np.mean(rr) - min(rr)], [max(rr) - np.mean(rr)]],
-                        fmt="x", color=col, ms=7, capsize=3, alpha=0.8)
-    ax.axhline(1, ls=":", color="gray", lw=0.8); ax.axhline(0, ls=":", color="gray", lw=0.8)
-    ax.set_xscale("log"); ax.set_xticks(ALIGNED_KS); ax.set_xticklabels(map(str, ALIGNED_KS))
-    ax.set_xlabel(r"tokens projected out ($k$); $\times$ = random-64 control")
-    ax.set_ylabel(r"depth statistic $\rho$ (MC2)")
-    ax.legend(frameon=False, fontsize=7.5)
+            ax.errorbar([64], [np.mean(rr)],
+                        yerr=[[np.mean(rr) - min(rr)], [max(rr) - np.mean(rr)]],
+                        fmt="D", color=COL_RAND, ms=5, capsize=3, lw=1.2, zorder=5,
+                        label="random-64 (3 seeds)")
+        ax.axhline(1, ls=":", color="gray", lw=0.9)
+        ax.axhline(0, ls=":", color="gray", lw=0.9)
+        ax.set_xscale("log")
+        ax.set_xticks(ALIGNED_KS)
+        ax.set_xticklabels([str(k) for k in ALIGNED_KS])
+        ax.minorticks_off()
+        ax.set_xlabel(r"directions projected out ($k$)")
+        ax.set_title(FAM_LABEL[fam])
+        if fam == "dec":
+            ax.set_ylabel(r"depth statistic $\rho$ (MC2)")
+            ax.text(0.5, 0.06, "denominator not significant:\n$\\rho$ not interpretable",
+                    transform=ax.transAxes, fontsize=7.2, color="#666666", ha="center")
+        ax.legend(fontsize=7, loc="upper left")
     fig.savefig(FIG / "rho_curve.pdf")
     plt.close(fig)
 
-    # lens resynthesis (CAA family if present)
+    # ---- Figure: component decomposition + paraphrase OOD, with CIs ----
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9))
+    ax = axes[0]
+    comps = [("v_dec", r"$v$", None), ("v_perp_al64", r"$v^{\perp}$", None),
+             ("v_par_al64", r"$v^{\parallel}$", COL_PAR)]
+    width = 0.34
+    for fi, fam in enumerate(fams):
+        fdir = RES / fam
+        xs = np.arange(len(comps)) + (fi - 0.5) * width
+        for (cond, _, over), x in zip(comps, xs):
+            rows = load_jsonl(fdir / f"{cond}.jsonl")
+            if not rows:
+                continue
+            m, lo, hi = _delta_ci(base, rows, rng)
+            col = over or FAM_COLOR[fam]
+            ax.bar(x, m, width=width * 0.92, color=col,
+                   alpha=0.85 if cond != "v_par_al64" else 0.65,
+                   label=FAM_LABEL[fam] if cond == "v_dec" else None)
+            ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#1A1A1A",
+                        capsize=2.5, lw=1.1)
+    ax.axhline(0, color="gray", lw=0.8)
+    ax.set_xticks(np.arange(len(comps)))
+    ax.set_xticklabels([lab for _, lab, _ in comps])
+    ax.set_ylabel(r"$\Delta$MC2 (95% CI)")
+    ax.set_title("component decomposition (aligned-64)")
+    ax.legend(fontsize=7, loc="lower left")
+
+    ax = axes[1]
+    pbase = load_jsonl(RES / "para_baseline.jsonl")
+    xs, labels = [], []
+    xpos = 0
+    for fam in fams:
+        for cond, lab in (("para_v_dec", r"$v$"), ("para_v_perp_al64", r"$v^{\perp}$")):
+            rows = load_jsonl(RES / fam / f"{cond}.jsonl")
+            if not rows or not pbase:
+                continue
+            m, lo, hi = _delta_ci(pbase, rows, rng)
+            ax.bar(xpos, m, width=0.7, color=FAM_COLOR[fam],
+                   alpha=0.85 if cond == "para_v_dec" else 0.55)
+            ax.errorbar(xpos, m, yerr=[[m - lo], [hi - m]], fmt="none",
+                        ecolor="#1A1A1A", capsize=2.5, lw=1.1)
+            labels.append(lab)
+            xs.append(xpos)
+            xpos += 1
+        xpos += 0.7
+    ax.axhline(0, color="gray", lw=0.8)
+    ax.set_xticks(xs)
+    ax.set_xticklabels(labels, fontsize=8.5)
+    for fi, fam in enumerate(fams):
+        ax.text(fi * 2.7 + 0.5, 1.0, FAM_LABEL[fam], transform=ax.get_xaxis_transform(),
+                ha="center", va="bottom", fontsize=8, color=FAM_COLOR[fam], clip_on=False)
+    ax.set_ylabel(r"$\Delta$MC2 on paraphrases (95% CI)")
+    ax.set_title("out-of-distribution (paraphrases)", pad=16)
+    fig.subplots_adjust(wspace=0.32)
+    fig.savefig(FIG / "decomposition.pdf")
+    plt.close(fig)
+
+    # ---- Figure: per-question scatter, mass-mean family ----
+    if "mm" in fams:
+        fig, axes = plt.subplots(1, 2, figsize=(6.4, 3.0), sharey=True, sharex=True)
+        bmap = {r["idx"]: r["mc2"] for r in base}
+        for ax, cond, lab, col in (
+            (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", FAM_COLOR["mm"]),
+            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", "#00B6EB"),
+        ):
+            rows = load_jsonl(RES / "mm" / f"{cond}.jsonl")
+            xs = np.array([bmap[r["idx"]] for r in rows if r["idx"] in bmap])
+            ys = np.array([r["mc2"] for r in rows if r["idx"] in bmap])
+            ax.plot([0, 1], [0, 1], color="gray", lw=0.9, ls=":", zorder=1)
+            ax.scatter(xs, ys, s=7, color=col, alpha=0.35, lw=0, zorder=2)
+            d = ys - xs
+            ax.text(0.03, 0.93, f"mean $\\Delta$MC2 = {d.mean():+.3f}\n"
+                    f"{(d > 0).mean() * 100:.0f}% of questions improve",
+                    transform=ax.transAxes, fontsize=7.5, va="top")
+            ax.set_xlabel("baseline MC2 (per question)")
+            ax.set_title(lab, fontsize=8.5)
+            ax.set_xlim(0, 1)
+            ax.set_ylim(0, 1)
+            ax.set_aspect("equal")
+        axes[0].set_ylabel("steered MC2 (per question)")
+        fig.savefig(FIG / "scatter_perq.pdf")
+        plt.close(fig)
+
+    # ---- Figure: lens re-synthesis trajectories ----
     lens_path = RES / "lens.pt"
     if lens_path.exists():
         import torch
         lens = torch.load(lens_path, weights_only=True)
-        fig, axes = plt.subplots(1, len(lens["families"]), figsize=(6.4, 2.8), squeeze=False)
+        fig, axes = plt.subplots(1, len(lens["families"]), figsize=(6.6, 2.9), squeeze=False)
         b = lens["baseline"].numpy()
+        cols = {"v_dec": COL_VDEC, "v_perp_al64": "#00B6EB", "v_par_al64": COL_PAR}
+        labs = {"v_dec": r"$v$ (unprojected)", "v_perp_al64": r"$v^{\perp}$ aligned-64",
+                "v_par_al64": r"$v^{\parallel}$ aligned-64"}
         for ax, fam in zip(axes[0], lens["families"]):
-            cols = {"v_dec": PALETTE[3], "v_perp_al64": PALETTE[1], "v_par_al64": PALETTE[5]}
             for name, tr in lens["families"][fam].items():
                 d = tr.numpy() - b
-                m = d.mean(1); se = d.std(1) / np.sqrt(d.shape[1])
+                m = d.mean(1)
+                se = d.std(1) / np.sqrt(d.shape[1])
                 xs = np.arange(len(m))
-                ax.plot(xs, m, color=cols.get(name, "gray"), label=name)
-                ax.fill_between(xs, m - 2 * se, m + 2 * se, color=cols.get(name, "gray"), alpha=0.15, lw=0)
-            ax.axvline(lens["layer_star"][fam], ls="--", color="gray", lw=0.8)
-            ax.axhline(0, ls=":", color="gray", lw=0.6)
-            ax.set_title(FAM_LABEL[fam], fontsize=9); ax.set_xlabel("layer")
-        axes[0][0].set_ylabel(r"honest-shift at $T$ vs.\ baseline")
-        axes[0][0].legend(frameon=False, fontsize=7)
+                ax.plot(xs, m, color=cols.get(name, "gray"), lw=1.5, label=labs.get(name, name))
+                ax.fill_between(xs, m - 2 * se, m + 2 * se, color=cols.get(name, "gray"),
+                                alpha=0.16, lw=0)
+            ls_ = lens["layer_star"][fam]
+            ax.axvline(ls_, ls="--", color="gray", lw=0.9)
+            ax.text(ls_ + 0.4, ax.get_ylim()[1] * 0.92, r"$\ell^{*}$", fontsize=8, color="gray")
+            ax.axhline(0, ls=":", color="gray", lw=0.7)
+            ax.set_title(FAM_LABEL[fam])
+            ax.set_xlabel("layer")
+        axes[0][0].set_ylabel("honest-shift at $T$ (logits)\nrelative to baseline")
+        axes[0][0].legend(fontsize=7, loc="upper right")
         fig.savefig(FIG / "lens_resynthesis.pdf")
         plt.close(fig)
 
@@ -445,18 +633,18 @@ def make_generations(probe):
                f"$\\alpha{{=}}{probe['conditions']['naive/dec']['alpha']:g}$)"),
               ("gated/dec", "CAA at the gated operating point"),
               ("gated/mm", "mass-mean at the gated operating point")]
-    prompts = list(probe["generations"]["baseline"].keys())[:2]
+    prompts = list(probe["generations"]["baseline"].keys())
     out = []
     for p in prompts:
         out.append(f"\\paragraph{{Prompt.}} \\emph{{{_tex_escape(p)}}}")
         out.append("\\begin{description}[leftmargin=1.2em, itemsep=2pt]")
         for key, lab in labels:
             g = probe["generations"].get(key, {}).get(p, "")
-            g = _tex_escape(g[:260]) + (r"\,\ldots" if len(g) > 260 else "")
+            g = _tex_escape(g[:400]) + (r"\,\ldots" if len(g) > 400 else "")
             out.append(f"\\item[{lab}:] {{\\small\\texttt{{{g}}}}}")
         out.append("\\end{description}")
     (TAB / "generations.tex").write_text("\n".join(out) + "\n")
-    print("[stage4r] wrote tables/generations.tex")
+    print(f"[stage4r] wrote tables/generations.tex ({len(prompts)} prompts)")
 
 
 def make_tables(summary, certs, cfg):

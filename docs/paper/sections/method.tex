@@ -22,7 +22,7 @@ where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Projecting against raw $
 
 \subsection{Token-conditional orthogonalization}
 
-A global version of the test --- a perturbation invisible to \emph{every} token --- is impossible: for every model we consider, $V > d$ and $\WU$ has full column rank, so $\ker(\WU) = \{0\}$ (Proposition~3.1 of the supplementary proof). The construction must restrict the readout to a chosen token set.
+A global version of the test, a perturbation invisible to \emph{every} token, is impossible: for every model we consider, $V > d$ and $\WU$ has full column rank, so $\ker(\WU) = \{0\}$ (Proposition~3.1 of the supplementary proof). The construction must restrict the readout to a chosen token set.
 
 Fix a deception-coded token set $T \subset \{1,\dots,V\}$ with $k = |T| \ll d$, and let $A = \WUt^{*}[T,:] \in \R^{k \times d}$ be the corresponding rows. With $A^{+}$ the Moore--Penrose pseudoinverse,
 \begin{equation}
@@ -38,7 +38,7 @@ Writing $M^{(\ell^{*} \to L)}$ for the summed Jacobian of all attention and MLP 
 \Delta\bm{\ell} \;=\; \underbrace{\WUt^{*}\, v}_{\text{direct}} \;+\; \underbrace{\WUt^{*} M^{(\ell^{*} \to L)}\, v}_{\text{indirect}} \;+\; O(\|v\|^2).
 \label{eq:decomp}
 \end{equation}
-For $v = \vperp$ the direct term vanishes on $T$ identically, so any change in the $T$-restricted logits --- and, to the extent that behavior on a deception benchmark is mediated by $T$, any change in measured behavior --- must travel through downstream computation (Theorem~6.1 of the supplementary proof).
+For $v = \vperp$ the direct term vanishes on $T$ identically, so any change in the $T$-restricted logits (and, to the extent that behavior on a truthfulness benchmark is mediated by $T$, any change in measured behavior) must travel through downstream computation (Theorem~6.1 of the supplementary proof).
 
 \subsection{The depth statistic}
 
@@ -55,7 +55,7 @@ Under a pure vocabulary-suppression account, $\rho \approx 0$ once $T$ exhausts 
 where $\mu_{T^{\pm}}$ is the mean logit over honest-coded ($T^{+}$) and deceptive-coded ($T^{-}$) tokens at the answer position.
 
 \paragraph{Token-set constructions.}
-We instantiate $T$ three ways. \emph{Curated}: a fixed lexicon of 32 honest and 32 deceptive lemmas expanded to single-token surface variants. \emph{Statistical}: the top-32 tokens per side by mean first-position logit shift between honest- and deceptive-prompted contexts on held-out prompts. \emph{Aligned-$k$}: the top-$k$ tokens by $|\WUt^{*}\vdec|$ --- the $k$ tokens the steering vector moves most through the direct path. The aligned construction is the strongest form of the test: it removes exactly the direct-readout content of $\vdec$ itself, and sweeping $k$ traces how the surviving effect $\rho(k)$ decays as more of the direct path is excised.
+We instantiate $T$ three ways. \emph{Curated}: a fixed lexicon of 32 honest and 32 deceptive lemmas expanded to single-token surface variants. \emph{Statistical}: the top-32 tokens per side by mean first-position logit shift between honest- and deceptive-prompted contexts on held-out prompts. \emph{Aligned-$k$}: the top-$k$ tokens by $|\WUt^{*}\vdec|$, the $k$ tokens the steering vector moves most through the direct path. The aligned construction is the strongest form of the test: it removes exactly the direct-readout content of $\vdec$ itself, and sweeping $k$ traces how the surviving effect $\rho(k)$ decays as more of the direct path is excised.
 
 \paragraph{Controls.}
 Three controls separate the unembedding subspace from generic perturbation. (i) \emph{Random projection}: project out a random $k$-dimensional subspace (three seeds), matching the dimension count of the aligned-64 set. (ii) \emph{Norm matching}: rescale $\vperp$ to $\|\vdec\|$, separating direction from magnitude. (iii) \emph{Parallel injection}: inject $\vpar$ alone, the readout-aligned rank-$\le k$ component; under the suppression account this component should carry the behavioral effect.
