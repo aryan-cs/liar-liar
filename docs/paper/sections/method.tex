@@ -18,7 +18,7 @@ For a perturbation $\delta z$ at the readout point $z$, the first-order logit re
 J_{\gamma}(z) = \frac{1}{\sigma(z)}\,\diag(\gamma)\!\left(I_d - \frac{z z^{\top}}{d\,\sigma(z)^2}\right),
 \label{eq:effective}
 \end{equation}
-where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Projecting against raw $\WU$ rows, as in prior unembedding-orthogonal constructions, leaves a residual direct effect through the gain and the rank-one term. We average $J_{\gamma}$ over a calibration set of readout points (Section~\ref{sec:setup}) and write $\WUt^{*}$ for the resulting matrix.
+where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Projecting against raw $\WU$ rows, as in prior unembedding-orthogonal constructions, leaves a residual direct effect through the gain and the rank-one term. We average $J_{\gamma}$ over a calibration set of readout points (Section~\ref{sec:setup}) and write $\WUt^{*}$ for the resulting matrix. All zero-direct-effect certificates are stated with respect to this averaged matrix; their transfer to an individual readout point is governed by the per-point deviation of the Jacobian from its average, an error of the same order as the linearization itself, and one the norm-matched and $k$-sweep controls bound behaviorally.
 
 \subsection{Token-conditional orthogonalization}
 

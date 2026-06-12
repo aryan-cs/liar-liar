@@ -65,6 +65,7 @@ def boot_mean(x, rng, n=N_BOOT):
 
 def boot_ratio(num, den, rng, n=N_BOOT):
     """Paired bootstrap CI for mean(num)/mean(den)."""
+    assert len(num) == len(den), f"unpaired ratio inputs: {len(num)} vs {len(den)}"
     k = len(num)
     idx = rng.integers(0, k, size=(n, k))
     r = num[idx].mean(1) / den[idx].mean(1)
@@ -73,6 +74,7 @@ def boot_ratio(num, den, rng, n=N_BOOT):
 
 def boot_diff(a_num, a_den, b_num, b_den, rng, n=N_BOOT):
     """Bootstrap CI for rho_a - rho_b (paired resample of question indices)."""
+    assert len(a_num) == len(a_den) == len(b_num) == len(b_den), "unpaired diff inputs"
     k = len(a_num)
     idx = rng.integers(0, k, size=(n, k))
     ra = a_num[idx].mean(1) / a_den[idx].mean(1)
@@ -502,8 +504,11 @@ def make_numbers(summary, calib, cfg, certs, rng):
     # --- certificates ---
     worst = max(c["max_direct_after"] for c in certs.values() if "max_direct_after" in c)
     pre = max(c["max_direct_before"] for c in certs.values() if "max_direct_before" in c)
-    exp = int(np.ceil(np.log10(worst)))
-    cmd("CertWorst", f"$10^{{{exp}}}$")
+    e = int(np.floor(np.log10(worst)))
+    m = int(np.ceil(worst / 10 ** e))
+    if m == 10:
+        m, e = 1, e + 1
+    cmd("CertWorst", f"${m} \\times 10^{{{e}}}$")
     cmd("CertPre", _fmt(pre, 2))
 
     # --- recal per family ---
@@ -533,6 +538,13 @@ def make_numbers(summary, calib, cfg, certs, rng):
         c = f["conditions"].get("v_par_al64", {})
         if c:
             cmd(f"{F}ParDelta", _fmt(c["delta_mc2"], 3, sign=True))
+        c = f["conditions"].get("v_perp_al64", {})
+        if c:
+            cmd(f"{F}PerpDelta", _fmt(c["delta_mc2"], 3, sign=True))
+        krhos = [f["conditions"][f"v_perp_al{k}"]["rho"] for k in ALIGNED_KS
+                 if f"v_perp_al{k}" in f["conditions"] and "rho" in f["conditions"][f"v_perp_al{k}"]]
+        if krhos:
+            cmd(f"{F}RhoKMin", _fmt(min(krhos), 2))
         rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
               if f"v_rand_s{s}" in f["conditions"] and "rho" in f["conditions"].get(f"v_rand_s{s}", {})]
         if rr:

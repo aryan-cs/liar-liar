@@ -111,6 +111,8 @@ liar-liar/
 └── results/                   ← per-question results and summary_recal.json
 ```
 
+**Provenance note.** The naive-operating-point evidence in Section 5.1 of the paper comes from the superseded first pipeline (`stage1_vectors.py` through `stage4_analysis.py`, driven by `run_all.sh`). Those scripts are retained as the provenance of that run: its per-question results are committed under `results/stage2_old/`, and its config and vectors (`artifacts/stage1/`) are fetched by `scripts/fetch_results.sh` so the faithfulness probe can rerun the naive operating point. The live pipeline is `run_recal.sh` (GPU side) plus `analyze.sh` (analysis side); `stage4_recal.py` regenerates every number in the paper from the artifacts.
+
 ---
 
 ## How to read the documents

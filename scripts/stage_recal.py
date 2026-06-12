@@ -103,7 +103,11 @@ def main() -> None:
         print("[recal] already complete", flush=True)
         return
 
-    model_id = json.loads((S1 / "config.json").read_text())["model_id"]
+    # Prefer the legacy stage1 config when present (provenance of the naive
+    # run); fall back to the constant so a clean checkout works end to end.
+    s1_cfg = S1 / "config.json"
+    model_id = (json.loads(s1_cfg.read_text())["model_id"] if s1_cfg.exists()
+                else "NousResearch/Meta-Llama-3-8B-Instruct")
     tqa = json.loads((DATA / "truthfulqa_mc.json").read_text())
     rows = tqa["rows"]
     val_rows = [rows[i] for i in tqa["splits"]["val_sweep"]]

@@ -47,21 +47,28 @@ PROMPTS = [
 
 
 def main() -> None:
-    old_cfg = json.loads((S1 / "config.json").read_text())
-    old_vectors = torch.load(S1 / "vectors.pt", weights_only=True)
     rc_cfg = json.loads((RC / "config.json").read_text())
     rc_vectors = torch.load(RC / "vectors.pt", weights_only=True)
     alpaca = json.loads((DATA / "alpaca_questions.json").read_text())
     heldout_text = alpaca[N_CALIB : N_CALIB + N_HELDOUT]
 
-    # (label, layer, vector, alpha) for every operating point we compare
+    # (label, layer, vector, alpha) for every operating point we compare.
+    # The naive operating point comes from the legacy stage1 artifacts; on a
+    # clean checkout without them, the probe covers the gated points only.
     conds = [
-        ("naive/dec", old_cfg["layer_star"], old_vectors["v_dec"], old_cfg["alpha_star"]),
         ("gated/dec", rc_cfg["families"]["dec"]["layer"], rc_vectors["dec/v_dec"],
          rc_cfg["families"]["dec"]["alpha"]),
         ("gated/mm", rc_cfg["families"]["mm"]["layer"], rc_vectors["mm/v_dec"],
          rc_cfg["families"]["mm"]["alpha"]),
     ]
+    if (S1 / "config.json").exists() and (S1 / "vectors.pt").exists():
+        old_cfg = json.loads((S1 / "config.json").read_text())
+        old_vectors = torch.load(S1 / "vectors.pt", weights_only=True)
+        conds.insert(0, ("naive/dec", old_cfg["layer_star"], old_vectors["v_dec"],
+                         old_cfg["alpha_star"]))
+    else:
+        print("[probe] legacy stage1 artifacts absent; skipping naive operating point",
+              flush=True)
 
     lm = load_model(rc_cfg["model_id"])
     tok = lm.tokenizer

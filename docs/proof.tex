@@ -133,7 +133,7 @@ The composition that controls direct logit contributions of residual perturbatio
 \WUt(z) := \WU \cdot J_{\mathcal{N}_\gamma}(z) \in \R^{V \times d}.
 \label{eq:effective}
 \end{equation}
-We refer to $\WUt(z)$ as the \emph{effective unembedding at $z$}. The rows of $\WUt(z)$ are token-indexed and live in $\R^d$. They differ from the rows of $\WU$ by a diagonal scaling and a rank-one correction along the readout point $z$. For an intervention applied at a middle layer $\ell^\star \ll L$, the effective unembedding the intervention couples to is evaluated at the readout point in the unperturbed run; we will denote this by $\WUt^\star$ and treat it as a fixed matrix when we project. We return to the sense in which this is justified in \Cref{sec:limitations}.
+We refer to $\WUt(z)$ as the \emph{effective unembedding at $z$}. The rows of $\WUt(z)$ are token-indexed and live in $\R^d$. They differ from the rows of $\WU$ by a diagonal scaling and a rank-one correction along the readout point $z$. For an intervention applied at a middle layer $\ell^\star \ll L$, the effective unembedding the intervention couples to depends on the readout point of the run at hand. We therefore work with a fixed surrogate $\WUt^\star$: the empirical instantiation averages $J_{\mathcal{N}_\gamma}(z)$ over a calibration set of unperturbed readout points and sets $\WUt^\star := \WU \bar{J}$. Every statement below holds verbatim for any fixed matrix in place of $\WUt^\star$; the zero-direct-effect certificate is exact with respect to this surrogate, and its transfer to an individual readout point is controlled by the deviation $J_{\mathcal{N}_\gamma}(z) - \bar{J}$. We return to the sense in which this is justified in \Cref{sec:limitations}.
 
 \subsection{Linear representation hypothesis and steering vectors}
 
@@ -417,16 +417,17 @@ Write any feasible $u = \vdec - \Delta$ with $\Delta \in \R^d$. The constraint $
 \begin{corollary}[Mahalanobis-weighted variant]\label{cor:mahalanobis}
 Let $\Sigma \succ 0$ be a positive-definite weighting matrix and replace the objective in \Cref{thm:minnorm} by the Mahalanobis distance $\|u - \vdec\|_\Sigma := \sqrt{(u - \vdec)^\top \Sigma^{-1} (u - \vdec)}$. The unique minimizer is
 \begin{equation}
-u^\star_\Sigma \;=\; \vdec \;-\; \Sigma (A \Sigma)^+ A \vdec.
+u^\star_\Sigma \;=\; \vdec \;-\; \Sigma^{1/2} \big(A \Sigma^{1/2}\big)^+ A \vdec,
 \label{eq:mahasoln}
 \end{equation}
+which, when $A$ has full row rank, equals $\vdec - \Sigma A^\top (A \Sigma A^\top)^{-1} A \vdec$.
 \end{corollary}
 
 \begin{proof}
-Change variables to $w := \Sigma^{-1/2}(u - \vdec)$. The objective becomes $\|w\|_2$ and the constraint becomes $A \Sigma^{1/2} w = -A \vdec$, namely $\widetilde{A} w = -A\vdec$ with $\widetilde{A} := A \Sigma^{1/2}$. The minimum-norm solution in $w$ is $w^\star = -\widetilde{A}^+ A \vdec$. Substituting back, $u^\star_\Sigma = \vdec + \Sigma^{1/2} w^\star = \vdec - \Sigma^{1/2} (A \Sigma^{1/2})^+ A \vdec$. Using the identity $\Sigma^{1/2}(A\Sigma^{1/2})^+ = \Sigma (A\Sigma)^+$ (\cite[Cor.\ 1.4.2]{ben2003generalized}) gives the stated form.
+Change variables to $w := \Sigma^{-1/2}(u - \vdec)$. The objective becomes $\|w\|_2$ and the constraint becomes $A \Sigma^{1/2} w = -A \vdec$, namely $\widetilde{A} w = -A\vdec$ with $\widetilde{A} := A \Sigma^{1/2}$. The minimum-norm solution in $w$ is $w^\star = -\widetilde{A}^+ A \vdec$. Substituting back gives $u^\star_\Sigma = \vdec + \Sigma^{1/2} w^\star = \vdec - \Sigma^{1/2} (A \Sigma^{1/2})^+ A \vdec$. When $A$ has full row rank, so does $\widetilde{A}$, and $\widetilde{A}^+ = \widetilde{A}^\top (\widetilde{A} \widetilde{A}^\top)^{-1} = \Sigma^{1/2} A^\top (A \Sigma A^\top)^{-1}$, which yields the second form. (The same minimizer follows from the Lagrangian condition $\Sigma^{-1}(u - \vdec) \in \rowsp(A)$.)
 \end{proof}
 
-The natural $\Sigma$ for our setting is the covariance of residual-stream activations at layer $\ell^\star$ on a held-out distribution. This connects the construction to LEACE \cite{belrose2023leace}, in which the relevant covariance is computed on the same residual stream that the projection is applied to. We use the unweighted version for the main analysis and treat the Mahalanobis variant as a robustness check.
+The natural $\Sigma$ for our setting is the covariance of residual-stream activations at layer $\ell^\star$ on a held-out distribution. This connects the construction to LEACE \cite{belrose2023leace}, in which the relevant covariance is computed on the same residual stream that the projection is applied to. The companion empirical work uses the unweighted version throughout; the Mahalanobis variant is stated for completeness.
 
 \begin{remark}[LEACE comparison]\label{rem:leace}
 LEACE projects out the column space of the whitened cross-covariance $W \Sigma_{XZ}$, where $Z$ is an externally provided concept label and $X$ is the residual activation. The minimum-norm projection in the LEACE Mahalanobis metric is the unique affine map that makes a linear classifier of $Z$ given $X$ impossible. Our construction is structurally identical, with two differences: the projected-out subspace is read directly off the model's effective unembedding rather than learned from labeled data, and the constraint is zero direct logit contribution on $T$ rather than zero linear classifier accuracy on a label. Theorem~\ref{thm:minnorm} is the LEACE theorem specialized to a $T$-indexed concept defined by the unembedding.
@@ -470,7 +471,7 @@ The construction in \Cref{constr:rankone} is the dual: project the steering vect
 
 \subsection{Park\textendash Choe\textendash Veitch duality}
 
-In the formal apparatus of \cite{park2024linear} the unembedding side of a concept $W$ is a direction $\bar{\gamma}_W \in \R^d$. The construction in \Cref{constr:rankone}, with $T^+, T^-$ aligned to the concept's positive and negative tokens, projects $\vdec$ orthogonal to $\bar{\gamma}_{HD}$ in the standard inner product. Under the causal inner product $\langle \cdot, \cdot\rangle_C$ induced by the unembedding covariance, the dual identification $\bar{\lambda}_{HD} = \Sigma_\gamma^{-1} \bar{\gamma}_{HD}$ holds. Our rank-one construction is the standard-inner-product version. The Mahalanobis variant in Corollary~\ref{cor:mahalanobis} with $\Sigma = \Sigma_\gamma$ is the causal-inner-product version. We will treat both in the experiments.
+In the formal apparatus of \cite{park2024linear} the unembedding side of a concept $W$ is a direction $\bar{\gamma}_W \in \R^d$. The construction in \Cref{constr:rankone}, with $T^+, T^-$ aligned to the concept's positive and negative tokens, projects $\vdec$ orthogonal to $\bar{\gamma}_{HD}$ in the standard inner product. Under the causal inner product $\langle \cdot, \cdot\rangle_C$ induced by the unembedding covariance, the dual identification $\bar{\lambda}_{HD} = \Sigma_\gamma^{-1} \bar{\gamma}_{HD}$ holds. Our rank-one construction is the standard-inner-product version. The Mahalanobis variant in Corollary~\ref{cor:mahalanobis} with $\Sigma = \Sigma_\gamma$ is the causal-inner-product version. The companion empirical work uses the token-set construction with the standard inner product; the rank-one and Mahalanobis variants are stated as exact analogues.
 
 \subsection{Venkatesh\textendash Kurapath non-identifiability}
 
