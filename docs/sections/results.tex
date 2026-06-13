@@ -16,7 +16,7 @@ The depth statistic computed in this regime looks decisive and is not. The full 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\textwidth]{../../figures/forest.pdf}
+\includegraphics[width=\textwidth]{../figures/forest.pdf}
 \caption{Paired per-question $\Delta$MC2 for every condition, with 95\% bootstrap intervals. Left: CAA. The unprojected vector and every orthogonal projection sit at or below zero; only the readout-aligned parallel component (orange) is positive. Right: mass-mean. Every orthogonal projection overlaps the unprojected vector, and the random-64 controls (gray) are indistinguishable from the aligned excisions.}
 \label{fig:forest}
 \end{figure}
@@ -31,7 +31,7 @@ The mass-mean vector passes both preconditions. At $\ell^{*}{=}\MmLayer$, $\alph
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{../../figures/rho_curve.pdf}
+\includegraphics[width=0.95\textwidth]{../figures/rho_curve.pdf}
 \caption{Depth statistic $\rho(k)$ as the top-$k$ readout-aligned directions are excised (bands: 95\% paired-bootstrap intervals; gray diamond: random-64 controls, with the range over three seeds). Mass-mean: $\rho$ stays at or above \MmRhoKMin{} across the sweep and coincides with the random controls at $k{=}64$; the rise at $k{=}1024$ runs in the direction of a stronger surviving effect, the opposite of what suppression predicts. CAA: the interval spans zero at every $k$ because the denominator is not significant.}
 \label{fig:rho}
 \end{figure}
@@ -44,14 +44,14 @@ The conclusion holds out of distribution. On model-paraphrased test questions th
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{../../figures/decomposition.pdf}
+\includegraphics[width=0.95\textwidth]{../figures/decomposition.pdf}
 \caption{Left: $\Delta$MC2 of the unprojected vector $v$, its orthogonal projection $\vperp$, and its readout-aligned parallel component $\vpar$ (aligned-64), with 95\% intervals. The projection preserves the mass-mean effect; the parallel component, which carries the entire direct readout path, delivers less than half of it. Right: the same comparison on model-paraphrased questions.}
 \label{fig:decomp}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{../../figures/scatter_perq.pdf}
+\includegraphics[width=0.92\textwidth]{../figures/scatter_perq.pdf}
 \caption{Per-question MC2 under the mass-mean vector (left) and its aligned-64 projection (right), against baseline. The two distributions are nearly identical: the projection preserves the mean effect and its per-question structure.}
 \label{fig:scatter}
 \end{figure}
@@ -60,7 +60,7 @@ The conclusion holds out of distribution. On model-paraphrased test questions th
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=0.95\textwidth]{../../figures/lens_resynthesis.pdf}
+\includegraphics[width=0.95\textwidth]{../figures/lens_resynthesis.pdf}
 \caption{Logit-lens trajectory of the curated honest-shift at each layer (mean $T^{+}$ minus $T^{-}$ logit through the model's final norm, relative to baseline; dashed line: injection layer $\ell^{*}$). The projection zeroes $\vperp$'s direct effect on the aligned-64 tokens, the ones the vector moves most; the curated honest-shift under $\vperp$ tracks (CAA) or exceeds (mass-mean) the unprojected vector's trajectory from the injection layer onward. The parallel component $\vpar$, which carries the entire direct readout content, produces no sustained shift, dipping \emph{anti}-honest at injection for the mass-mean vector.}
 \label{fig:lens}
 \end{figure}

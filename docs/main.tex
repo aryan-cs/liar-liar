@@ -22,18 +22,25 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{5.5pt}
 
-% -- Colors --
+% -- Colors: shades of the four-colour palette (green/blue/red/orange) --
 \usepackage{xcolor}
-\definecolor{primary}{HTML}{7B2D26}
-\definecolor{secondary}{HTML}{B8973A}
-
-% -- Figure palette --
-\definecolor{figAqua}{HTML}{63FBC5}
-\definecolor{figBlue}{HTML}{00B6EB}
-\definecolor{figPurple}{HTML}{8000FF}
-\definecolor{figRed}{HTML}{FF0000}
-\definecolor{figOrange}{HTML}{FFB360}
-\definecolor{figYellow}{HTML}{D6DD81}
+% base pastels
+\definecolor{baseGreen}{HTML}{8DF0A8}
+\definecolor{baseBlue}{HTML}{8DD2F0}
+\definecolor{baseRed}{HTML}{F08D96}
+\definecolor{baseOrange}{HTML}{F0C88D}
+% darker shades for readable chrome (links, accents)
+\definecolor{primary}{HTML}{B23A46}   % deep shade of baseRed
+\definecolor{secondary}{HTML}{C08A2E}  % deep shade of baseOrange
+% figure-palette aliases (the four colours and their dark line shades)
+\definecolor{figGreen}{HTML}{8DF0A8}
+\definecolor{figBlue}{HTML}{8DD2F0}
+\definecolor{figRed}{HTML}{F08D96}
+\definecolor{figOrange}{HTML}{F0C88D}
+\definecolor{figGreenD}{HTML}{2E9E57}
+\definecolor{figBlueD}{HTML}{2F8FCC}
+\definecolor{figRedD}{HTML}{CC4F5B}
+\definecolor{figOrangeD}{HTML}{C0902E}
 
 % -- Typography --
 \usepackage{microtype}
@@ -92,7 +99,7 @@
 % -- Title block --
 \begingroup
 \centering
-{\noindent\rule{\textwidth}{4pt}\par}
+{\noindent\color{primary}\rule{\textwidth}{4pt}\par}
 \vspace{10pt}
 {\LARGE\bf Liar, Liar: Beyond Vocabulary Suppression\par}
 \vspace{10pt}
@@ -102,7 +109,7 @@
 \vspace{4pt}
 {\small\textcolor{secondary}{\texttt{github.com/aryan-cs/liar-liar}}\par}
 \vspace{6pt}
-{\noindent\rule{\textwidth}{1pt}\par}
+{\noindent\color{secondary}\rule{\textwidth}{1pt}\par}
 \endgroup
 \vspace{8pt}
 

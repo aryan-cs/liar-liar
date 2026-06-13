@@ -23,9 +23,14 @@ sys.path.insert(0, str(ROOT))
 RC = ROOT / "artifacts" / "recal"
 RES = ROOT / "results" / "recal"
 FIG = ROOT / "figures"
-TAB = ROOT / "docs" / "paper" / "tables"
+TAB = ROOT / "docs" / "tables"
 
-PALETTE = ["#63FBC5", "#00B6EB", "#8000FF", "#FF0000", "#FFB360", "#D6DD81"]
+# Four-colour palette (base pastels) and their darker line shades.
+GREEN, GREEN_D = "#8DF0A8", "#2E9E57"
+BLUE, BLUE_D = "#8DD2F0", "#2F8FCC"
+RED, RED_D = "#F08D96", "#CC4F5B"
+ORANGE, ORANGE_D = "#F0C88D", "#C0902E"
+PALETTE = [GREEN, BLUE, RED, ORANGE, GREEN_D, BLUE_D]
 N_BOOT = 10_000
 SEED = 0
 FAM_LABEL = {"dec": "CAA", "mm": "mass-mean"}
@@ -240,11 +245,13 @@ def main() -> None:
     print("[stage4r] complete")
 
 
-FAM_COLOR = {"dec": "#00B6EB", "mm": "#8000FF"}
-COL_PAR = "#E08214"      # parallel component
-COL_RAND = "#8C8C8C"     # random controls
-COL_GATE = "#C0392B"     # coherence gate / incoherent region
+FAM_COLOR = {"dec": BLUE_D, "mm": GREEN_D}      # CAA blue, mass-mean green
+FAM_FILL = {"dec": BLUE, "mm": GREEN}           # light pastel band fills
+COL_PAR = ORANGE_D       # parallel component
+COL_RAND = "#8C8C8C"     # random controls (neutral gray)
+COL_GATE = RED_D         # coherence gate / incoherent region
 COL_VDEC = "#1A1A1A"     # the unprojected vector in per-condition plots
+COL_PERP = BLUE_D        # the projected vector in lens/scatter (vs vdec ink)
 
 CONDITION_ROWS = [
     ("v_dec", r"$v$ (unprojected)"),
@@ -454,7 +461,7 @@ def make_figures(summary, calib, cfg, certs):
         bmap = {r["idx"]: r["mc2"] for r in base}
         for ax, cond, lab, col in (
             (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", FAM_COLOR["mm"]),
-            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", "#00B6EB"),
+            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", COL_PERP),
         ):
             rows = load_jsonl(RES / "mm" / f"{cond}.jsonl")
             xs = np.array([bmap[r["idx"]] for r in rows if r["idx"] in bmap])
@@ -481,7 +488,7 @@ def make_figures(summary, calib, cfg, certs):
         lens = torch.load(lens_path, weights_only=True)
         fig, axes = plt.subplots(1, len(lens["families"]), figsize=(6.6, 2.9), squeeze=False)
         b = lens["baseline"].numpy()
-        cols = {"v_dec": COL_VDEC, "v_perp_al64": "#00B6EB", "v_par_al64": COL_PAR}
+        cols = {"v_dec": COL_VDEC, "v_perp_al64": COL_PERP, "v_par_al64": COL_PAR}
         labs = {"v_dec": r"$v$ (unprojected)", "v_perp_al64": r"$v^{\perp}$ aligned-64",
                 "v_par_al64": r"$v^{\parallel}$ aligned-64"}
         for ax, fam in zip(axes[0], lens["families"]):
