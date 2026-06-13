@@ -242,6 +242,7 @@ def main() -> None:
     make_tables(summary, certs, cfg)
     make_numbers(summary, calib, cfg, certs, rng)
     make_appendix_tables(summary, certs, cfg, calib)
+    make_caagrid_table()
     print("[stage4r] complete")
 
 
@@ -712,6 +713,35 @@ def make_numbers(summary, calib, cfg, certs, rng):
         cmd("MmRhoAlSixtyFourMcOne", _fmt(r[0], 2))
         cmd("MmRhoAlSixtyFourMcOneCI", _ci(r[1], r[2], nd=2))
 
+    # --- CAA coherent-grid sweep (stage5_extra dec_grid): largest test gain at
+    #     any coherent operating point, to license the "no gain anywhere" claim ---
+    import glob as _glob
+    grid_files = sorted(_glob.glob(str(RES / "dec_grid" / "*.jsonl")))
+    if base and grid_files:
+        best = None
+        n_coh = 0
+        for f in grid_files:
+            g = load_jsonl(Path(f))
+            if not g:
+                continue
+            n_coh += 1
+            bb, gg = align(base, g, "mc2")
+            e = boot_mean(gg - bb, rng)
+            if best is None or e[0] > best[0]:
+                best = e
+        # include the gated OP itself among coherent settings
+        opd = load_jsonl(RES / "dec" / "v_dec.jsonl")
+        if opd:
+            bb, gg = align(base, opd, "mc2")
+            e = boot_mean(gg - bb, rng)
+            n_coh += 1
+            if best is None or e[0] > best[0]:
+                best = e
+        if best is not None:
+            cmd("CaaGridNCoherent", n_coh)
+            cmd("CaaGridMaxDelta", _fmt(best[0], 3, sign=True))
+            cmd("CaaGridMaxDeltaCI", _ci(best[1], best[2]))
+
     # --- nonlinear direct-path leakage (nonlinear_directpath.py) ---
     nlp = RES / "nonlinear.json"
     if nlp.exists():
@@ -842,6 +872,41 @@ def _tex_escape_text(s: str) -> str:
                  ("_", r"\_"), ("{", r"\{"), ("}", r"\}")]:
         s = s.replace(a, b)
     return s
+
+
+def make_caagrid_table():
+    """Table of CAA test-set Delta MC2 at every coherent grid setting."""
+    import glob as _glob
+    import re as _re
+    base = load_jsonl(RES / "baseline.jsonl")
+    files = sorted(_glob.glob(str(RES / "dec_grid" / "*.jsonl")))
+    if not base or not files:
+        return
+    rng = np.random.default_rng(3)
+    rows = [r"\begin{tabular}{llc}", r"\toprule",
+            r"$\ell$ & $\alpha$ & test $\Delta$MC2 [95\% CI] \\", r"\midrule"]
+    entries = []
+    for f in files:
+        m = _re.search(r"L(\d+)_a(\d+(?:\.\d+)?)", f)
+        layer, alpha = int(m.group(1)), float(m.group(2))
+        g = load_jsonl(Path(f))
+        if not g:
+            continue
+        bb, gg = align(base, g, "mc2")
+        e = boot_mean(gg - bb, rng)
+        entries.append((layer, alpha, e, False))
+    op = load_jsonl(RES / "dec" / "v_dec.jsonl")
+    if op:
+        bb, gg = align(base, op, "mc2")
+        e = boot_mean(gg - bb, rng)
+        entries.append((12, 3.0, e, True))
+    for layer, alpha, e, is_op in sorted(entries, key=lambda x: (x[0], x[1])):
+        star = r"$^{\star}$" if is_op else ""
+        rows.append(f"{layer} & {alpha:g}{star} & ${e[0]:+.3f}$ "
+                    f"{{\\scriptsize $[{e[1]:+.3f}, {e[2]:+.3f}]$}} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    (TAB / "app_caagrid.tex").write_text("\n".join(rows) + "\n")
+    print(f"[stage4r] wrote app_caagrid.tex ({len(entries)} coherent settings)")
 
 
 def make_tables(summary, certs, cfg):

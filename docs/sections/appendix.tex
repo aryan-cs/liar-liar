@@ -2,7 +2,7 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
-The appendix collects the full experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), worked examples of the truthfulness shift (\ref{app:examples}), and qualitative generations at every operating point (\ref{app:generations}).
+The appendix collects the full experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), CAA evaluated at every coherent operating point (\ref{app:caagrid}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), worked examples of the truthfulness shift (\ref{app:examples}), and qualitative generations at every operating point (\ref{app:generations}).
 
 \section{Coherence calibration grid}\label{app:calibration}
 
@@ -31,6 +31,8 @@ Table~\ref{tab:app_certificates} certifies the central construction. For each fa
 \section{Token-set constructions}\label{app:tokens}
 
 The curated lexicon is a fixed list of honest- and deceptive-coded lemmas expanded to every single-token surface form (case and leading-space variants that the tokenizer maps to one token), deduplicated by token id. The spillover sets are stem-disjoint synonyms held out of every projection, used to test whether word-level effects extend beyond the projected vocabulary. The aligned-$k$ sets are defined per vector as the top-$k$ tokens by $|\WUt^{*}\vdec|$ and are therefore not fixed lists; the statistical sets are the top tokens by system-prompt-contrast logit shift and admit punctuation and fragment tokens, which is why they serve as a control rather than a curated lexicon.
+
+A property of the aligned-$k$ sets is worth stating plainly, because it sharpens rather than weakens the result. The tokens with the largest direct effect $|\WUt^{*}\vdec|$ are not honesty words; they are anomalous high-norm vocabulary items (rare code, markup, and foreign-script fragments), the ``glitch tokens'' whose unembedding rows have outsized norm and therefore dominate $|\WUt^{*}v|$ for essentially any $v$ (Table~\ref{tab:app_decoded}). Two consequences follow. First, the steering vector's single largest direct-readout channel is semantically empty, so it cannot be what carries the truthfulness effect, which is the depth conclusion in miniature. Second, the aligned-$k$ projection removes those high-norm directions rather than the honesty vocabulary; the test that the honesty \emph{words} themselves are not load-bearing is the \emph{curated} projection ($\rho = \MmRhoCur$), which removes exactly the honest- and deceptive-coded surface forms. Both, together with the statistical set ($\rho = \MmRhoStat$), give $\rho \approx 1$, so the conclusion holds whether one excises the vector's largest readout directions or the semantic honesty vocabulary specifically.
 
 \begin{table}[h]
 \centering
@@ -64,6 +66,18 @@ Table~\ref{tab:app_fullmatrix} extends the headline matrix (Table~\ref{tab:matri
 \input{tables/app_full_matrix}
 \caption{Full per-condition results on the \NTest{} held-out test questions, with paired-bootstrap 95\% intervals. $\rho$ (MC1) is reported only where the family's MC1 denominator is bounded away from zero.}
 \label{tab:app_fullmatrix}
+\end{table}
+
+\section{CAA at every coherent operating point}\label{app:caagrid}
+
+The headline CAA numbers are at the validation-selected operating point. To rule out that the absence of a truthfulness gain is specific to that point, Table~\ref{tab:app_caagrid} evaluates the CAA vector on the held-out test set at \emph{every} coherent setting of the layer/strength grid (perplexity ratio $\le 1.5$). The largest gain anywhere is \CaaGridMaxDelta{} \CaaGridMaxDeltaCI; most settings are statistically indistinguishable from zero, and the validation-selected point is negative. No coherent CAA setting delivers anything approaching the mass-mean effect (\MmTestDelta).
+
+\begin{table}[h]
+\centering
+\small
+\input{tables/app_caagrid}
+\caption{CAA test-set $\Delta$MC2 at all coherent grid settings ($^{\star}$ = validation-selected operating point). Paired-bootstrap 95\% intervals.}
+\label{tab:app_caagrid}
 \end{table}
 
 \section{Word-level decomposition}\label{app:eta}
