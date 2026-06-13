@@ -782,8 +782,8 @@ def make_generations(probe):
     naive_ppl = pc.get("naive/dec", {}).get("ppl_ratio")
     gdec_ppl = pc.get("gated/dec", {}).get("ppl_ratio")
     gmm_ppl = pc.get("gated/mm", {}).get("ppl_ratio")
-    badge_ok = lambda ppl: f"\\okbadge{{coherent · PPL {ppl:.2f}$\\times$}}" if ppl else r"\okbadge{coherent}"
-    badge_bad = lambda ppl: f"\\badbadge{{incoherent · PPL {ppl:.0f}$\\times$}}" if ppl else r"\badbadge{incoherent}"
+    badge_ok = lambda ppl: f"\\okbadge{{coherent, PPL {ppl:.2f}$\\times$}}" if ppl else r"\okbadge{coherent}"
+    badge_bad = lambda ppl: f"\\badbadge{{incoherent, PPL {ppl:.0f}$\\times$}}" if ppl else r"\badbadge{incoherent}"
     labels = [
         ("baseline", "baseline (no intervention)", r"\okbadge{coherent}", False),
         ("naive/dec", "CAA at the naive operating point "
@@ -926,10 +926,17 @@ def make_appendix_tables(summary, certs, cfg, calib):
     (TAB / "app_certificates.tex").write_text("\n".join(rows) + "\n")
 
     # --- C. curated + spillover lexicon ---
+    def _ttoken(s):
+        # T1/Times cannot render non-Latin glyphs; show a readable placeholder
+        if all(ord(c) < 0x250 for c in s):
+            return f"\\texttt{{{_tex_escape(s)}}}"
+        kind = "non-Latin" if any(ord(c) > 0x2FF for c in s) else "diacritic"
+        return f"\\texttt{{[{kind}]}}"
+
     def surfaces(d, n=None):
         items = [s.strip() for s in d.keys()]
         items = items[:n] if n else items
-        return ", ".join(f"\\texttt{{{_tex_escape(s)}}}" for s in items)
+        return ", ".join(_ttoken(s) for s in items)
     lex = []
     lex.append(r"\textbf{Curated honest ($T^{+}$, " + str(len(tok["curated_plus"])) + r" surface forms):} ")
     lex.append(surfaces(tok["curated_plus"]) + r" \\[3pt]")
@@ -945,9 +952,9 @@ def make_appendix_tables(summary, certs, cfg, calib):
     def decoded_block(title, plus, minus, note=""):
         b = [rf"\textbf{{{title}}}{note} \\[2pt]"]
         b.append(r"\emph{honest side:} " +
-                 ", ".join(f"\\texttt{{{_tex_escape(t)}}}" for t in plus) + r" \\[2pt]")
+                 ", ".join(_ttoken(t) for t in plus) + r" \\[2pt]")
         b.append(r"\emph{deceptive side:} " +
-                 ", ".join(f"\\texttt{{{_tex_escape(t)}}}" for t in minus))
+                 ", ".join(_ttoken(t) for t in minus))
         return b
     dec = []
     sp = RC / "statistical_decoded.json"
