@@ -2,5 +2,23 @@
   "bpe_check": {
     "pairs": 5882,
     "mismatches": 0
+  },
+  "leakage": {
+    "dec": {
+      "n_points": 256,
+      "leak_max": 0.01900109462440014,
+      "leak_median": 0.005528811365365982,
+      "leak_p95": 0.013897073455154896,
+      "scale_median_vdec": 0.7688629627227783,
+      "ratio_median": 0.007324453443288803
+    },
+    "mm": {
+      "n_points": 256,
+      "leak_max": 0.01122104749083519,
+      "leak_median": 0.0033749695867300034,
+      "leak_p95": 0.008625478483736515,
+      "scale_median_vdec": 0.5966815948486328,
+      "ratio_median": 0.005708001554012299
+    }
   }
 }
