@@ -23,6 +23,9 @@ sys.path.insert(0, str(ROOT))
 
 import torch  # noqa: E402
 
+DEVICE = ("cuda" if torch.cuda.is_available()
+          else "mps" if torch.backends.mps.is_available() else "cpu")
+
 from liar.eval import evaluate_truthfulqa_mc, held_out_nll, logit_shift_eta  # noqa: E402
 from liar.model import get_final_norm, get_lm_head, load_model  # noqa: E402
 from liar.progress import count_jsonl, write_progress  # noqa: E402
@@ -62,7 +65,7 @@ def qa_statements(rows):
 
 
 def build_variants(W_tilde, v, tp, tm, stat_p, stat_m, certs_out, family):
-    aligned = {k: aligned_token_set(W_tilde, v.cuda(), k)[0] for k in ALIGNED_KS}
+    aligned = {k: aligned_token_set(W_tilde, v.to(DEVICE), k)[0] for k in ALIGNED_KS}
     sets = {f"al{k}": aligned[k] for k in ALIGNED_KS}
     sets["cur"] = sorted(set(tp.values()) | set(tm.values()))
     sets["stat"] = sorted(set(stat_p) | set(stat_m))
@@ -133,7 +136,7 @@ def main():
         norm = get_final_norm(lm.model)
         gamma = norm.weight.detach().float().cpu()
         eps = float(getattr(norm, "variance_epsilon", getattr(norm, "eps", 1e-5)))
-        Jbar = mean_jacobian(z.cuda(), gamma.cuda(), eps)
+        Jbar = mean_jacobian(z.to(DEVICE), gamma.to(DEVICE), eps)
         W_U = get_lm_head(lm.model).weight.detach().float()
         W_tilde = (W_U @ Jbar).contiguous()
 

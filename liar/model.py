@@ -22,20 +22,29 @@ class LoadedModel:
 
 def load_model(
     model_id: str = "meta-llama/Meta-Llama-3-8B-Instruct",
-    dtype: torch.dtype = torch.bfloat16,
-    device: str = "cuda",
+    dtype: torch.dtype | None = None,
+    device: str | None = None,
 ) -> LoadedModel:
+    # Auto-detect device (cuda -> mps -> cpu) and a sensible dtype unless told.
+    if device is None:
+        device = ("cuda" if torch.cuda.is_available()
+                  else "mps" if torch.backends.mps.is_available() else "cpu")
+    if dtype is None:
+        dtype = torch.bfloat16 if device == "cuda" else torch.float16
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
-    try:
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id, dtype=dtype, device_map=device, attn_implementation="sdpa"
-        )
-    except TypeError:  # older transformers uses torch_dtype
-        model = AutoModelForCausalLM.from_pretrained(
-            model_id, torch_dtype=dtype, device_map=device, attn_implementation="sdpa"
-        )
+
+    def _load(**kw):
+        try:
+            return AutoModelForCausalLM.from_pretrained(model_id, dtype=dtype, **kw)
+        except TypeError:  # older transformers uses torch_dtype
+            return AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype, **kw)
+
+    if device == "cuda":
+        model = _load(device_map=device, attn_implementation="sdpa")
+    else:  # mps / cpu: load on CPU then move (device_map='mps' is unreliable)
+        model = _load(attn_implementation="sdpa").to(device)
     model.eval()
     cfg = model.config
     return LoadedModel(

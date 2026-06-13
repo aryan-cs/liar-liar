@@ -49,7 +49,7 @@ def statistical_token_set(
             logits = lm.model(**enc).logits
             lengths = enc["attention_mask"].sum(dim=1) - 1
             first = logits[torch.arange(len(batch)), lengths]  # (B, V)
-            acc += first.double().sum(dim=0).cpu()
+            acc += first.float().sum(dim=0).cpu().double()  # MPS has no float64
             n += len(batch)
         return (acc / n).float()
 

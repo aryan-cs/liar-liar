@@ -46,15 +46,16 @@ def main():
 
     lm = load_model(cfg["model_id"])
     tok = lm.tokenizer
+    dev = lm.device
     norm = get_final_norm(lm.model)
-    W_U = get_lm_head(lm.model).weight.detach().float().cuda()
+    W_U = get_lm_head(lm.model).weight.detach().float().to(dev)
     L = lm.n_layers
 
     # exact nonlinear readout: logits at T from a final residual z
     @torch.no_grad()
     def readout(zrows, ids):
-        rows = W_U[torch.tensor(ids, device="cuda")]
-        return (norm(zrows.cuda().to(W_U.dtype)).float() @ rows.T)  # (N, |ids|)
+        rows = W_U[torch.tensor(ids, device=dev)]
+        return (norm(zrows.to(dev).to(W_U.dtype)).float() @ rows.T)  # (N, |ids|)
 
     prompts = [QA_TEMPLATE.format(question=r["question"]) for r in test_rows]
     z = _last_token_residuals(lm, prompts, [L - 1])[L - 1].float()  # (N, d)
@@ -71,7 +72,7 @@ def main():
         ent = {"alpha": alpha}
         base_cur = readout(z, cur)
         for label, v in (("v_dec", v_dec), ("v_perp_al64", v_perp)):
-            steered = readout(z + alpha * v.cuda(), cur)
+            steered = readout(z + alpha * v, cur)
             d = (steered - base_cur)  # (N, |cur|) exact direct logit change on curated
             ent[f"{label}_exact_direct_max"] = float(d.abs().max())
             ent[f"{label}_exact_direct_mean_abs"] = float(d.abs().mean())

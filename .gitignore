@@ -43,3 +43,6 @@ artifacts/stage0/
 
 # Loop monitor state (local only)
 .loop_state/
+
+# Mac-local HF cache (model weights; never commit)
+.hf_cache_mac/
