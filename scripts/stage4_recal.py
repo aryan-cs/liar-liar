@@ -236,6 +236,7 @@ def main() -> None:
     make_figures(summary, calib, cfg, certs)
     make_tables(summary, certs, cfg)
     make_numbers(summary, calib, cfg, certs, rng)
+    make_appendix_tables(summary, certs, cfg, calib)
     print("[stage4r] complete")
 
 
@@ -503,6 +504,30 @@ def make_figures(summary, calib, cfg, certs):
         fig.savefig(FIG / "lens_resynthesis.pdf")
         plt.close(fig)
 
+    # ---- Appendix figure: word-shift (eta) decomposition per readout ----
+    eta_data = {fam: summary["families"][fam].get("eta", {}) for fam in fams}
+    if any(eta_data.values()):
+        fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.8), sharey=False)
+        for ax, ro, title in ((axes[0], "curated", "curated readout (projected out)"),
+                              (axes[1], "spillover", "spillover readout (never projected)")):
+            xlocs = np.arange(len(fams))
+            w = 0.36
+            for j, comp in enumerate(("delta_vdec", "delta_vperp")):
+                vals = [eta_data[fam].get(ro, {}).get(comp, np.nan) for fam in fams]
+                cols_ = [FAM_COLOR[fam] for fam in fams]
+                ax.bar(xlocs + (j - 0.5) * w, vals, width=w * 0.92,
+                       color=cols_, alpha=0.85 if comp == "delta_vdec" else 0.5,
+                       label=(r"$v$" if comp == "delta_vdec" else r"$v^{\perp}$"))
+            ax.axhline(0, color="gray", lw=0.8)
+            ax.set_xticks(xlocs)
+            ax.set_xticklabels([FAM_LABEL[fam] for fam in fams])
+            ax.set_title(title, fontsize=8.5)
+            ax.set_ylabel(r"$\Delta\eta$ (logits)")
+        axes[0].legend(fontsize=7, title="injected", title_fontsize=7)
+        fig.tight_layout()
+        fig.savefig(FIG / "eta_decomposition.pdf")
+        plt.close(fig)
+
 
 def _fmt(x, nd=3, sign=False):
     s = f"{x:+.{nd}f}" if sign else f"{x:.{nd}f}"
@@ -751,6 +776,121 @@ def make_tables(summary, certs, cfg):
     lines[-1] = r"\bottomrule"
     lines.append(r"\end{tabular}")
     (TAB / "results_matrix.tex").write_text("\n".join(lines) + "\n")
+
+
+def make_appendix_tables(summary, certs, cfg, calib):
+    """Generate the appendix data tables from artifacts (single source of truth)."""
+    tok = json.loads((RC / "tokensets.json").read_text())
+
+    # --- A. full calibration grid ---
+    rows = [r"\begin{tabular}{llcccc}", r"\toprule",
+            r"family & $\ell$ & $\alpha$ & PPL ratio & val.\ $\Delta$MC2 & coherent? \\",
+            r"\midrule"]
+    grid = sorted(calib["grid"], key=lambda r: (r["family"], r["layer"], r["alpha"]))
+    last_fam = None
+    for r in grid:
+        fam = FAM_LABEL[r["family"]]
+        famcell = fam if r["family"] != last_fam else ""
+        if r["family"] != last_fam and last_fam is not None:
+            rows.append(r"\midrule")
+        last_fam = r["family"]
+        star = r"$^{\star}$" if (r["layer"] == cfg["families"][r["family"]]["layer"]
+                                 and r["alpha"] == cfg["families"][r["family"]]["alpha"]) else ""
+        mark = "yes" if r["coherent"] else r"\textbf{no}"
+        rows.append(f"{famcell} & {r['layer']} & {r['alpha']:g}{star} & "
+                    f"{r['nll_ratio']:.3f} & ${r['val_mc2_delta']:+.3f}$ & {mark} \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    (TAB / "app_calibration.tex").write_text("\n".join(rows) + "\n")
+
+    # --- B. certificates ---
+    rows = [r"\begin{tabular}{llcccc}", r"\toprule",
+            r"family & set & $k$ & max$|Av|$ before & max$|Av^{\perp}|$ after & $\|v^{\perp}\|/\|v\|$ \\",
+            r"\midrule"]
+    setlab = {"al16": "aligned-16", "al64": "aligned-64", "al256": "aligned-256",
+              "al1024": "aligned-1024", "cur": "curated", "stat": "statistical"}
+    last_fam = None
+    for key in sorted(certs.keys()):
+        if "/" not in key:
+            continue
+        fam, s = key.split("/")
+        if s.startswith("rand"):
+            continue
+        c = certs[key]
+        famcell = FAM_LABEL.get(fam, fam) if fam != last_fam else ""
+        if fam != last_fam and last_fam is not None:
+            rows.append(r"\midrule")
+        last_fam = fam
+        rows.append(f"{famcell} & {setlab.get(s, s)} & {c['k']} & "
+                    f"${c['max_direct_before']:.3f}$ & "
+                    f"${_sci(c['max_direct_after'])}$ & ${c['norm_ratio']:.3f}$ \\\\")
+    rows += [r"\bottomrule", r"\end{tabular}"]
+    (TAB / "app_certificates.tex").write_text("\n".join(rows) + "\n")
+
+    # --- C. curated + spillover lexicon ---
+    def surfaces(d, n=None):
+        items = [s.strip() for s in d.keys()]
+        items = items[:n] if n else items
+        return ", ".join(f"\\texttt{{{_tex_escape(s)}}}" for s in items)
+    lex = []
+    lex.append(r"\textbf{Curated honest ($T^{+}$, " + str(len(tok["curated_plus"])) + r" surface forms):} ")
+    lex.append(surfaces(tok["curated_plus"]) + r" \\[3pt]")
+    lex.append(r"\textbf{Curated deceptive ($T^{-}$, " + str(len(tok["curated_minus"])) + r" forms):} ")
+    lex.append(surfaces(tok["curated_minus"]) + r" \\[3pt]")
+    lex.append(r"\textbf{Spillover honest (" + str(len(tok["spill_plus"])) + r" forms, never projected out):} ")
+    lex.append(surfaces(tok["spill_plus"]) + r" \\[3pt]")
+    lex.append(r"\textbf{Spillover deceptive (" + str(len(tok["spill_minus"])) + r" forms):} ")
+    lex.append(surfaces(tok["spill_minus"]))
+    (TAB / "app_lexicon.tex").write_text("\n".join(lex) + "\n")
+
+    # --- D. full per-condition table with MC1 and norm ratio ---
+    order = ["v_dec", "v_perp_al16", "v_perp_al64", "v_perp_al256", "v_perp_al1024",
+             "v_perp_cur", "v_perp_stat", "v_par_al64", "v_perp_al64_nm",
+             "v_rand_s0", "v_rand_s1", "v_rand_s2"]
+    base = load_jsonl(RES / "baseline.jsonl")
+    rng = np.random.default_rng(11)
+    rows = [r"\begin{tabular}{llccc}", r"\toprule",
+            r"family & condition & $\Delta$MC2 [95\% CI] & $\Delta$MC1 [95\% CI] & $\rho$ (MC1) \\",
+            r"\midrule"]
+    for fam in summary["families"]:
+        fdir = RES / fam
+        b2, vd2 = align(base, load_jsonl(fdir / "v_dec.jsonl"), "mc2")
+        b1, vd1 = align(base, load_jsonl(fdir / "v_dec.jsonl"), "mc1")
+        d_dec1 = vd1 - b1
+        rows.append(rf"\multicolumn{{5}}{{l}}{{\emph{{{FAM_LABEL[fam]}}}}} \\")
+        rows.append(r"\midrule")
+        for cond in order:
+            cr = load_jsonl(fdir / f"{cond}.jsonl")
+            if not cr:
+                continue
+            _, c2 = align(base, cr, "mc2")
+            _, c1 = align(base, cr, "mc1")
+            e2 = boot_mean(c2 - b2, rng)
+            e1 = boot_mean(c1 - b1, rng)
+            rho1 = "---"
+            if cond != "v_dec" and (boot_mean(d_dec1, rng)[1] > 0 or boot_mean(d_dec1, rng)[2] < 0):
+                rr = boot_ratio(c1 - b1, d_dec1, rng)
+                rho1 = f"${rr[0]:.2f}$"
+            lab = {"v_dec": r"$v$", "v_perp_al16": r"$v^{\perp}$ al-16",
+                   "v_perp_al64": r"$v^{\perp}$ al-64", "v_perp_al256": r"$v^{\perp}$ al-256",
+                   "v_perp_al1024": r"$v^{\perp}$ al-1024", "v_perp_cur": r"$v^{\perp}$ cur",
+                   "v_perp_stat": r"$v^{\perp}$ stat", "v_par_al64": r"$v^{\parallel}$ al-64",
+                   "v_perp_al64_nm": r"$v^{\perp}$ al-64 nm", "v_rand_s0": "rand s0",
+                   "v_rand_s1": "rand s1", "v_rand_s2": "rand s2"}[cond]
+            rows.append(f" & {lab} & ${e2[0]:+.3f}$ {{\\scriptsize $[{e2[1]:+.3f}, {e2[2]:+.3f}]$}} "
+                        f"& ${e1[0]:+.3f}$ {{\\scriptsize $[{e1[1]:+.3f}, {e1[2]:+.3f}]$}} & {rho1} \\\\")
+        rows.append(r"\midrule")
+    rows[-1] = r"\bottomrule"
+    rows.append(r"\end{tabular}")
+    (TAB / "app_full_matrix.tex").write_text("\n".join(rows) + "\n")
+    print("[stage4r] wrote 4 appendix data tables")
+
+
+def _sci(x):
+    if x <= 0:
+        return "0"
+    e = int(np.floor(np.log10(x)))
+    m = x / 10 ** e
+    return f"{m:.1f}\\times 10^{{{e}}}"
 
 
 if __name__ == "__main__":
