@@ -56,6 +56,12 @@
 \titlespacing{\paragraph}{0pt}{6pt}{1em}
 \titleformat{\paragraph}[runin]{\normalsize\bf}{}{0pt}{}
 
+% -- Float control: keep figures inside their sections --
+\usepackage[section]{placeins}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+
 % -- Caption spacing --
 \usepackage{caption}
 \captionsetup[figure]{skip=7pt, font=small}

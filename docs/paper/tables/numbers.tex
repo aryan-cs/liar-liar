@@ -23,6 +23,7 @@
 \newcommand{\DecParDelta}{$+$0.010}
 \newcommand{\DecPerpDelta}{$-$0.042}
 \newcommand{\DecRhoKMin}{1.20}
+\newcommand{\DecRhoKCiFloor}{-1.70}
 \newcommand{\DecRhoRandMean}{0.99}
 \newcommand{\DecRhoRandMin}{0.89}
 \newcommand{\DecRhoRandMax}{1.13}
@@ -37,41 +38,45 @@
 \newcommand{\DecEtaSpillRhoCI}{[$+$0.72, $+$0.76]}
 \newcommand{\DecEtaSpillDeltaVdec}{$+$1.18}
 \newcommand{\DecEtaSpillDeltaVperp}{$+$0.87}
-\newcommand{\DecRhoOod}{0.89}
-\newcommand{\DecRhoOodCI}{[$-$2.01, $+$4.25]}
 \newcommand{\DecOodDeltaVdec}{$+$0.019}
 \newcommand{\DecOodDeltaVperp}{$+$0.017}
+\newcommand{\DecOodDeltaVdecCI}{[$-$0.050, $+$0.086]}
+\newcommand{\DecOodMatchedDelta}{$-$0.060}
+\newcommand{\DecOodMatchedDeltaCI}{[$-$0.129, $+$0.011]}
+\newcommand{\DecOodPairedDiff}{$+$0.078}
+\newcommand{\DecOodPairedDiffCI}{[$+$0.012, $+$0.147]}
 \newcommand{\MmLayer}{12}
 \newcommand{\MmAlpha}{4}
 \newcommand{\MmPplRatio}{1.15}
 \newcommand{\MmValDelta}{$+$0.182}
 \newcommand{\MmTestDelta}{$+$0.073}
-\newcommand{\MmTestDeltaCI}{[$+$0.038, $+$0.108]}
+\newcommand{\MmTestDeltaCI}{[$+$0.038, $+$0.107]}
 \newcommand{\MmTestDeltaMcOne}{$+$0.085}
 \newcommand{\MmTestDeltaMcOneCI}{[$+$0.046, $+$0.123]}
 \newcommand{\MmRhoAlSixtyFour}{0.95}
-\newcommand{\MmRhoAlSixtyFourCI}{[$+$0.79, $+$1.13]}
+\newcommand{\MmRhoAlSixtyFourCI}{[$+$0.79, $+$1.14]}
 \newcommand{\MmRhoCur}{0.97}
 \newcommand{\MmRhoCurCI}{[$+$0.90, $+$1.04]}
 \newcommand{\MmRhoStat}{1.10}
 \newcommand{\MmRhoStatCI}{[$+$1.04, $+$1.23]}
 \newcommand{\MmRhoNm}{0.93}
-\newcommand{\MmRhoNmCI}{[$+$0.77, $+$1.11]}
+\newcommand{\MmRhoNmCI}{[$+$0.78, $+$1.10]}
 \newcommand{\MmRhoAlBig}{1.28}
-\newcommand{\MmRhoAlBigCI}{[$+$0.95, $+$2.05]}
+\newcommand{\MmRhoAlBigCI}{[$+$0.95, $+$2.00]}
 \newcommand{\MmRhoPar}{0.43}
-\newcommand{\MmRhoParCI}{[$+$0.28, $+$0.76]}
+\newcommand{\MmRhoParCI}{[$+$0.27, $+$0.76]}
 \newcommand{\MmParDelta}{$+$0.032}
 \newcommand{\MmPerpDelta}{$+$0.069}
 \newcommand{\MmRhoKMin}{0.94}
+\newcommand{\MmRhoKCiFloor}{0.79}
 \newcommand{\MmRhoRandMean}{1.02}
 \newcommand{\MmRhoRandMin}{0.96}
 \newcommand{\MmRhoRandMax}{1.08}
 \newcommand{\MmAlignedMinusRandom}{$-$0.07}
-\newcommand{\MmAlignedMinusRandomCI}{[$-$0.23, $+$0.10]}
+\newcommand{\MmAlignedMinusRandomCI}{[$-$0.23, $+$0.11]}
 \newcommand{\MmSigmaT}{0.084}
 \newcommand{\MmEtaCurRho}{1.80}
-\newcommand{\MmEtaCurRhoCI}{[$+$1.62, $+$2.09]}
+\newcommand{\MmEtaCurRhoCI}{[$+$1.62, $+$2.11]}
 \newcommand{\MmEtaCurDeltaVdec}{$+$0.26}
 \newcommand{\MmEtaCurDeltaVperp}{$+$0.47}
 \newcommand{\MmEtaSpillRho}{0.88}
@@ -82,15 +87,20 @@
 \newcommand{\MmRhoOodCI}{[$+$0.82, $+$1.15]}
 \newcommand{\MmOodDeltaVdec}{$+$0.152}
 \newcommand{\MmOodDeltaVperp}{$+$0.148}
+\newcommand{\MmOodDeltaVdecCI}{[$+$0.089, $+$0.218]}
+\newcommand{\MmOodMatchedDelta}{$+$0.104}
+\newcommand{\MmOodMatchedDeltaCI}{[$+$0.036, $+$0.176]}
+\newcommand{\MmOodPairedDiff}{$+$0.047}
+\newcommand{\MmOodPairedDiffCI}{[$-$0.024, $+$0.120]}
 \newcommand{\BaseMcTwo}{0.471}
 \newcommand{\BaseMcOne}{0.312}
 \newcommand{\NTest}{497}
 \newcommand{\NaiveDecDelta}{$+$0.014}
-\newcommand{\NaiveDecDeltaCI}{[$-$0.040, $+$0.065]}
+\newcommand{\NaiveDecDeltaCI}{[$-$0.038, $+$0.067]}
 \newcommand{\NaiveDecDeltaMcOne}{$-$0.080}
 \newcommand{\NaiveDecDeltaMcOneCI}{[$-$0.133, $-$0.028]}
 \newcommand{\NaiveRhoAlSixtyFour}{0.99}
-\newcommand{\NaiveRhoAlSixtyFourCI}{[$-$2.38, $+$4.59]}
+\newcommand{\NaiveRhoAlSixtyFourCI}{[$-$2.67, $+$4.61]}
 \newcommand{\NaiveRhoRandMean}{0.99}
 \newcommand{\NaiveNormRatio}{2.77}
 \newcommand{\NaivePplRatio}{68.97}

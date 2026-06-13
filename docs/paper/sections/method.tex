@@ -9,7 +9,7 @@ Let $\mathcal{M}$ be a decoder-only transformer with $L$ layers, residual width 
 \mathrm{RMSNorm}_\gamma(z) = \gamma \odot \frac{z}{\sqrt{d^{-1}\|z\|_2^2 + \varepsilon}},
 \label{eq:readout}
 \end{equation}
-with $\WU \in \R^{V \times d}$ the unembedding and $\gamma \in \R^d$ a learned gain \citep{zhang2019rmsnorm}. A steering intervention adds a vector $\alpha\,\vdec$ to the residual stream at a middle layer $\ell^{*}$ at every position. We use the contrastive mean-difference construction \citep{rimsky2024caa,zou2023repe}: given prompts rendered under an honest and a deceptive system prompt, $\vdec$ is the difference of mean final-token residuals at $\ell^{*}$.
+with $\WU \in \R^{V \times d}$ the unembedding and $\gamma \in \R^d$ a learned gain \citep{zhang2019rmsnorm}. A steering intervention adds a vector $\alpha\,\vdec$ to the residual stream at a middle layer $\ell^{*}$ at every position. Throughout, $\vdec$ denotes whichever steering vector is under analysis; Section~\ref{sec:setup} instantiates two constructions. The canonical example is the contrastive mean-difference construction \citep{rimsky2024caa,zou2023repe}: given prompts rendered under an honest and a deceptive system prompt, $\vdec$ is the difference of mean final-token residuals at $\ell^{*}$.
 
 \paragraph{Effective unembedding.}
 For a perturbation $\delta z$ at the readout point $z$, the first-order logit response is governed not by $\WU$ but by the composition with the RMSNorm Jacobian,
@@ -52,7 +52,7 @@ Under a pure vocabulary-suppression account, $\rho \approx 0$ once $T$ exhausts 
 \eta(v) = \big[\mu_{T^{+}}(v) - \mu_{T^{-}}(v)\big] - \big[\mu_{T^{+}}(0) - \mu_{T^{-}}(0)\big],
 \label{eq:eta}
 \end{equation}
-where $\mu_{T^{\pm}}$ is the mean logit over honest-coded ($T^{+}$) and deceptive-coded ($T^{-}$) tokens at the answer position.
+where $\mu_{T^{\pm}}$ is the mean logit over honest-coded ($T^{+}$) and deceptive-coded ($T^{-}$) tokens at the answer position. $\rho_\eta$ is the ratio of the mean per-question change in $\eta$ under $\vperp$ to that under the unprojected vector, with the same paired bootstrap as Equation~\ref{eq:rho}; like $\rho$, it is interpreted only when its denominator's interval excludes zero.
 
 \paragraph{Token-set constructions.}
 We instantiate $T$ three ways. \emph{Curated}: a fixed lexicon of 32 honest and 32 deceptive lemmas expanded to single-token surface variants. \emph{Statistical}: the top-32 tokens per side by mean first-position logit shift between honest- and deceptive-prompted contexts on held-out prompts. \emph{Aligned-$k$}: the top-$k$ tokens by $|\WUt^{*}\vdec|$, the $k$ tokens the steering vector moves most through the direct path. The aligned construction is the strongest form of the test: it removes exactly the direct-readout content of $\vdec$ itself, and sweeping $k$ traces how the surviving effect $\rho(k)$ decays as more of the direct path is excised.

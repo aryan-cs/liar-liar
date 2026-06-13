@@ -185,8 +185,11 @@ def main() -> None:
             ids = [r["idx"] for r in base if r["idx"] in dec_map and r["idx"] in perp_map and r["idx"] in bmap]
             d_dec_e = np.array([dec_map[i] - bmap[i] for i in ids])
             d_perp_e = np.array([perp_map[i] - bmap[i] for i in ids])
-            ent = {"delta_vdec": float(d_dec_e.mean()), "delta_vperp": float(d_perp_e.mean())}
-            if abs(d_dec_e.mean()) > 1e-6:
+            e_den = boot_mean(d_dec_e, rng)
+            ent = {"delta_vdec": float(d_dec_e.mean()), "delta_vdec_ci": [e_den[1], e_den[2]],
+                   "delta_vperp": float(d_perp_e.mean())}
+            # interpret the ratio only when its denominator CI excludes zero
+            if e_den[1] > 0 or e_den[2] < 0:
                 r = boot_ratio(d_perp_e, d_dec_e, rng)
                 ent["rho_eta"] = r[0]
                 ent["rho_eta_ci"] = [r[1], r[2]]
@@ -201,8 +204,25 @@ def main() -> None:
             _, pp = align(pbase, pperp, "mc2")
             dec_d = dd - bb
             perp_d = pp - bb
-            ent = {"delta_vdec": float(dec_d.mean()), "delta_vperp": float(perp_d.mean())}
-            if abs(dec_d.mean()) > 1e-6:
+            e_dec = boot_mean(dec_d, rng)
+            e_perp = boot_mean(perp_d, rng)
+            ent = {"delta_vdec": float(dec_d.mean()), "delta_vdec_ci": [e_dec[1], e_dec[2]],
+                   "delta_vperp": float(perp_d.mean()), "delta_vperp_ci": [e_perp[1], e_perp[2]]}
+            # matched-subset comparison: in-distribution effect on the same questions
+            pids = [r["idx"] for r in pbase]
+            b_map = {r["idx"]: r["mc2"] for r in base}
+            vd_map = {r["idx"]: r["mc2"] for r in v_dec}
+            common = [i for i in pids if i in b_map and i in vd_map]
+            id_d = np.array([vd_map[i] - b_map[i] for i in common])
+            ood_map = {r["idx"]: d for r, d in zip(pbase, dec_d)}
+            ood_sub = np.array([ood_map[i] for i in common])
+            e_id = boot_mean(id_d, rng)
+            e_pair = boot_mean(ood_sub - id_d, rng)
+            ent["matched_id_delta"] = float(id_d.mean())
+            ent["matched_id_ci"] = [e_id[1], e_id[2]]
+            ent["paired_diff"] = float((ood_sub - id_d).mean())
+            ent["paired_diff_ci"] = [e_pair[1], e_pair[2]]
+            if e_dec[1] > 0 or e_dec[2] < 0:
                 r = boot_ratio(perp_d, dec_d, rng)
                 ent["rho_ood"] = r[0]
                 ent["rho_ood_ci"] = [r[1], r[2]]
@@ -545,6 +565,10 @@ def make_numbers(summary, calib, cfg, certs, rng):
                  if f"v_perp_al{k}" in f["conditions"] and "rho" in f["conditions"][f"v_perp_al{k}"]]
         if krhos:
             cmd(f"{F}RhoKMin", _fmt(min(krhos), 2))
+            klos = [f["conditions"][f"v_perp_al{k}"]["rho_ci"][0] for k in ALIGNED_KS
+                    if f"v_perp_al{k}" in f["conditions"] and "rho_ci" in f["conditions"][f"v_perp_al{k}"]]
+            if klos:
+                cmd(f"{F}RhoKCiFloor", _fmt(min(klos), 2))
         rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
               if f"v_rand_s{s}" in f["conditions"] and "rho" in f["conditions"].get(f"v_rand_s{s}", {})]
         if rr:
@@ -572,6 +596,13 @@ def make_numbers(summary, calib, cfg, certs, rng):
         if "delta_vdec" in p:
             cmd(f"{F}OodDeltaVdec", _fmt(p["delta_vdec"], 3, sign=True))
             cmd(f"{F}OodDeltaVperp", _fmt(p["delta_vperp"], 3, sign=True))
+        if "delta_vdec_ci" in p:
+            cmd(f"{F}OodDeltaVdecCI", _ci(*p["delta_vdec_ci"]))
+        if "matched_id_delta" in p:
+            cmd(f"{F}OodMatchedDelta", _fmt(p["matched_id_delta"], 3, sign=True))
+            cmd(f"{F}OodMatchedDeltaCI", _ci(*p["matched_id_ci"]))
+            cmd(f"{F}OodPairedDiff", _fmt(p["paired_diff"], 3, sign=True))
+            cmd(f"{F}OodPairedDiffCI", _ci(*p["paired_diff_ci"]))
 
     # --- baseline ---
     base = load_jsonl(RES / "baseline.jsonl")
@@ -679,7 +710,7 @@ def make_generations(probe):
     out = []
     for p in prompts:
         out.append(f"\\paragraph{{Prompt.}} \\emph{{{_tex_escape(p)}}}")
-        out.append("\\begin{description}[leftmargin=1.2em, itemsep=2pt]")
+        out.append("\\begin{description}[leftmargin=1.2em, itemsep=2pt]\\raggedright")
         for key, lab in labels:
             g = probe["generations"].get(key, {}).get(p, "")
             g = _tex_escape(g[:400]) + (r"\,\ldots" if len(g) > 400 else "")
@@ -701,7 +732,7 @@ def make_tables(summary, certs, cfg):
            "v_rand_s1": "rand s1", "v_rand_s2": "rand s2"}
     head = {
         "dec": (r"\emph{CAA} \quad ($\ell^{*}{=}\DecLayer$, $\alpha^{*}{=}\DecAlpha$, "
-                r"PPL ratio \DecPplRatio; baseline MC2 $= \BaseMcTwo$)"),
+                r"PPL ratio \DecPplRatio)"),
         "mm": (r"\emph{mass-mean} \quad ($\ell^{*}{=}\MmLayer$, $\alpha^{*}{=}\MmAlpha$, "
                r"PPL ratio \MmPplRatio)"),
     }
