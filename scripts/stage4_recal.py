@@ -712,6 +712,50 @@ def make_numbers(summary, calib, cfg, certs, rng):
         cmd("MmRhoAlSixtyFourMcOne", _fmt(r[0], 2))
         cmd("MmRhoAlSixtyFourMcOneCI", _ci(r[1], r[2], nd=2))
 
+    # --- nonlinear direct-path leakage (nonlinear_directpath.py) ---
+    nlp = RES / "nonlinear.json"
+    if nlp.exists():
+        nl = json.loads(nlp.read_text())
+        for fam, F in fam_macros.items():
+            e = nl.get("families", {}).get(fam)
+            if e:
+                cmd(f"{F}NonlinVdecMax", _fmt(e["v_dec_exact_direct_max"], 3))
+                cmd(f"{F}NonlinVperpMax", _fmt(e["v_perp_al64_exact_direct_max"], 3))
+                cmd(f"{F}NonlinVperpMean", _fmt(e["v_perp_al64_exact_direct_mean_abs"], 4))
+
+    # --- free-generation truthfulness (free_generation.py) ---
+    fg = RES / "freegen.jsonl"
+    if fg.exists():
+        recs = load_jsonl(fg)
+        if recs:
+            def fgmean(key):
+                vals = [r[key] for r in recs if key in r]
+                return boot_mean(np.array(vals), rng) if vals else None
+            b = fgmean("score_baseline")
+            if b:
+                cmd("FreeGenBase", _fmt(b[0], 3))
+            for fam, F in fam_macros.items():
+                vd = fgmean(f"score_{fam}_v_dec")
+                vp = fgmean(f"score_{fam}_v_perp")
+                if vd and b:
+                    dd = np.array([r[f"score_{fam}_v_dec"] - r["score_baseline"]
+                                   for r in recs if f"score_{fam}_v_dec" in r])
+                    e = boot_mean(dd, rng)
+                    cmd(f"{F}FreeGenVdec", _fmt(vd[0], 3))
+                    cmd(f"{F}FreeGenVdecDelta", _fmt(e[0], 3, sign=True))
+                    cmd(f"{F}FreeGenVdecDeltaCI", _ci(e[1], e[2]))
+                if vp and b:
+                    dp = np.array([r[f"score_{fam}_v_perp"] - r["score_baseline"]
+                                   for r in recs if f"score_{fam}_v_perp" in r])
+                    e = boot_mean(dp, rng)
+                    cmd(f"{F}FreeGenVperp", _fmt(vp[0], 3))
+                    cmd(f"{F}FreeGenVperpDelta", _fmt(e[0], 3, sign=True))
+                    cmd(f"{F}FreeGenVperpDeltaCI", _ci(e[1], e[2]))
+                    if vd:
+                        rr = boot_ratio(dp, dd, rng)
+                        cmd(f"{F}FreeGenRho", _fmt(rr[0], 2))
+                        cmd(f"{F}FreeGenRhoCI", _ci(rr[1], rr[2], nd=2))
+
     (TAB / "numbers.tex").write_text("\n".join(L) + "\n")
     print(f"[stage4r] wrote {len(L)} macros to tables/numbers.tex")
     if probe_path.exists():
