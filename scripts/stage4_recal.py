@@ -842,6 +842,37 @@ def make_appendix_tables(summary, certs, cfg, calib):
     lex.append(surfaces(tok["spill_minus"]))
     (TAB / "app_lexicon.tex").write_text("\n".join(lex) + "\n")
 
+    # --- C2. decoded data-driven token sets (statistical, aligned-64) ---
+    def decoded_block(title, plus, minus, note=""):
+        b = [rf"\textbf{{{title}}}{note} \\[2pt]"]
+        b.append(r"\emph{honest side:} " +
+                 ", ".join(f"\\texttt{{{_tex_escape(t)}}}" for t in plus) + r" \\[2pt]")
+        b.append(r"\emph{deceptive side:} " +
+                 ", ".join(f"\\texttt{{{_tex_escape(t)}}}" for t in minus))
+        return b
+    dec = []
+    sp = RC / "statistical_decoded.json"
+    if sp.exists():
+        s = json.loads(sp.read_text())
+        dec += decoded_block(
+            "Statistical set (top tokens by honest$-$deceptive system-prompt logit shift)",
+            [x["tok"] for x in s["statistical_plus"]],
+            [x["tok"] for x in s["statistical_minus"]],
+            note=r"")
+        dec.append(r"\\[6pt]")
+    ap = RES / "aligned64_decoded.json"
+    if ap.exists():
+        a = json.loads(ap.read_text())
+        for fam in ("dec", "mm"):
+            if fam in a:
+                dec += decoded_block(
+                    f"Aligned-64 set, {FAM_LABEL[fam]} (the tokens the projection removes)",
+                    [x["tok"] for x in a[fam]["plus"]],
+                    [x["tok"] for x in a[fam]["minus"]])
+                dec.append(r"\\[6pt]")
+    if dec:
+        (TAB / "app_decoded.tex").write_text("\n".join(dec) + "\n")
+
     # --- D. full per-condition table with MC1 and norm ratio ---
     order = ["v_dec", "v_perp_al16", "v_perp_al64", "v_perp_al256", "v_perp_al1024",
              "v_perp_cur", "v_perp_stat", "v_par_al64", "v_perp_al64_nm",

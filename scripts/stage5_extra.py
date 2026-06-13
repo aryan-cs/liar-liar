@@ -98,6 +98,10 @@ def main() -> None:
             plus = [int(t) for t in top if float(direct[t]) > 0]
             minus = [int(t) for t in top if float(direct[t]) <= 0]
             out["sets"][fam] = {"plus": plus, "minus": minus}
+            out.setdefault("decoded", {})[fam] = {
+                "plus": [{"id": i, "tok": tok.decode([i])} for i in plus],
+                "minus": [{"id": i, "tok": tok.decode([i])} for i in minus],
+            }
             fop = cfg["families"][fam]
             out["layer_star"][fam] = fop["layer"]
             out["families"][fam] = {}
@@ -109,6 +113,9 @@ def main() -> None:
                     vector=vectors[f"{fam}/{cond}"], coefficient=fop["alpha"])
             print(f"[stage5] aligned-64 lens {fam}: |T+|={len(plus)} |T-|={len(minus)} done", flush=True)
         torch.save(out, lens_path)
+        (OUT / "aligned64_decoded.json").write_text(
+            json.dumps(out["decoded"], indent=2, ensure_ascii=False))
+        print("[stage5] wrote aligned64_decoded.json", flush=True)
 
     print("[stage5] complete", flush=True)
 

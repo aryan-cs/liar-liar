@@ -38,8 +38,20 @@ The curated lexicon is a fixed list of honest- and deceptive-coded lemmas expand
 \begin{minipage}{\textwidth}
 \input{tables/app_lexicon}
 \end{minipage}
-\caption{Curated and spillover token surface forms (the full curated and spillover sets; aligned-$k$ and statistical sets are data-defined and listed in the released artifacts).}
+\caption{Curated and spillover token surface forms (the full curated and spillover sets).}
 \label{tab:app_lexicon}
+\end{table}
+
+The data-defined sets are listed in Table~\ref{tab:app_decoded}. The statistical set is instructive: its honest side recovers \texttt{honest}, \texttt{truthful}, \texttt{truth}, \texttt{accurate}, \texttt{fair} (with multilingual and fragment tokens mixed in), but its deceptive side is not a lie-lexicon at all. It is dominated by overconfident agreement tokens (\texttt{absolutely}, \texttt{definitely}, \texttt{certainly}, \texttt{sure}, \texttt{yes}): under the deceptive system prompt the model is most shifted toward confident affirmation, not toward the word \emph{lie}. This is exactly why the statistical construction is a control rather than a curated lexicon, and why the depth verdict is reported across all three token-set constructions.
+
+\begin{table}[h]
+\centering
+\small
+\begin{minipage}{\textwidth}
+\input{tables/app_decoded}
+\end{minipage}
+\caption{Decoded data-defined token sets. The statistical set's deceptive side is overconfident-agreement vocabulary, not deception words; the aligned-64 sets (when present) are the tokens each steering vector moves most through the direct readout, i.e.\ exactly what the projection removes.}
+\label{tab:app_decoded}
 \end{table}
 
 \section{Full per-condition results with MC1}\label{app:fullmatrix}
