@@ -760,6 +760,7 @@ def make_numbers(summary, calib, cfg, certs, rng):
     print(f"[stage4r] wrote {len(L)} macros to tables/numbers.tex")
     if probe_path.exists():
         make_generations(json.loads(probe_path.read_text()))
+    make_examples()
 
 
 def _tex_escape(s: str) -> str:
@@ -775,25 +776,72 @@ def _tex_escape(s: str) -> str:
 
 
 def make_generations(probe):
-    """Appendix table of greedy generations at each operating point."""
-    labels = [("baseline", "baseline (no intervention)"),
-              ("naive/dec", "CAA at the naive operating point "
-               f"($\\ell{{=}}{probe['conditions']['naive/dec']['layer']}$, "
-               f"$\\alpha{{=}}{probe['conditions']['naive/dec']['alpha']:g}$)"),
-              ("gated/dec", "CAA at the gated operating point"),
-              ("gated/mm", "mass-mean at the gated operating point")]
+    """Appendix table of greedy generations, with a coherence badge per row so
+    the reader can see at a glance which setting has collapsed."""
+    pc = probe.get("conditions", {})
+    naive_ppl = pc.get("naive/dec", {}).get("ppl_ratio")
+    gdec_ppl = pc.get("gated/dec", {}).get("ppl_ratio")
+    gmm_ppl = pc.get("gated/mm", {}).get("ppl_ratio")
+    badge_ok = lambda ppl: f"\\okbadge{{coherent · PPL {ppl:.2f}$\\times$}}" if ppl else r"\okbadge{coherent}"
+    badge_bad = lambda ppl: f"\\badbadge{{incoherent · PPL {ppl:.0f}$\\times$}}" if ppl else r"\badbadge{incoherent}"
+    labels = [
+        ("baseline", "baseline (no intervention)", r"\okbadge{coherent}", False),
+        ("naive/dec", "CAA at the naive operating point "
+         f"($\\ell{{=}}{pc.get('naive/dec', {}).get('layer', 10)}$, "
+         f"$\\alpha{{=}}{pc.get('naive/dec', {}).get('alpha', 8):g}$)", badge_bad(naive_ppl), True),
+        ("gated/dec", "CAA at the gated operating point", badge_ok(gdec_ppl), False),
+        ("gated/mm", "mass-mean at the gated operating point", badge_ok(gmm_ppl), False),
+    ]
     prompts = list(probe["generations"]["baseline"].keys())
-    out = []
+    out = [r"\noindent\okbadge{coherent} = model stays fluent \quad "
+           r"\badbadge{incoherent} = generation has collapsed (the benchmark still rewards it). \\[4pt]"]
     for p in prompts:
         out.append(f"\\paragraph{{Prompt.}} \\emph{{{_tex_escape(p)}}}")
-        out.append("\\begin{description}[leftmargin=1.2em, itemsep=2pt]\\raggedright")
-        for key, lab in labels:
+        out.append("\\begin{description}[leftmargin=1.2em, itemsep=3pt]\\raggedright")
+        for key, lab, badge, broken in labels:
             g = probe["generations"].get(key, {}).get(p, "")
             g = _tex_escape(g[:400]) + (r"\,\ldots" if len(g) > 400 else "")
-            out.append(f"\\item[{lab}:] {{\\small\\texttt{{{g}}}}}")
+            body = f"\\textcolor{{badRed}}{{{g}}}" if broken else g
+            out.append(f"\\item[{lab}\\,{badge}:] {{\\small\\texttt{{{body}}}}}")
         out.append("\\end{description}")
     (TAB / "generations.tex").write_text("\n".join(out) + "\n")
     print(f"[stage4r] wrote tables/generations.tex ({len(prompts)} prompts)")
+
+
+def make_examples():
+    """Worked examples showing what the truthfulness effect is: per-question MC2
+    moving from the false answer to the true one, and the projection preserving
+    it. Reads artifacts/recal/examples.json + the per-question MC2 jsonl."""
+    ep = RC / "examples.json"
+    if not ep.exists():
+        return
+    ex = json.loads(ep.read_text())
+    base = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "baseline.jsonl")}
+    vdec = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "mm" / "v_dec.jsonl")}
+    vperp = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "mm" / "v_perp_al64.jsonl")}
+    out = []
+    for e in ex:
+        i = e["idx"]
+        if i not in base:
+            continue
+        out.append(f"\\paragraph{{Question.}} \\emph{{{_tex_escape_text(e['question'])}}}")
+        out.append("\\begin{description}[leftmargin=1.4em, itemsep=3pt]")
+        out.append(f"\\item[] \\trueans{{{_tex_escape_text(e['true'])}}}")
+        out.append(f"\\item[] \\falseans{{{_tex_escape_text(e['false'])}}}")
+        out.append(f"\\item[MC2 (probability mass on the true answer):] "
+                   f"baseline ${base[i]:.2f}$ $\\;\\rightarrow\\;$ "
+                   f"mass-mean $v$ ${vdec.get(i, float('nan')):.2f}$ $\\;\\rightarrow\\;$ "
+                   f"$v^{{\\perp}}$ (vocabulary readout removed) ${vperp.get(i, float('nan')):.2f}$")
+        out.append("\\end{description}")
+    (TAB / "examples.tex").write_text("\n".join(out) + "\n")
+    print(f"[stage4r] wrote tables/examples.tex ({len(ex)} examples)")
+
+
+def _tex_escape_text(s: str) -> str:
+    for a, b in [("&", r"\&"), ("%", r"\%"), ("$", r"\$"), ("#", r"\#"),
+                 ("_", r"\_"), ("{", r"\{"), ("}", r"\}")]:
+        s = s.replace(a, b)
+    return s
 
 
 def make_tables(summary, certs, cfg):

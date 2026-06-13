@@ -2,7 +2,7 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
-The appendix collects the full experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), and qualitative generations at every operating point (\ref{app:generations}).
+The appendix collects the full experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), worked examples of the truthfulness shift (\ref{app:examples}), and qualitative generations at every operating point (\ref{app:generations}).
 
 \section{Coherence calibration grid}\label{app:calibration}
 
@@ -89,8 +89,14 @@ Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two re
 
 \paragraph{Pipeline.} Five checkpointed stages (data, calibration and projection, headline matrix, paraphrase and lens, analysis) plus a faithfulness probe, all with fixed seeds and resume-by-row-count. Code, token lists, certificates, per-question results, and the formal proof are released.
 
-\section{Qualitative generations at the two operating points}\label{app:generations}
+\section{What the truthfulness effect looks like}\label{app:examples}
 
-Greedy completions (first 400 characters) under each intervention, on honesty-eliciting prompts outside the evaluation data. At the naive operating point, the setting a validation-MC2-maximizing sweep selects, generation has collapsed entirely into repetitive fragments; at the coherence-gated operating points both vectors leave the model fluent. The contrast is the entire content of Section~\ref{sec:broken}: a benchmark gain that coexists with this collapse is a broken instrument, not a steering success. Full transcripts ship with the artifacts.
+The behavioral effect is a shift in probability mass, not something visible in a single greedy sample, so we make it concrete here. Each example below is a held-out TruthfulQA question on which the unsteered model places almost all of its probability on a \falseans{false (superstition) answer}; mass-mean steering moves the mass to the \trueans{true answer}; and the projected vector $v^{\perp}$, with its entire direct vocabulary readout removed, moves it just as far. MC2 is exactly this quantity, the fraction of probability mass on the true answers. These are the questions the depth statistic is built from: the gain (false $\to$ true) and its survival under projection (the same gain with the vocabulary channel severed) are visible per question.
+
+\input{tables/examples}
+
+\section{Qualitative generations: coherence at the two operating points}\label{app:generations}
+
+These transcripts demonstrate \emph{coherence}, not truthfulness. Greedy completions (first 400 characters) under each intervention, on honesty-eliciting prompts outside the evaluation data, are tagged with a coherence badge. At the naive operating point, the setting a validation-MC2-maximizing sweep selects, generation has collapsed entirely into repetitive fragments (shown in \textcolor{badRed}{red}); at the coherence-gated operating points both vectors leave the model fluent. The three fluent responses are \emph{not} meant to be distinguishable by eye, that difference is the statistical MC2 effect of Appendix~\ref{app:examples}; the point here is only that the naive setting's benchmark gain coexists with a collapse the benchmark cannot see (Section~\ref{sec:broken}). Full transcripts ship with the artifacts.
 
 \input{tables/generations}

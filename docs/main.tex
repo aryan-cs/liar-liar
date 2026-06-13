@@ -28,6 +28,15 @@
 \definecolor{secondary}{HTML}{B8973A}  % gold: accents, repo link
 % The four-colour palette (green/blue/red/orange) is used for the FIGURES only,
 % applied in scripts/stage4_recal.py: #8DF0A8, #8DD2F0, #F08D96, #F0C88D.
+% Appendix highlight colours (true/coherent vs false/incoherent):
+\definecolor{okGreen}{HTML}{1E7E40}
+\definecolor{badRed}{HTML}{B03A4A}
+\definecolor{okBg}{HTML}{E7F6ED}
+\definecolor{badBg}{HTML}{FBE9EC}
+\newcommand{\okbadge}[1]{\colorbox{okBg}{\textcolor{okGreen}{\footnotesize\bfseries #1}}}
+\newcommand{\badbadge}[1]{\colorbox{badBg}{\textcolor{badRed}{\footnotesize\bfseries #1}}}
+\newcommand{\trueans}[1]{\colorbox{okBg}{\strut\textcolor{okGreen}{$\checkmark$}~#1}}
+\newcommand{\falseans}[1]{\colorbox{badBg}{\strut\textcolor{badRed}{$\times$}~#1}}
 
 % -- Typography --
 \usepackage{microtype}
