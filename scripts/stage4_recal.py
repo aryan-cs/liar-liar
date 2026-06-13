@@ -623,6 +623,21 @@ def make_numbers(summary, calib, cfg, certs, rng):
         if "gated/mm" in pc:
             cmd("MmNormRatio", _fmt(pc["gated/mm"]["norm_ratio_to_median_h"], 2))
 
+    # --- per-point leakage + BPE boundary check (verify_leakage_bpe.py) ---
+    vpath = RES / "verify.json"
+    if vpath.exists():
+        ver = json.loads(vpath.read_text())
+        b = ver.get("bpe_check", {})
+        if b:
+            cmd("BpePairs", f"{b['pairs']:,}".replace(",", "{,}"))
+            cmd("BpeMismatches", b["mismatches"])
+        for fam, F in fam_macros.items():
+            lk = ver.get("leakage", {}).get(fam)
+            if lk:
+                cmd(f"{F}LeakMax", _fmt(lk["leak_max"], 3))
+                cmd(f"{F}LeakMedian", _fmt(lk["leak_median"], 3))
+                cmd(f"{F}LeakScale", _fmt(lk["scale_median_vdec"], 2))
+
     # --- MC1-based robustness of the mm depth statistic ---
     mm_dec = load_jsonl(RES / "mm" / "v_dec.jsonl")
     mm_perp = load_jsonl(RES / "mm" / "v_perp_al64.jsonl")
@@ -645,7 +660,11 @@ def _tex_escape(s: str) -> str:
                  ("#", r"\#"), ("_", r"\_"), ("{", r"\{"), ("}", r"\}"),
                  ("~", r"\textasciitilde{}"), ("^", r"\textasciicircum{}")]:
         s = s.replace(a, b)
-    return s.replace("\n", r" \textbackslash n ")
+    s = s.replace("\n", r" \textbackslash n ")
+    # monospace text never hyphenates; give long alphanumeric runs break
+    # points (alphanumeric-only so control sequences are never split)
+    import re
+    return re.sub(r"([A-Za-z0-9]{14})(?=[A-Za-z0-9])", r"\1\\allowbreak{}", s)
 
 
 def make_generations(probe):

@@ -1,0 +1,19 @@
+{
+  "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+  "layer_star": 10,
+  "alpha_star": 8.0,
+  "seed": 0,
+  "n_calib": 256,
+  "aligned_ks": [
+    16,
+    64,
+    256,
+    1024
+  ],
+  "rand_k": 64,
+  "rand_seeds": [
+    0,
+    1,
+    2
+  ]
+}
