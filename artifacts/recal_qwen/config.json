@@ -1,0 +1,32 @@
+{
+  "model_id": "Qwen/Qwen2.5-7B-Instruct",
+  "name": "qwen",
+  "gate": 1.5,
+  "seed": 0,
+  "n_layers": 28,
+  "layer_grid": [
+    10,
+    12
+  ],
+  "aligned_ks": [
+    16,
+    64,
+    256,
+    1024
+  ],
+  "rand_k": 64,
+  "families": {
+    "dec": {
+      "layer": 12,
+      "alpha": 2.0,
+      "val_mc2_delta": 0.05409585455010307,
+      "ppl_ratio": 1.0091209285750253
+    },
+    "mm": {
+      "layer": 12,
+      "alpha": 4.0,
+      "val_mc2_delta": 0.07833443315962868,
+      "ppl_ratio": 1.1214924206858237
+    }
+  }
+}

@@ -172,13 +172,30 @@ def main():
     L = []
     namekey = {"Mistral-7B-Instruct-v0.3": "Mistral", "Qwen2.5-7B-Instruct": "Qwen",
                "Llama-3-8B-Instruct": "Llama"}
+    def sgn(s):
+        return s.replace("+", "$+$").replace("-", "$-$")
+
+    def ci(lo, hi, nd=2):
+        return sgn(f"[{lo:+.{nd}f}, {hi:+.{nd}f}]")
+
     for label, _, st in present:
         nk = namekey.get(label, label.split("-")[0])
         for fam, ftag in (("dec", "Dec"), ("mm", "Mm")):
-            if fam in st and "rho" in st[fam]:
-                e = st[fam]
+            e = st.get(fam)
+            if not e:
+                continue
+            dval = sgn(f"{e['delta']:+.3f}")
+            L.append(f"\\newcommand{{\\{nk}{ftag}Delta}}{{{dval}}}")
+            L.append(f"\\newcommand{{\\{nk}{ftag}DeltaCI}}{{{ci(e['delta_ci'][0], e['delta_ci'][1], 3)}}}")
+            sig = (e['delta_ci'][0] > 0 or e['delta_ci'][1] < 0)
+            L.append(f"\\newcommand{{\\{nk}{ftag}Sig}}{{{'yes' if sig else 'no'}}}")
+            if "rho" in e:
                 L.append(f"\\newcommand{{\\{nk}{ftag}Rho}}{{{e['rho']:.2f}}}")
-                L.append(f"\\newcommand{{\\{nk}{ftag}Delta}}{{{e['delta']:+.3f}}}".replace("+", "$+$").replace("-", "$-$"))
+                L.append(f"\\newcommand{{\\{nk}{ftag}RhoCI}}{{{ci(*e['rho_ci'])}}}")
+            if "amr" in e:
+                aval = sgn(f"{e['amr']:+.2f}")
+                L.append(f"\\newcommand{{\\{nk}{ftag}Amr}}{{{aval}}}")
+                L.append(f"\\newcommand{{\\{nk}{ftag}AmrCI}}{{{ci(*e['amr_ci'])}}}")
     (TAB / "multimodel_numbers.tex").write_text("\n".join(L) + "\n")
     print(f"[stage6] wrote multimodel table + figure + {len(L)} macros ({len(present)} models)")
 

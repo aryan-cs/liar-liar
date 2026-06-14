@@ -1,0 +1,32 @@
+{
+  "model_id": "mistralai/Mistral-7B-Instruct-v0.3",
+  "name": "mistral",
+  "gate": 1.5,
+  "seed": 0,
+  "n_layers": 32,
+  "layer_grid": [
+    12,
+    14
+  ],
+  "aligned_ks": [
+    16,
+    64,
+    256,
+    1024
+  ],
+  "rand_k": 64,
+  "families": {
+    "dec": {
+      "layer": 14,
+      "alpha": 2.0,
+      "val_mc2_delta": 0.061249871898422514,
+      "ppl_ratio": 1.2059426432620493
+    },
+    "mm": {
+      "layer": 14,
+      "alpha": 4.0,
+      "val_mc2_delta": 0.2483761636522065,
+      "ppl_ratio": 1.1015470055275876
+    }
+  }
+}
