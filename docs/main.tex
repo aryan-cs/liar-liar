@@ -1,30 +1,19 @@
 % Liar, Liar: Beyond Vocabulary Suppression
 % Compile: tectonic main.tex
-% Layout follows the ICLR 2024 preprint template (single column, Times,
-% small-caps left-aligned title and section headings, "Preprint." header).
-\documentclass[10pt]{article}
+% Layout: NeurIPS 2023 style in preprint (non-anonymous) mode, via neurips_2023.sty.
+\documentclass{article}
 
-% -- Fonts --
+% NeurIPS 2023 style. preprint = non-anonymous preprint version; nonatbib = we
+% load natbib ourselves (below) so the manual bibliography keeps its citation style.
+\usepackage[preprint, nonatbib]{neurips_2023}
+
+% -- Encoding (neurips_2023 loads the times package for the body font) --
 \usepackage[T1]{fontenc}
-\renewcommand{\rmdefault}{ptm}    % Times
-\renewcommand{\sfdefault}{phv}    % Helvetica
 
-% -- Geometry (ICLR-like text block) --
-\usepackage[
-  textheight=9in,
-  textwidth=5.5in,
-  top=1in,
-  headheight=14pt,
-  headsep=20pt,
-  footskip=30pt,
-  centering
-]{geometry}
+% -- Citations --
+\usepackage[round]{natbib}
 
-% -- Paragraph style --
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{5.5pt}
-
-% -- Colors (document chrome) --
+% -- Colors (document chrome + appendix highlights) --
 \usepackage{xcolor}
 \definecolor{primary}{HTML}{7B2D26}    % burgundy: links, citations
 \definecolor{secondary}{HTML}{B8973A}  % gold: repo link
@@ -40,37 +29,16 @@
 \newcommand{\trueans}[1]{\colorbox{okBg}{\strut\textcolor{okGreen}{$\checkmark$}~#1}}
 \newcommand{\falseans}[1]{\colorbox{badBg}{\strut\textcolor{badRed}{$\times$}~#1}}
 
-% -- Typography --
+% -- Typography & essentials --
 \usepackage{microtype}
-
-% -- Essentials --
 \usepackage{amsmath, amssymb, bm}
 \usepackage{graphicx, subcaption}
 \usepackage{booktabs, array}
 \usepackage{enumitem}
-\usepackage[round]{natbib}
-
-% -- Running header: "Preprint." with a rule (ICLR style) --
-\usepackage{fancyhdr}
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[L]{\small\scshape Preprint}
-\fancyfoot[C]{\small\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
-\renewcommand{\footrulewidth}{0pt}
 
 % -- Links (after natbib) --
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, citecolor=primary, linkcolor=primary, urlcolor=primary}
-
-% -- Section heading styles (small caps, numbered, left-aligned: ICLR style) --
-\usepackage{titlesec}
-\titleformat{\section}{\large\bfseries\scshape\raggedright}{\thesection}{1em}{}
-\titleformat{\subsection}{\normalsize\bfseries\scshape\raggedright}{\thesubsection}{1em}{}
-\titlespacing{\section}{0pt}{3.2ex plus 1ex minus .2ex}{1.6ex plus .2ex}
-\titlespacing{\subsection}{0pt}{2.6ex plus .8ex minus .2ex}{1.2ex plus .2ex}
-\titleformat{\paragraph}[runin]{\normalsize\bfseries}{}{0pt}{}
-\titlespacing{\paragraph}{0pt}{6pt}{1em}
 
 % -- Float control: keep figures inside their sections --
 \usepackage[section]{placeins}
@@ -100,26 +68,21 @@
 \input{tables/numbers}
 \input{tables/multimodel_numbers}
 
+\title{Liar, Liar: Beyond Vocabulary Suppression}
+
+\author{%
+  Aryan Gupta \\
+  \texttt{aryan.cs.app@gmail.com} \quad
+  \textcolor{secondary}{\texttt{github.com/aryan-cs/liar-liar}}
+}
+
 \begin{document}
 
-% -- Title block (ICLR style: small-caps, left-aligned) --
-\thispagestyle{fancy}
-\begingroup
-\setlength{\parskip}{0pt}
-{\LARGE\bfseries\scshape Liar, Liar: Beyond Vocabulary Suppression\par}
-\vspace{18pt}
-{\large\bfseries Aryan Gupta\par}
-\vspace{3pt}
-{\normalsize\texttt{aryan.cs.app@gmail.com}\hspace{1.5em}\textcolor{secondary}{\texttt{github.com/aryan-cs/liar-liar}}\par}
-\endgroup
-\vspace{20pt}
+\maketitle
 
-% -- Abstract (centred small-caps heading, indented block) --
-\begin{center}{\bfseries\scshape Abstract}\end{center}
-\vspace{-4pt}
-{\leftskip=0.45in \rightskip=0.45in \parindent=0pt \noindent
-\input{sections/abstract}\par}
-\vspace{10pt}
+\begin{abstract}
+\input{sections/abstract}
+\end{abstract}
 
 \input{sections/intro}
 \input{sections/related}
