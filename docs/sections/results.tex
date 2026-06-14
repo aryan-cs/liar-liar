@@ -9,6 +9,8 @@ The depth statistic computed in this regime looks decisive and is not. The full 
 \begin{table}[t]
 \centering
 \small
+\setlength{\tabcolsep}{16pt}
+\renewcommand{\arraystretch}{1.15}
 \input{tables/results_matrix}
 \caption{Headline condition matrix on the \NTest{} held-out test questions; the shared unsteered baseline has MC2 $= \BaseMcTwo$. $\rho$ is the fraction of the family's own steering effect that survives each projection, with paired-bootstrap 95\% intervals. CAA's denominator is not bounded away from zero (its $\Delta$MC2 interval \DecTestDeltaCI{} contains zero), so its $\rho$ column is reported for completeness but is not interpreted; percentile intervals for a ratio are not valid confidence sets in that regime. The mass-mean denominator is bounded away from zero ($\Delta$MC2 \MmTestDelta{} \MmTestDeltaCI), and its $\rho$ values carry the central result. Figure~\ref{fig:forest} plots the same matrix as paired deltas.}
 \label{tab:matrix}
