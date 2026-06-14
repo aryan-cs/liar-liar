@@ -1,0 +1,247 @@
+{
+  "base_nll": 3.78703874098677,
+  "base_mc2": 0.4526516127127661,
+  "gate": 1.5,
+  "grid": [
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 0.5,
+      "nll_ratio": 1.3054331847230545,
+      "val_mc2": 0.45947936892689517,
+      "val_mc2_delta": 0.006827756214129066,
+      "val_eta": 0.2616898223757744,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 1.0,
+      "nll_ratio": 1.3976284531510201,
+      "val_mc2": 0.4670668885723293,
+      "val_mc2_delta": 0.014415275859563204,
+      "val_eta": 0.3886755369603634,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 1.5,
+      "nll_ratio": 1.5965231265600772,
+      "val_mc2": 0.47169931490739814,
+      "val_mc2_delta": 0.019047702194632032,
+      "val_eta": 0.5086700409650803,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 2.0,
+      "nll_ratio": 1.5855266600287616,
+      "val_mc2": 0.4751495043462856,
+      "val_mc2_delta": 0.022497891633519507,
+      "val_eta": 0.6239311255514621,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 3.0,
+      "nll_ratio": 1.2049019761586997,
+      "val_mc2": 0.4731396972927933,
+      "val_mc2_delta": 0.02048808458002721,
+      "val_eta": 0.8316188131769499,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 12,
+      "alpha": 4.0,
+      "nll_ratio": 1.5850455589676669,
+      "val_mc2": 0.47806143347054975,
+      "val_mc2_delta": 0.02540982075778364,
+      "val_eta": 0.9816791292279958,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 0.5,
+      "nll_ratio": 1.5385895175617494,
+      "val_mc2": 0.45434251607783877,
+      "val_mc2_delta": 0.0016909033650726601,
+      "val_eta": 0.31989865327874817,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 1.0,
+      "nll_ratio": 1.5188886720010624,
+      "val_mc2": 0.45662653696457983,
+      "val_mc2_delta": 0.003974924251813727,
+      "val_eta": 0.5092492728183667,
+      "coherent": false
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 1.5,
+      "nll_ratio": 1.4337305355515693,
+      "val_mc2": 0.45948308332102533,
+      "val_mc2_delta": 0.006831470608259227,
+      "val_eta": 0.6980187192559242,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 2.0,
+      "nll_ratio": 1.3707618288005765,
+      "val_mc2": 0.46236966997391477,
+      "val_mc2_delta": 0.00971805726114866,
+      "val_eta": 0.8903295088559389,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 3.0,
+      "nll_ratio": 1.3511781773198892,
+      "val_mc2": 0.4597998012013304,
+      "val_mc2_delta": 0.0071481884885643,
+      "val_eta": 1.291148921350638,
+      "coherent": true
+    },
+    {
+      "family": "dec",
+      "layer": 14,
+      "alpha": 4.0,
+      "nll_ratio": 1.3136633790289791,
+      "val_mc2": 0.45243668466259845,
+      "val_mc2_delta": -0.00021492805016765093,
+      "val_eta": 1.7014874637126922,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 0.5,
+      "nll_ratio": 1.2029893171016515,
+      "val_mc2": 0.4937946994578007,
+      "val_mc2_delta": 0.041143086745034585,
+      "val_eta": -0.05467237221697966,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 1.0,
+      "nll_ratio": 248.30614685152395,
+      "val_mc2": 0.5506648836528887,
+      "val_mc2_delta": 0.09801327094012258,
+      "val_eta": -0.08110113792742292,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 1.5,
+      "nll_ratio": 1382.2924437244715,
+      "val_mc2": 0.5263193588684328,
+      "val_mc2_delta": 0.07366774615566674,
+      "val_eta": -0.44388594254851343,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 2.0,
+      "nll_ratio": 682.9628320233088,
+      "val_mc2": 0.5312902687206724,
+      "val_mc2_delta": 0.07863865600790632,
+      "val_eta": -0.593322039147218,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 3.0,
+      "nll_ratio": 335.8016833472074,
+      "val_mc2": 0.5306198824985352,
+      "val_mc2_delta": 0.0779682697857691,
+      "val_eta": -1.022830260793368,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 12,
+      "alpha": 4.0,
+      "nll_ratio": 270.6065519109598,
+      "val_mc2": 0.5314915811272304,
+      "val_mc2_delta": 0.07883996841446428,
+      "val_eta": -1.1180603086948395,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 0.5,
+      "nll_ratio": 1.0933141310345527,
+      "val_mc2": 0.482672568457098,
+      "val_mc2_delta": 0.03002095574433189,
+      "val_eta": -0.03368266988545656,
+      "coherent": true
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 1.0,
+      "nll_ratio": 46.64826151161968,
+      "val_mc2": 0.5905851125955653,
+      "val_mc2_delta": 0.13793349988279924,
+      "val_eta": 0.0212593802716583,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 1.5,
+      "nll_ratio": 910.4750902899121,
+      "val_mc2": 0.5382223555963859,
+      "val_mc2_delta": 0.08557074288361977,
+      "val_eta": -0.3392248610034585,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 2.0,
+      "nll_ratio": 991.7827568028288,
+      "val_mc2": 0.5274703887480241,
+      "val_mc2_delta": 0.074818776035258,
+      "val_eta": -0.5895484909415245,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 3.0,
+      "nll_ratio": 383.52801397058676,
+      "val_mc2": 0.5315151686279309,
+      "val_mc2_delta": 0.0788635559151648,
+      "val_eta": -1.0200056026379267,
+      "coherent": false
+    },
+    {
+      "family": "mm",
+      "layer": 14,
+      "alpha": 4.0,
+      "nll_ratio": 252.2146878877243,
+      "val_mc2": 0.5268859021179538,
+      "val_mc2_delta": 0.07423428940518773,
+      "val_eta": -1.1189310242732367,
+      "coherent": false
+    }
+  ]
+}

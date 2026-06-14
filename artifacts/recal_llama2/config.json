@@ -1,0 +1,32 @@
+{
+  "model_id": "NousResearch/Llama-2-7b-chat-hf",
+  "name": "llama2",
+  "gate": 1.5,
+  "seed": 0,
+  "n_layers": 32,
+  "layer_grid": [
+    12,
+    14
+  ],
+  "aligned_ks": [
+    16,
+    64,
+    256,
+    1024
+  ],
+  "rand_k": 64,
+  "families": {
+    "dec": {
+      "layer": 12,
+      "alpha": 3.0,
+      "val_mc2_delta": 0.02048808458002721,
+      "ppl_ratio": 1.2049019761586997
+    },
+    "mm": {
+      "layer": 12,
+      "alpha": 0.5,
+      "val_mc2_delta": 0.041143086745034585,
+      "ppl_ratio": 1.2029893171016515
+    }
+  }
+}

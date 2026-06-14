@@ -1,0 +1,98 @@
+{
+  "dec/al16": {
+    "k": 16,
+    "max_direct_before": 19.204716315652437,
+    "max_direct_after": 5.750955267558311e-14,
+    "norm_ratio": 0.9836514592170715
+  },
+  "dec/al64": {
+    "k": 64,
+    "max_direct_before": 19.204716315652437,
+    "max_direct_after": 6.45039577307216e-14,
+    "norm_ratio": 0.9620006680488586
+  },
+  "dec/al256": {
+    "k": 256,
+    "max_direct_before": 19.204716315652437,
+    "max_direct_after": 1.305622276959184e-13,
+    "norm_ratio": 0.897223949432373
+  },
+  "dec/al1024": {
+    "k": 1024,
+    "max_direct_before": 19.204716315652437,
+    "max_direct_after": 1.4654943925052066e-13,
+    "norm_ratio": 0.7008576989173889
+  },
+  "dec/cur": {
+    "k": 27,
+    "max_direct_before": 10.636452962003323,
+    "max_direct_after": 1.7319479184152442e-14,
+    "norm_ratio": 0.9937427639961243
+  },
+  "dec/stat": {
+    "k": 64,
+    "max_direct_before": 12.345544783561149,
+    "max_direct_after": 3.108624468950438e-14,
+    "norm_ratio": 0.9874151945114136
+  },
+  "dec/rand_s0": {
+    "k": 64,
+    "norm_ratio": 0.9896530508995056
+  },
+  "dec/rand_s1": {
+    "k": 64,
+    "norm_ratio": 0.9911909103393555
+  },
+  "dec/rand_s2": {
+    "k": 64,
+    "norm_ratio": 0.9932107925415039
+  },
+  "mm/al16": {
+    "k": 16,
+    "max_direct_before": 255.92512326974077,
+    "max_direct_after": 1.5631940186722204e-12,
+    "norm_ratio": 0.9861251711845398
+  },
+  "mm/al64": {
+    "k": 64,
+    "max_direct_before": 255.92512326974077,
+    "max_direct_after": 1.3358203432289883e-12,
+    "norm_ratio": 0.9757234454154968
+  },
+  "mm/al256": {
+    "k": 256,
+    "max_direct_before": 255.92512326974077,
+    "max_direct_after": 1.3216094885137863e-12,
+    "norm_ratio": 0.9661528468132019
+  },
+  "mm/al1024": {
+    "k": 1024,
+    "max_direct_before": 255.92512326974077,
+    "max_direct_after": 1.5987211554602254e-12,
+    "norm_ratio": 0.9153916835784912
+  },
+  "mm/cur": {
+    "k": 27,
+    "max_direct_before": 51.525785612234024,
+    "max_direct_after": 4.1042169662830474e-13,
+    "norm_ratio": 0.9995568990707397
+  },
+  "mm/stat": {
+    "k": 64,
+    "max_direct_before": 218.86117473641687,
+    "max_direct_after": 1.2079226507921703e-12,
+    "norm_ratio": 0.9982243180274963
+  },
+  "mm/rand_s0": {
+    "k": 64,
+    "norm_ratio": 0.9904792904853821
+  },
+  "mm/rand_s1": {
+    "k": 64,
+    "norm_ratio": 0.9937516450881958
+  },
+  "mm/rand_s2": {
+    "k": 64,
+    "norm_ratio": 0.9920887351036072
+  }
+}

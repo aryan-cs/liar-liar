@@ -123,18 +123,26 @@ def main():
     lines = [r"\begin{tabular}{llccc}", r"\toprule",
              r"model & family & $\Delta$MC2 [95\% CI] & $\rho$ (al-64) [95\% CI] & aligned$-$random [95\% CI] \\",
              r"\midrule"]
+    def dim(cell, sig):
+        """Grey a ratio cell unless it decomposes a genuine truthfulness gain
+        (delta significantly positive); rho is a gain-fraction and is undefined
+        for null or harmful effects."""
+        return cell if sig else (r"\textcolor{black!42}{" + cell + "}")
+
     for label, _, st in present:
         for fi, fam in enumerate(("dec", "mm")):
             if fam not in st:
                 continue
             e = st[fam]
+            lo, hi = e["delta_ci"]
+            sig = lo > 0
             mcell = label if fi == 0 else ""
             d = f"${e['delta']:+.3f}$ {{\\scriptsize $[{e['delta_ci'][0]:+.3f}, {e['delta_ci'][1]:+.3f}]$}}"
             rho = (f"${e['rho']:.2f}$ {{\\scriptsize $[{e['rho_ci'][0]:.2f}, {e['rho_ci'][1]:.2f}]$}}"
                    if "rho" in e else "---")
             amr = (f"${e['amr']:+.2f}$ {{\\scriptsize $[{e['amr_ci'][0]:+.2f}, {e['amr_ci'][1]:+.2f}]$}}"
                    if "amr" in e else "---")
-            lines.append(f"{mcell} & {FAM_LABEL[fam]} & {d} & {rho} & {amr} \\\\")
+            lines.append(f"{mcell} & {FAM_LABEL[fam]} & {d} & {dim(rho, sig)} & {dim(amr, sig)} \\\\")
         lines.append(r"\midrule")
     lines[-1] = r"\bottomrule"
     lines.append(r"\end{tabular}")
@@ -147,25 +155,64 @@ def main():
     import matplotlib.pyplot as plt
     plt.rcParams.update({"font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False,
                          "figure.dpi": 200, "savefig.bbox": "tight", "legend.frameon": False})
-    fig, ax = plt.subplots(figsize=(6.4, 2.8))
+    # short x-tick labels
+    SHORT = {"Llama-3-8B-Instruct": "Llama-3-8B", "Mistral-7B-Instruct-v0.3": "Mistral-7B",
+             "Qwen2.5-7B-Instruct": "Qwen2.5-7B", "Llama-2-7B-chat": "Llama-2-7B"}
     labels = [l for l, _, _ in present]
+    short = [SHORT.get(l, l) for l in labels]
     x = np.arange(len(labels))
-    for fam, col, off in (("mm", GREEN_D, -0.12), ("dec", BLUE_D, 0.12)):
-        ys, los, his = [], [], []
-        for _, _, st in present:
-            e = st.get(fam, {})
-            ys.append(e.get("rho", np.nan))
-            ci = e.get("rho_ci", [np.nan, np.nan])
-            los.append(ci[0]); his.append(ci[1])
-        ys = np.array(ys); los = np.array(los); his = np.array(his)
-        ax.errorbar(x + off, ys, yerr=[ys - los, his - ys], fmt="o", color=col, capsize=3,
-                    ms=6, lw=1.4, label=f"{FAM_LABEL[fam]} $\\rho$ (al-64)")
-    ax.axhline(1, ls=":", color="gray", lw=0.9)
-    ax.axhline(0, ls=":", color="gray", lw=0.9)
-    ax.set_xticks(x); ax.set_xticklabels(labels, fontsize=7.5)
-    ax.set_ylabel(r"depth statistic $\rho$ (MC2)")
-    ax.set_title("Depth statistic across models")
-    ax.legend(fontsize=7.5, loc="lower right")
+
+    def sig(e):
+        """Depth rho is plotted only where the effect is a genuine truthfulness
+        gain (delta significantly positive); rho is a gain-fraction."""
+        return e["delta_ci"][0] > 0
+
+    fig, (axL, axR) = plt.subplots(1, 2, figsize=(7.0, 2.9),
+                                   gridspec_kw={"width_ratios": [1.55, 1.0]})
+
+    # --- panel (a): the effect itself, delta MC2 per model per family ---
+    for fam, col, off in (("dec", BLUE_D, -0.13), ("mm", GREEN_D, 0.13)):
+        ys, los, his, xs = [], [], [], []
+        for i, (_, _, st) in enumerate(present):
+            if fam not in st:
+                continue
+            e = st[fam]
+            xs.append(i + off); ys.append(e["delta"])
+            los.append(e["delta_ci"][0]); his.append(e["delta_ci"][1])
+        ys = np.array(ys); los = np.array(los); his = np.array(his); xs = np.array(xs)
+        axL.errorbar(xs, ys, yerr=[ys - los, his - ys], fmt="o", color=col, capsize=3,
+                     ms=6, lw=1.4, label=FAM_LABEL[fam])
+    axL.axhline(0, ls="-", color="0.3", lw=0.8)
+    axL.set_xticks(x); axL.set_xticklabels(short, fontsize=7, rotation=18, ha="right")
+    axL.set_ylabel(r"truthfulness gain $\Delta$MC2")
+    axL.set_title("(a) Steering effect across models", fontsize=8.5)
+    axL.legend(fontsize=7.5, loc="upper right")
+
+    # --- panel (b): depth rho, mass-mean, only where the effect is significant ---
+    rx, ry, rlo, rhi, rlab = [], [], [], [], []
+    for i, (_, _, st) in enumerate(present):
+        e = st.get("mm")
+        if e and "rho" in e and sig(e):
+            rx.append(len(rx)); ry.append(e["rho"])
+            rlo.append(e["rho_ci"][0]); rhi.append(e["rho_ci"][1])
+            rlab.append(short[i])
+    rx = np.array(rx); ry = np.array(ry); rlo = np.array(rlo); rhi = np.array(rhi)
+    axR.axhspan(0, 1, color=GREEN_D, alpha=0.06)
+    axR.errorbar(rx, ry, yerr=[ry - rlo, rhi - ry], fmt="o", color=GREEN_D, capsize=3,
+                 ms=7, lw=1.5)
+    axR.axhline(1, ls=":", color="0.4", lw=0.9)
+    axR.axhline(0, ls=":", color="0.4", lw=0.9)
+    axR.text(0.02, 1.0, "all downstream", transform=axR.get_yaxis_transform(),
+             fontsize=6.5, va="bottom", ha="left", color="0.35")
+    axR.text(0.02, 0.0, "all readout", transform=axR.get_yaxis_transform(),
+             fontsize=6.5, va="bottom", ha="left", color="0.35")
+    axR.set_xticks(rx); axR.set_xticklabels(rlab, fontsize=7, rotation=18, ha="right")
+    axR.set_xlim(-0.6, max(len(rx) - 0.4, 0.6))
+    axR.set_ylim(-0.1, 1.45)
+    axR.set_ylabel(r"depth statistic $\rho$ (mass-mean)")
+    axR.set_title("(b) Depth where effect is real", fontsize=8.5)
+
+    fig.tight_layout()
     fig.savefig(FIG / "multimodel.pdf")
     plt.close(fig)
 
