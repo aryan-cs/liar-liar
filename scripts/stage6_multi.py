@@ -25,6 +25,7 @@ MODELS = [
     ("recal", "recal", "Llama-3-8B-Instruct"),
     ("recal_mistral", "recal_mistral", "Mistral-7B-Instruct-v0.3"),
     ("recal_qwen", "recal_qwen", "Qwen2.5-7B-Instruct"),
+    ("recal_llama2", "recal_llama2", "Llama-2-7B-chat"),
 ]
 GREEN_D, BLUE_D, GRAY = "#2E9E57", "#2F8FCC", "#8C8C8C"
 FAM_LABEL = {"dec": "CAA", "mm": "mass-mean"}
@@ -171,7 +172,7 @@ def main():
     # --- macros ---
     L = []
     namekey = {"Mistral-7B-Instruct-v0.3": "Mistral", "Qwen2.5-7B-Instruct": "Qwen",
-               "Llama-3-8B-Instruct": "Llama"}
+               "Llama-3-8B-Instruct": "Llama", "Llama-2-7B-chat": "LlamaTwo"}
     def sgn(s):
         return s.replace("+", "$+$").replace("-", "$-$")
 

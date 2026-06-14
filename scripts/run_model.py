@@ -116,6 +116,17 @@ def main():
     lm = load_model(model_id)
     torch.manual_seed(SEED)
     tok = lm.tokenizer
+    if tok.chat_template is None:  # some mirrors (e.g. Llama-2) ship no template
+        tok.chat_template = (
+            "{% if messages[0]['role'] == 'system' %}{% set sys = messages[0]['content'] %}"
+            "{% set msgs = messages[1:] %}{% else %}{% set sys = false %}{% set msgs = messages %}{% endif %}"
+            "{% for m in msgs %}{% if loop.index0 == 0 and sys != false %}"
+            "{% set content = '<<SYS>>\\n' + sys + '\\n<</SYS>>\\n\\n' + m['content'] %}"
+            "{% else %}{% set content = m['content'] %}{% endif %}"
+            "{% if m['role'] == 'user' %}{{ bos_token + '[INST] ' + content.strip() + ' [/INST]' }}"
+            "{% elif m['role'] == 'assistant' %}{{ ' ' + content.strip() + ' ' + eos_token }}{% endif %}{% endfor %}"
+        )
+        print(f"[{name}] set fallback Llama-2-style chat template", flush=True)
     L = lm.n_layers
     layer_grid = sorted({max(1, int(round(0.375 * L))), max(2, int(round(0.4375 * L)))})
     print(f"[{name}] L={L} d={lm.d_model} V={lm.vocab_size} layer_grid={layer_grid}", flush=True)
