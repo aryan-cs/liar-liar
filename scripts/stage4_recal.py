@@ -761,6 +761,7 @@ def make_numbers(summary, calib, cfg, certs, rng):
             def fgmean(key):
                 vals = [r[key] for r in recs if key in r]
                 return boot_mean(np.array(vals), rng) if vals else None
+            cmd("FreeGenN", len(recs))
             b = fgmean("score_baseline")
             if b:
                 cmd("FreeGenBase", _fmt(b[0], 3))
