@@ -304,6 +304,10 @@ For a small perturbation $v$, a first-order expansion gives
 \end{equation}
 where $M^{(\ell^\star \to L)} \in \R^{d \times d}$ is the sum of Jacobians of the attention and MLP blocks composed along layers $\ell^\star, \ell^\star+1, \dots, L-1$, evaluated at the unperturbed activations. The identity term $I_d$ in \Cref{eq:propagation} is the direct residual path: the perturbation passes through subsequent residual additions unchanged. The matrix $M^{(\ell^\star \to L)}$ is the indirect path: every downstream attention head and feed-forward block reads the perturbed residual and writes a contribution back into the stream.
 
+\begin{remark}[All-position injection]
+In the experiments $v$ is added at every token position, following the CAA inference convention, rather than at position $n$ alone. This leaves the decomposition \Cref{eq:propagation} unchanged in form. Only the injection at the readout position contributes to the direct term $\WUt^\star v$, because the direct path is the identity residual addition evaluated at that position; injections at earlier positions reach the final-position logits solely through downstream attention and are absorbed into the indirect operator $M^{(\ell^\star \to L)}$, now read as the full first-order map from the all-position perturbation to the final-position residual, including the cross-position attention Jacobians. Consequently a projected vector satisfying $\WUt^\star v = 0$ on the token set $T$ nulls the entire direct path to $T$ at the readout position, independently of how many positions are perturbed.
+\end{remark}
+
 \subsection{Direct and indirect logit contributions}
 
 Composing \Cref{eq:propagation} with the readout linearization \Cref{eq:firstorder},

@@ -235,7 +235,10 @@ def main():
             dval = sgn(f"{e['delta']:+.3f}")
             L.append(f"\\newcommand{{\\{nk}{ftag}Delta}}{{{dval}}}")
             L.append(f"\\newcommand{{\\{nk}{ftag}DeltaCI}}{{{ci(e['delta_ci'][0], e['delta_ci'][1], 3)}}}")
-            sig = (e['delta_ci'][0] > 0 or e['delta_ci'][1] < 0)
+            # "Sig" tracks a significant positive truthfulness GAIN, matching the
+            # one-sided rule used for rho-greying (line ~138) and figure panel (b);
+            # a significant *negative* effect (e.g. Mistral CAA) is not a gain.
+            sig = e['delta_ci'][0] > 0
             L.append(f"\\newcommand{{\\{nk}{ftag}Sig}}{{{'yes' if sig else 'no'}}}")
             if "rho" in e:
                 L.append(f"\\newcommand{{\\{nk}{ftag}Rho}}{{{e['rho']:.2f}}}")

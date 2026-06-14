@@ -1,98 +1,98 @@
 {
   "dec/al16": {
     "k": 16,
-    "max_direct_before": 19.204716315652437,
-    "max_direct_after": 5.750955267558311e-14,
-    "norm_ratio": 0.9836514592170715
+    "max_direct_before": 0.929051964681768,
+    "max_direct_after": 2.3592239273284576e-15,
+    "norm_ratio": 0.9832184314727783
   },
   "dec/al64": {
     "k": 64,
-    "max_direct_before": 19.204716315652437,
-    "max_direct_after": 6.45039577307216e-14,
-    "norm_ratio": 0.9620006680488586
+    "max_direct_before": 0.929051964681768,
+    "max_direct_after": 4.801714581503802e-15,
+    "norm_ratio": 0.9530355334281921
   },
   "dec/al256": {
     "k": 256,
-    "max_direct_before": 19.204716315652437,
-    "max_direct_after": 1.305622276959184e-13,
-    "norm_ratio": 0.897223949432373
+    "max_direct_before": 0.929051964681768,
+    "max_direct_after": 7.271960811294775e-15,
+    "norm_ratio": 0.8715137839317322
   },
   "dec/al1024": {
     "k": 1024,
-    "max_direct_before": 19.204716315652437,
-    "max_direct_after": 1.4654943925052066e-13,
-    "norm_ratio": 0.7008576989173889
+    "max_direct_before": 0.929051964681768,
+    "max_direct_after": 7.632783294297951e-15,
+    "norm_ratio": 0.6741577982902527
   },
   "dec/cur": {
     "k": 27,
-    "max_direct_before": 10.636452962003323,
-    "max_direct_after": 1.7319479184152442e-14,
-    "norm_ratio": 0.9937427639961243
+    "max_direct_before": 0.6149579252976776,
+    "max_direct_after": 1.5265566588595902e-15,
+    "norm_ratio": 0.9935830235481262
   },
   "dec/stat": {
     "k": 64,
-    "max_direct_before": 12.345544783561149,
-    "max_direct_after": 3.108624468950438e-14,
-    "norm_ratio": 0.9874151945114136
+    "max_direct_before": 0.47776345573980483,
+    "max_direct_after": 1.1518563880486e-15,
+    "norm_ratio": 0.9912766218185425
   },
   "dec/rand_s0": {
     "k": 64,
-    "norm_ratio": 0.9896530508995056
+    "norm_ratio": 0.9892521500587463
   },
   "dec/rand_s1": {
     "k": 64,
-    "norm_ratio": 0.9911909103393555
+    "norm_ratio": 0.9921014904975891
   },
   "dec/rand_s2": {
     "k": 64,
-    "norm_ratio": 0.9932107925415039
+    "norm_ratio": 0.9934636354446411
   },
   "mm/al16": {
     "k": 16,
-    "max_direct_before": 255.92512326974077,
-    "max_direct_after": 1.5631940186722204e-12,
-    "norm_ratio": 0.9861251711845398
+    "max_direct_before": 0.5024965193757506,
+    "max_direct_after": 1.0998146837692957e-15,
+    "norm_ratio": 0.9800921082496643
   },
   "mm/al64": {
     "k": 64,
-    "max_direct_before": 255.92512326974077,
-    "max_direct_after": 1.3358203432289883e-12,
-    "norm_ratio": 0.9757234454154968
+    "max_direct_before": 0.5024965193757506,
+    "max_direct_after": 1.0061396160665481e-15,
+    "norm_ratio": 0.9611620903015137
   },
   "mm/al256": {
     "k": 256,
-    "max_direct_before": 255.92512326974077,
-    "max_direct_after": 1.3216094885137863e-12,
-    "norm_ratio": 0.9661528468132019
+    "max_direct_before": 0.5024965193757506,
+    "max_direct_after": 2.886579864025407e-15,
+    "norm_ratio": 0.869709312915802
   },
   "mm/al1024": {
     "k": 1024,
-    "max_direct_before": 255.92512326974077,
-    "max_direct_after": 1.5987211554602254e-12,
-    "norm_ratio": 0.9153916835784912
+    "max_direct_before": 0.5024965193757506,
+    "max_direct_after": 3.0166841247236675e-15,
+    "norm_ratio": 0.6640431880950928
   },
   "mm/cur": {
     "k": 27,
-    "max_direct_before": 51.525785612234024,
-    "max_direct_after": 4.1042169662830474e-13,
-    "norm_ratio": 0.9995568990707397
+    "max_direct_before": 0.226065033505304,
+    "max_direct_after": 8.049116928532385e-16,
+    "norm_ratio": 0.9964790940284729
   },
   "mm/stat": {
     "k": 64,
-    "max_direct_before": 218.86117473641687,
-    "max_direct_after": 1.2079226507921703e-12,
-    "norm_ratio": 0.9982243180274963
+    "max_direct_before": 0.2703469450839362,
+    "max_direct_after": 7.042977312465837e-16,
+    "norm_ratio": 0.9909288883209229
   },
   "mm/rand_s0": {
     "k": 64,
-    "norm_ratio": 0.9904792904853821
+    "norm_ratio": 0.9915316700935364
   },
   "mm/rand_s1": {
     "k": 64,
-    "norm_ratio": 0.9937516450881958
+    "norm_ratio": 0.991940975189209
   },
   "mm/rand_s2": {
     "k": 64,
-    "norm_ratio": 0.9920887351036072
+    "norm_ratio": 0.9921349287033081
   }
 }

@@ -34,6 +34,13 @@ def load_model(
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
+    # Final-token extraction (steering._last_token_residuals, tokenset, lens) and
+    # the calibration point all read the residual/logit at attention_mask.sum()-1,
+    # which is the last real token ONLY under right padding. Some tokenizers default
+    # to left padding (e.g. Llama-2-chat), which would point that index into the pad
+    # region and corrupt the vectors. Force right padding to match that assumption;
+    # eval.py flips to left for generation and restores right in its own scope.
+    tokenizer.padding_side = "right"
 
     def _load(**kw):
         try:

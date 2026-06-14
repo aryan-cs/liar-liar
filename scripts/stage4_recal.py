@@ -213,13 +213,18 @@ def main() -> None:
             e_perp = boot_mean(perp_d, rng)
             ent = {"delta_vdec": float(dec_d.mean()), "delta_vdec_ci": [e_dec[1], e_dec[2]],
                    "delta_vperp": float(perp_d.mean()), "delta_vperp_ci": [e_perp[1], e_perp[2]]}
-            # matched-subset comparison: in-distribution effect on the same questions
-            pids = [r["idx"] for r in pbase]
+            # matched-subset comparison: in-distribution effect on the same questions.
+            # dec_d is in pbase order but only over pbase rows present in pdec; key by
+            # exactly those kept idx (not all of pbase) so a dropped row cannot silently
+            # misalign the (idx, delta) pairing, and restrict the matched set to ids
+            # present in baseline, v_dec, AND the paraphrase delta so id and ood pair up.
             b_map = {r["idx"]: r["mc2"] for r in base}
             vd_map = {r["idx"]: r["mc2"] for r in v_dec}
-            common = [i for i in pids if i in b_map and i in vd_map]
+            pdec_ids = {r["idx"] for r in pdec}
+            kept_idx = [r["idx"] for r in pbase if r["idx"] in pdec_ids]
+            ood_map = {i: d for i, d in zip(kept_idx, dec_d)}
+            common = [r["idx"] for r in pbase if r["idx"] in b_map and r["idx"] in vd_map and r["idx"] in ood_map]
             id_d = np.array([vd_map[i] - b_map[i] for i in common])
-            ood_map = {r["idx"]: d for r, d in zip(pbase, dec_d)}
             ood_sub = np.array([ood_map[i] for i in common])
             e_id = boot_mean(id_d, rng)
             e_pair = boot_mean(ood_sub - id_d, rng)
@@ -242,7 +247,7 @@ def main() -> None:
     make_tables(summary, certs, cfg)
     make_numbers(summary, calib, cfg, certs, rng)
     make_appendix_tables(summary, certs, cfg, calib)
-    make_caagrid_table()
+    make_caagrid_table(summary, cfg)
     print("[stage4r] complete")
 
 
@@ -287,7 +292,7 @@ def make_figures(summary, calib, cfg, certs):
         "axes.grid": True, "grid.alpha": 0.22, "grid.linewidth": 0.5,
         "legend.frameon": False, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
     })
-    rng = np.random.default_rng(7)
+    rng = np.random.default_rng(SEED)
     base = load_jsonl(RES / "baseline.jsonl")
     fams = list(summary["families"].keys())
 
@@ -460,9 +465,11 @@ def make_figures(summary, calib, cfg, certs):
     if "mm" in fams:
         fig, axes = plt.subplots(1, 2, figsize=(6.4, 3.0), sharey=True, sharex=True)
         bmap = {r["idx"]: r["mc2"] for r in base}
+        # both panels are the mass-mean family: use the unprojected-vector ink and the
+        # mass-mean green, not COL_PERP (= CAA blue), which would misread as the CAA family
         for ax, cond, lab, col in (
-            (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", FAM_COLOR["mm"]),
-            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", COL_PERP),
+            (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", COL_VDEC),
+            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", GREEN_D),
         ):
             rows = load_jsonl(RES / "mm" / f"{cond}.jsonl")
             xs = np.array([bmap[r["idx"]] for r in rows if r["idx"] in bmap])
@@ -581,6 +588,12 @@ def make_numbers(summary, calib, cfg, certs, rng):
         d1 = f["delta_vdec_mc1"]
         cmd(f"{F}TestDeltaMcOne", _fmt(d1["point"], 3, sign=True))
         cmd(f"{F}TestDeltaMcOneCI", _ci(*d1["ci"]))
+        # fraction of test questions whose paired Delta MC2 improves (prose SSOT;
+        # same quantity annotated on the per-question scatter figure)
+        bfi, vfi = align(load_jsonl(RES / "baseline.jsonl"),
+                         load_jsonl(RES / fam / "v_dec.jsonl"), "mc2")
+        if len(bfi):
+            cmd(f"{F}FracImproving", f"{(vfi - bfi > 0).mean() * 100:.0f}\\%")
         for cond, tag in (("v_perp_al64", "RhoAlSixtyFour"), ("v_perp_cur", "RhoCur"),
                           ("v_perp_stat", "RhoStat"), ("v_perp_al64_nm", "RhoNm"),
                           ("v_perp_al1024", "RhoAlBig"), ("v_par_al64", "RhoPar")):
@@ -875,7 +888,7 @@ def _tex_escape_text(s: str) -> str:
     return s
 
 
-def make_caagrid_table():
+def make_caagrid_table(summary, cfg):
     """Table of CAA test-set Delta MC2 at every coherent grid setting."""
     import glob as _glob
     import re as _re
@@ -883,7 +896,7 @@ def make_caagrid_table():
     files = sorted(_glob.glob(str(RES / "dec_grid" / "*.jsonl")))
     if not base or not files:
         return
-    rng = np.random.default_rng(3)
+    rng = np.random.default_rng(SEED)
     rows = [r"\begin{tabular}{llc}", r"\toprule",
             r"$\ell$ & $\alpha$ & test $\Delta$MC2 [95\% CI] \\", r"\midrule"]
     entries = []
@@ -896,11 +909,15 @@ def make_caagrid_table():
         bb, gg = align(base, g, "mc2")
         e = boot_mean(gg - bb, rng)
         entries.append((layer, alpha, e, False))
+    # The starred operating-point row duplicates the headline CAA delta; read it
+    # from the single computed value in `summary` (seed 0) rather than re-bootstrapping,
+    # and label it from config, so it is identical to numbers.tex / Table 1 / Table 7.
     op = load_jsonl(RES / "dec" / "v_dec.jsonl")
-    if op:
-        bb, gg = align(base, op, "mc2")
-        e = boot_mean(gg - bb, rng)
-        entries.append((12, 3.0, e, True))
+    if op and "dec" in summary["families"]:
+        dvd = summary["families"]["dec"]["delta_vdec_mc2"]
+        e = (dvd["point"], dvd["ci"][0], dvd["ci"][1])
+        op_cfg = cfg["families"]["dec"]
+        entries.append((op_cfg["layer"], op_cfg["alpha"], e, True))
     for layer, alpha, e, is_op in sorted(entries, key=lambda x: (x[0], x[1])):
         star = r"$^{\star}$" if is_op else ""
         rows.append(f"{layer} & {alpha:g}{star} & ${e[0]:+.3f}$ "
@@ -1050,7 +1067,7 @@ def make_appendix_tables(summary, certs, cfg, calib):
              "v_perp_cur", "v_perp_stat", "v_par_al64", "v_perp_al64_nm",
              "v_rand_s0", "v_rand_s1", "v_rand_s2"]
     base = load_jsonl(RES / "baseline.jsonl")
-    rng = np.random.default_rng(11)
+    rng = np.random.default_rng(SEED)
     rows = [r"\begin{tabular}{llccc}", r"\toprule",
             r"family & condition & $\Delta$MC2 [95\% CI] & $\Delta$MC1 [95\% CI] & $\rho$ (MC1) \\",
             r"\midrule"]
@@ -1059,6 +1076,10 @@ def make_appendix_tables(summary, certs, cfg, calib):
         b2, vd2 = align(base, load_jsonl(fdir / "v_dec.jsonl"), "mc2")
         b1, vd1 = align(base, load_jsonl(fdir / "v_dec.jsonl"), "mc1")
         d_dec1 = vd1 - b1
+        # MC1 denominator gate: bootstrap once (both CI bounds from the same draw) and reuse
+        dec1_gate = boot_mean(d_dec1, rng)
+        dec1_significant = dec1_gate[1] > 0 or dec1_gate[2] < 0
+        fdelta = summary["families"][fam]
         rows.append(rf"\multicolumn{{5}}{{l}}{{\emph{{{FAM_LABEL[fam]}}}}} \\")
         rows.append(r"\midrule")
         for cond in order:
@@ -1067,10 +1088,16 @@ def make_appendix_tables(summary, certs, cfg, calib):
                 continue
             _, c2 = align(base, cr, "mc2")
             _, c1 = align(base, cr, "mc1")
-            e2 = boot_mean(c2 - b2, rng)
-            e1 = boot_mean(c1 - b1, rng)
+            if cond == "v_dec":
+                # headline row: reuse the single computed value (SSOT) so it is identical
+                # to numbers.tex, Table 1, and the CAA-grid starred row
+                e2 = (fdelta["delta_vdec_mc2"]["point"], *fdelta["delta_vdec_mc2"]["ci"])
+                e1 = (fdelta["delta_vdec_mc1"]["point"], *fdelta["delta_vdec_mc1"]["ci"])
+            else:
+                e2 = boot_mean(c2 - b2, rng)
+                e1 = boot_mean(c1 - b1, rng)
             rho1 = "---"
-            if cond != "v_dec" and (boot_mean(d_dec1, rng)[1] > 0 or boot_mean(d_dec1, rng)[2] < 0):
+            if cond != "v_dec" and dec1_significant:
                 rr = boot_ratio(c1 - b1, d_dec1, rng)
                 rho1 = f"${rr[0]:.2f}$"
             lab = {"v_dec": r"$v$", "v_perp_al16": r"$v^{\perp}$ al-16",
