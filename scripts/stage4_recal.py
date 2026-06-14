@@ -733,13 +733,17 @@ def make_numbers(summary, calib, cfg, certs, rng):
     if base and grid_files:
         best = None
         n_coh = 0
+        # Use a fresh rng in the SAME sorted order as make_caagrid_table so the
+        # grid-max row's bootstrap CI here is identical to the one in app_caagrid.tex
+        # (otherwise the same +0.013 row carries two slightly different intervals).
+        gridrng = np.random.default_rng(SEED)
         for f in grid_files:
             g = load_jsonl(Path(f))
             if not g:
                 continue
             n_coh += 1
             bb, gg = align(base, g, "mc2")
-            e = boot_mean(gg - bb, rng)
+            e = boot_mean(gg - bb, gridrng)
             if best is None or e[0] > best[0]:
                 best = e
         # include the gated OP itself among coherent settings
