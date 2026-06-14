@@ -1,0 +1,24 @@
+{
+  "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+  "n_prompts": 200,
+  "families": {
+    "dec": {
+      "alpha": 3.0,
+      "set": "aligned-64",
+      "k": 64,
+      "v_dec_exact_direct_max": 2.3039486408233643,
+      "v_dec_exact_direct_mean_abs": 1.2522914409637451,
+      "v_perp_al64_exact_direct_max": 0.16686296463012695,
+      "v_perp_al64_exact_direct_mean_abs": 0.022969774901866913
+    },
+    "mm": {
+      "alpha": 4.0,
+      "set": "aligned-64",
+      "k": 64,
+      "v_dec_exact_direct_max": 2.3725130558013916,
+      "v_dec_exact_direct_mean_abs": 0.9850355386734009,
+      "v_perp_al64_exact_direct_max": 0.0961160659790039,
+      "v_perp_al64_exact_direct_mean_abs": 0.012233803048729897
+    }
+  }
+}

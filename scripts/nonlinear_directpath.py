@@ -60,24 +60,25 @@ def main():
     prompts = [QA_TEMPLATE.format(question=r["question"]) for r in test_rows]
     z = _last_token_residuals(lm, prompts, [L - 1])[L - 1].float()  # (N, d)
 
-    cur = sorted(set(toks["curated_plus"].values()) | set(toks["curated_minus"].values()))
+    # The correct test set is each vector's OWN aligned-64 set (the tokens it was
+    # projected against), where the first-order direct effect of v_perp is
+    # certified zero. We read those ids from the decoded aligned-64 artifact.
+    aligned = json.loads((OUT / "aligned64_decoded.json").read_text())
     out = {"model_id": cfg["model_id"], "n_prompts": len(prompts), "families": {}}
     for fam in cfg["families"]:
         alpha = cfg["families"][fam]["alpha"]
         v_dec = vectors[f"{fam}/v_dec"].float()
         v_perp = vectors[f"{fam}/v_perp_al64"].float()
-        # aligned-64 ids for this family: top-64 by |W_tilde v|, recompute from the
-        # certificate's saved set is not stored, so use curated as a fixed comparator
-        # plus the aligned set recomputed below.
-        ent = {"alpha": alpha}
-        base_cur = readout(z, cur)
+        ids = [x["id"] for x in aligned[fam]["plus"]] + [x["id"] for x in aligned[fam]["minus"]]
+        ent = {"alpha": alpha, "set": "aligned-64", "k": len(ids)}
+        base_al = readout(z, ids)
         for label, v in (("v_dec", v_dec), ("v_perp_al64", v_perp)):
-            steered = readout(z + alpha * v, cur)
-            d = (steered - base_cur)  # (N, |cur|) exact direct logit change on curated
+            steered = readout(z + alpha * v, ids)
+            d = (steered - base_al)  # (N, 64) exact direct logit change on the projected set
             ent[f"{label}_exact_direct_max"] = float(d.abs().max())
             ent[f"{label}_exact_direct_mean_abs"] = float(d.abs().mean())
         out["families"][fam] = ent
-        print(f"[nonlinear] {fam} a={alpha}: curated exact direct |delta| "
+        print(f"[nonlinear] {fam} a={alpha}: aligned-64 exact direct |delta| "
               f"v_dec max={ent['v_dec_exact_direct_max']:.4f} "
               f"v_perp max={ent['v_perp_al64_exact_direct_max']:.4f} "
               f"(mean v_perp={ent['v_perp_al64_exact_direct_mean_abs']:.5f})", flush=True)
