@@ -1,6 +1,6 @@
 \section{Generalization across models}\label{sec:multimodel}
 
-The decomposition so far is on a single model. We rerun the entire protocol --- per-model operating-point selection under the coherence gate, both vector families, all projections and controls --- on three further instruction-tuned models spanning three additional family lineages: Mistral-7B-Instruct-v0.3, Qwen2.5-7B-Instruct, and Llama-2-7B-chat. The RMSNorm-corrected construction transfers unchanged; only the per-model operating points differ. Table~\ref{tab:multimodel} and Figure~\ref{fig:multimodel} report the result, and it separates cleanly into a part that replicates and a part that does not.
+The decomposition so far is on a single model. We rerun the entire protocol --- per-model operating-point selection under the coherence gate, both vector families, all projections and controls --- on three further instruction-tuned models: Mistral-7B-Instruct-v0.3 and Qwen2.5-7B-Instruct from two other developers, and Llama-2-7B-chat from an earlier Llama generation with a different tokenizer and attention layout. The RMSNorm-corrected construction transfers unchanged; only the per-model operating points differ. Table~\ref{tab:multimodel} and Figure~\ref{fig:multimodel} report the result, and it separates cleanly into a part that replicates and a part that does not.
 
 \begin{table}[t]
 \centering
