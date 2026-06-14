@@ -74,12 +74,12 @@
 
 \begin{abstract}
 \noindent
-Representation-engineering interventions reduce deceptive behavior in language models by injecting a contrastively constructed vector into the residual stream. Whether such interventions manipulate an upstream concept or merely tilt the readout against a small lexicon of deception-coded tokens is not resolved by the standard experimental setup. We formalize the question through a token-conditional projection: for a chosen set $T$ of deception-coded tokens, project the steering vector $\vdec$ onto the orthogonal complement of the relevant unembedding subspace to obtain $\vperp$ with zero direct logit contribution at every token in $T$. The fraction of behavioral steering preserved under this projection is a test statistic for the depth of the underlying representation. The construction has a minimum-norm characterization analogous to LEACE and requires the RMSNorm-corrected effective unembedding rather than the raw unembedding matrix; the naive global-orthogonality formulation is impossible whenever the vocabulary exceeds the residual dimension. We position the construction against the Park\textendash Choe\textendash Veitch causal-inner-product duality, the Arditi et al.\ weight-orthogonalization recipe, the Venkatesh\textendash Kurapath non-identifiability result, and Nadaf's function-vector decoding gap.
+Representation-engineering interventions reduce deceptive behavior in language models by injecting a contrastively constructed vector into the residual stream. Whether such interventions manipulate an upstream concept or instead adjust the readout against a small lexicon of deception-coded tokens is not resolved by the standard experimental setup. We formalize the question through a token-conditional projection: for a chosen set $T$ of deception-coded tokens, project the steering vector $\vdec$ onto the orthogonal complement of the relevant unembedding subspace to obtain $\vperp$ with zero direct logit contribution at every token in $T$. The fraction of behavioral steering preserved under this projection is a test statistic for the depth of the underlying representation. The construction has a minimum-norm characterization analogous to LEACE and requires the RMSNorm-corrected effective unembedding rather than the raw unembedding matrix; the naive global-orthogonality formulation is impossible whenever the vocabulary exceeds the residual dimension. We position the construction against the Park\textendash Choe\textendash Veitch causal-inner-product duality, the Arditi et al.\ weight-orthogonalization recipe, the Venkatesh\textendash Kurapath non-identifiability result, and Nadaf's function-vector decoding gap.
 \end{abstract}
 
 \section{Introduction}\label{sec:intro}
 
-The headline result of the representation-engineering line is that adding a contrastively constructed vector to a transformer's residual stream at a middle layer steers high-level behavior, with reported reductions in deception, sycophancy, and refusal of harmful requests \cite{zou2023repe,rimsky2024caa,li2023iti,arditi2024refusal}. Two accounts of this result are consistent with the reported numbers. Under the \emph{deep} account, the steering vector moves an upstream representation of the relevant concept and downstream layers consume that representation. Under the \emph{shallow} account, the steering vector tilts the logit head against a small lexicon of behavior-coded tokens, with no upstream content. The two accounts predict different behavior off-distribution and lead to different conclusions about what the model represents.
+The headline result of the representation-engineering line is that adding a contrastively constructed vector to a transformer's residual stream at a middle layer steers high-level behavior, with reported reductions in deception, sycophancy, and refusal of harmful requests \cite{zou2023repe,rimsky2024caa,li2023iti,arditi2024refusal}. Two accounts of this result are consistent with the reported numbers. Under the \emph{deep} account, the steering vector moves an upstream representation of the relevant concept and downstream layers consume that representation. Under the \emph{shallow} account, the steering vector adjusts the logit head against a small lexicon of behavior-coded tokens, with no upstream content. The two accounts predict different behavior off-distribution and lead to different conclusions about what the model represents.
 
 The standard experimental setup conflates two paths along which the intervention propagates. Adding $\vdec$ at layer $\ell^\star$ shifts every downstream activation, including the final residual that the unembedding $\WU$ reads to produce logits. The direct logit-attribution path \cite{elhage2021mathematical} carries the projection of $\vdec$ onto the rows of $\WU$ unchanged through the readout. The indirect path routes $\vdec$ through every subsequent attention and feed-forward block before reaching the readout. The reported behavioral effect is the sum of the two contributions, and a measurement that does not separate them cannot answer the depth question.
 
@@ -152,7 +152,7 @@ Let $T \subset \{1, \dots, V\}$ denote a deception-coded token set, that is, a f
 
 \section{Impossibility of the Global Construction}\label{sec:impossibility}
 
-The cleanest version of the question one might ask is: is there a nonzero residual perturbation $v \in \R^d$ such that adding $v$ to the residual stream produces zero change in the logits of every token in the vocabulary? In the architectures of practical interest, the answer is no.
+The strongest form of the question is whether there exists a nonzero residual perturbation $v \in \R^d$ such that adding $v$ to the residual stream produces zero change in the logits of every token in the vocabulary. In the architectures of practical interest, no such perturbation exists.
 
 \begin{proposition}[Triviality of the global null space]\label{prop:triv}
 Let $\WU \in \R^{V \times d}$ and suppose $\rank(\WU) = d$. Then $\ker(\WU) = \{0\}$. In particular, if $V \geq d$ and the rows of $\WU$ span $\R^d$, then no nonzero $v \in \R^d$ satisfies $\WU v = 0$.
@@ -166,7 +166,7 @@ By the rank-nullity theorem applied to $\WU$ viewed as a linear map $\R^d \to \R
 For modern transformers $V$ exceeds $d$ by an order of magnitude: Llama-2-7B has $V = 32{,}000$, $d = 4096$; Llama-2-70B has $V = 32{,}000$, $d = 8192$; Mistral-7B has $V = 32{,}000$, $d = 4096$. The unembedding has full column rank with probability one over standard initializations, and this is confirmed by direct inspection of the released checkpoints.
 \end{remark}
 
-Proposition~\ref{prop:triv} forces the reformulation that follows. If one wants a nontrivial residual direction with zero direct readout effect, one must restrict the readout: drop the requirement that the direction be invisible to every token, and require only that it be invisible to a chosen subset.
+Proposition~\ref{prop:triv} forces the reformulation that follows. Obtaining a nontrivial residual direction with zero direct readout effect requires restricting the readout: the requirement that the direction have no direct contribution at every token is replaced by the weaker requirement that it have no direct contribution at a chosen subset.
 
 \section{Token-Conditional Orthogonalization}\label{sec:conditional}
 
@@ -182,7 +182,7 @@ the row span of $\WUt^\star[T,:]$. The dimension of $S_T$ is at most $k$, and is
 S_T^{\perp} \;:=\; \{ v \in \R^d \;:\; \langle v, w \rangle = 0 \text{ for all } w \in S_T \}.
 \label{eq:STperp}
 \end{equation}
-The dimension of $S_T^\perp$ is at least $d - k$, and in particular nontrivial whenever $k < d$. This is the room our intervention has to operate in.
+The dimension of $S_T^\perp$ is at least $d - k$, and in particular nontrivial whenever $k < d$. This subspace constitutes the space within which the intervention operates.
 
 \subsection{Projection operators}
 
@@ -235,7 +235,7 @@ For any $t \notin T$, the direct logit contribution of $\vperp$ to token $t$ is
 This is in general nonzero, and equals the inner product of $\WUt^\star_{t,:}$ with the component of $\vdec$ orthogonal to $S_T$.
 \end{proposition}
 
-The proof is immediate. The substantive point is that the construction zeroes the direct contribution exactly on $T$ and does not constrain the contribution on the complement. We comment on the implications for evaluation in \Cref{sec:limitations}.
+The proof is immediate. The construction nulls the direct contribution on $T$ and imposes no constraint on the contribution on the complement. We comment on the implications for evaluation in \Cref{sec:limitations}.
 
 \subsection{Parallel and orthogonal decomposition}
 
@@ -249,11 +249,11 @@ Both lie in $\R^d$, both have norms at most $\|\vdec\|$, and they are mutually o
 \|\vdec\|_2^2 \;=\; \|\vpar\|_2^2 + \|\vperp\|_2^2
 \label{eq:pythagoras}
 \end{equation}
-quantifies how much of $\vdec$ lies in the readout-aligned subspace. The ratio $\|\vperp\|^2 / \|\vdec\|^2$ summarizes the projection geometry but does not in general track behavioral effect, and is not the test statistic of \Cref{sec:statistic}.
+quantifies how much of $\vdec$ lies in the readout-aligned subspace. The ratio $\|\vperp\|^2 / \|\vdec\|^2$ summarizes the projection geometry but does not in general predict the behavioral effect, and does not coincide with the test statistic of \Cref{sec:statistic}.
 
 \section{The Rank-One Variant: Logit-Difference Direction}\label{sec:logitdiff}
 
-A natural lower-dimensional choice for the projected-out subspace is a single direction: the one that, in the readout, separates $T^+$ from $T^-$. This is the direction along which raw probability mass moves from deceptive-coded tokens to honest-coded tokens.
+A natural lower-dimensional choice for the projected-out subspace is a single direction, namely the direction that, in the readout, separates $T^+$ from $T^-$. Along this direction, raw probability mass moves from deceptive-coded tokens to honest-coded tokens.
 
 \begin{definition}[Logit-difference direction]\label{def:hd}
 Let $T^+ \cup T^- = T$ be a partition of $T$ into honest-coded and deceptive-coded subsets. The \emph{logit-difference direction} is
@@ -285,7 +285,7 @@ For $\vperp_{HD}$ as defined in \Cref{eq:rankone},
 The left-hand side equals $\langle d_{HD}, \vperp_{HD}\rangle$ by linearity. By construction, $\vperp_{HD}$ is the orthogonal projection of $\vdec$ onto $\spann\{\hat{d}_{HD}\}^\perp = \spann\{d_{HD}\}^\perp$, so $\langle d_{HD}, \vperp_{HD}\rangle = 0$.
 \end{proof}
 
-The rank-one variant trades zero direct effect on individual tokens in $T$ for zero direct effect on the mean logit difference between $T^+$ and $T^-$. It leaves $d-1$ residual dimensions free, the maximal complement available to a nontrivial readout-orthogonal construction.
+The rank-one variant exchanges zero direct effect on individual tokens in $T$ for zero direct effect on the mean logit difference between $T^+$ and $T^-$. It leaves $d-1$ residual dimensions unconstrained, which is the maximal complement available to a nontrivial readout-orthogonal construction.
 
 \begin{remark}[Relation to Park\textendash Choe\textendash Veitch]
 Under the duality of \cite{park2024linear}, $d_{HD}$ is the unembedding-side representation $\bar{\gamma}_{HD}$ of the honesty-versus-deception concept $W = HD$. The construction in \Cref{constr:rankone} projects the steering vector orthogonal to this unembedding-side representation. The dual statement is that the steering vector is forced to live in the kernel of the Riesz map $v \mapsto \langle \bar{\gamma}_{HD}, v\rangle_C$, modulo the difference between the standard inner product on $\R^d$ and the causal inner product. We make the comparison precise in \Cref{sec:related}.
@@ -350,7 +350,7 @@ which combines the direct readout of the full $\vdec$ with the indirect readout 
 
 \section{Test Statistic and Hypothesis Schema}\label{sec:statistic}
 
-The construction above gives a clean test only when paired with a way to summarize the behavioral effect. We use two summaries: a benchmark-level effect on a deception evaluation, and a per-sample logit-shift on the diagnostic token set. Both fit a single hypothesis schema.
+The construction above yields a well-defined test only when paired with a means of summarizing the behavioral effect. We employ two summaries, a benchmark-level effect on a deception evaluation and a per-sample logit-shift on the diagnostic token set, both of which conform to a single hypothesis schema.
 
 \subsection{Benchmark-level effect}
 
@@ -390,7 +390,7 @@ The behavioral effect of $\vdec$ is mediated entirely by the direct logit-attrib
 The behavioral effect of $\vdec$ is mediated substantially by the indirect path through downstream attention and feed-forward layers. In this case the construction predicts $\rho(\vdec, T) \not\approx 0$, with $\rho$ approaching $1$ in the limit that the indirect path carries all of the behavioral effect.
 \end{hypothesis}
 
-The two hypotheses are not exhaustive; in practice one expects $\rho \in (0, 1)$, with the value an empirical statement about the proportion of the steering effect that lies in the readout-aligned subspace. The schema admits an informative interpretation under any empirical outcome. A small $\rho$ across token sets, models, and benchmarks is evidence for the shallow account; a large $\rho$ is evidence for the deep account; an intermediate $\rho$ is a quantitative decomposition of the two contributions.
+The two hypotheses are not exhaustive; in practice one expects $\rho \in (0, 1)$, with the value constituting an empirical statement about the proportion of the steering effect that lies in the readout-aligned subspace. The schema admits an informative interpretation under any empirical outcome. A small $\rho$ across token sets, models, and benchmarks constitutes evidence for the shallow account, a large $\rho$ constitutes evidence for the deep account, and an intermediate $\rho$ constitutes a quantitative decomposition of the two contributions.
 
 \subsection{Robustness statistic}
 
@@ -399,11 +399,11 @@ A subsidiary statistic measures how stable $\rho$ is across choices of $T$. For 
 \sigma_T(\vdec) \;:=\; \Var_{j} \big[ \rho(\vdec, T_j) \big]^{1/2}.
 \label{eq:sigmaT}
 \end{equation}
-A small $\sigma_T$ is evidence that the depth statistic is a property of the steering vector and not an artefact of the token-set choice. We will report both $\rho$ and $\sigma_T$ in the experimental program.
+A small $\sigma_T$ provides evidence that the depth statistic is a property of the steering vector rather than an artefact of the token-set choice. We report both $\rho$ and $\sigma_T$ in the experimental program.
 
 \section{Minimum-Norm Characterization}\label{sec:minnorm}
 
-The projection in \Cref{eq:vperp} is a specific choice of intervention on $\vdec$. Among all interventions that satisfy the zero-direct-effect constraint on $T$, it is the one that perturbs $\vdec$ minimally in the Euclidean sense. This is the natural analogue of the LEACE characterization \cite{belrose2023leace}, restricted to the token-conditional setting.
+The projection in \Cref{eq:vperp} is one particular intervention on $\vdec$. Among all interventions that satisfy the zero-direct-effect constraint on $T$, it is the intervention that perturbs $\vdec$ minimally in the Euclidean sense. This is the natural analogue of the LEACE characterization \cite{belrose2023leace}, restricted to the token-conditional setting.
 
 \begin{theorem}[Minimum-norm projection]\label{thm:minnorm}
 Let $A := \WUt^\star[T,:]$ and let $\vdec \in \R^d$ be given. Consider the optimization problem
@@ -439,7 +439,7 @@ LEACE projects out the column space of the whitened cross-covariance $W \Sigma_{
 
 \section{Relation to Prior Work}\label{sec:related}
 
-We position the construction relative to the closest precedents. \Cref{tab:related} summarizes the comparison; the text expands the rows that are load-bearing for the novelty claim.
+We position the construction relative to the closest precedents. \Cref{tab:related} summarizes the comparison, and the text below expands the rows that are most relevant to the novelty claim.
 
 \begin{table}[h]
 \centering
@@ -471,7 +471,7 @@ The closest methodological precedent is the weight-orthogonalization recipe of A
 W_{\text{out}} \;\mapsto\; W_{\text{out}} \;-\; \hat{r}\hat{r}^\top W_{\text{out}}.
 \label{eq:arditi}
 \end{equation}
-The construction in \Cref{constr:rankone} is the dual: project the steering vector $\vdec$ orthogonal to a readout-derived direction $\hat{d}_{HD}$ rather than projecting all write-side matrices orthogonal to a behavior-derived direction $\hat{r}$. Both rely on the same rank-one projector $I - \hat{u}\hat{u}^\top$; Arditi removes a direction from every matrix that writes to the residual stream, while we remove a direction from the steering vector itself.
+The construction in \Cref{constr:rankone} is the dual of this recipe: it projects the steering vector $\vdec$ orthogonal to a readout-derived direction $\hat{d}_{HD}$ rather than projecting all write-side matrices orthogonal to a behavior-derived direction $\hat{r}$. Both constructions rely on the same rank-one projector $I - \hat{u}\hat{u}^\top$. Arditi et al.\ remove a direction from every matrix that writes to the residual stream, whereas the present construction removes a direction from the steering vector itself.
 
 \subsection{Park\textendash Choe\textendash Veitch duality}
 
@@ -479,15 +479,15 @@ In the formal apparatus of \cite{park2024linear} the unembedding side of a conce
 
 \subsection{Venkatesh\textendash Kurapath non-identifiability}
 
-\cite{venkatesh2026nonid} show that steering vectors are not uniquely identified: large equivalence classes of behaviorally indistinguishable interventions exist, parametrized by perturbations in the null space of the activation-to-logit Jacobian. The relevant subspace for their non-identifiability is $\ker(J)$ where $J = \WU \cdot J_{\mathcal{N}_\gamma}(\cdot) \cdot M^{(\ell^\star \to L)}$; ours is $\ker(\WUt^\star[T,:])$. The two address different questions. Theirs establishes that $\vperp$ is in general not behaviorally equivalent to $\vdec$; ours measures how much of the discrepancy concentrates in the readout-aligned subspace as a depth statistic.
+\cite{venkatesh2026nonid} show that steering vectors are not uniquely identified, in the sense that large equivalence classes of behaviorally indistinguishable interventions exist, parametrized by perturbations in the null space of the activation-to-logit Jacobian. The relevant subspace for their non-identifiability is $\ker(J)$ where $J = \WU \cdot J_{\mathcal{N}_\gamma}(\cdot) \cdot M^{(\ell^\star \to L)}$; ours is $\ker(\WUt^\star[T,:])$. The two address different questions. Their result establishes that $\vperp$ is in general not behaviorally equivalent to $\vdec$, whereas the present construction measures, as a depth statistic, the extent to which the discrepancy concentrates in the readout-aligned subspace.
 
 \subsection{Nadaf function vectors}
 
-\cite{nadaf2026function} demonstrate that function vectors can steer model behavior in cases where the logit lens cannot decode the steered output at any intermediate layer. That is direct evidence of an off-readout steering channel for the in-context-learning function-vector setting. Our construction asks whether the same gap exists for honesty-and-deception steering vectors specifically, on modern deception benchmarks, with a quantitative measurement of the gap.
+\cite{nadaf2026function} demonstrate that function vectors can steer model behavior in cases where the logit lens cannot decode the steered output at any intermediate layer. This constitutes direct evidence of an off-readout steering channel in the in-context-learning function-vector setting. The present construction asks whether the same gap exists for honesty-and-deception steering vectors, on modern deception benchmarks, and provides a quantitative measurement of the gap.
 
 \subsection{Prior unembedding-orthogonal benchmark}
 
-The hughvd unembedding-steering-benchmark repository \cite{hughvd2024benchmark} proposes a related test on Gemma-2-9b with sentiment as the worked example, and develops the orthogonalized-steering construction and the evaluation harness. The construction has not been applied to honesty and deception steering with quantitative measurement on the modern deception benchmarks.
+The hughvd unembedding-steering-benchmark repository \cite{hughvd2024benchmark} proposes a related test on Gemma-2-9b with sentiment as the worked example, and develops the orthogonalized-steering construction and the evaluation harness. The construction has not previously been applied to honesty and deception steering with quantitative measurement on the modern deception benchmarks.
 
 \section{Predicted Outcomes Under Each Hypothesis}\label{sec:predictions}
 
@@ -517,7 +517,7 @@ If the behavioral effect of $\vdec$ rides on the indirect path through downstrea
 
 \subsection{Intermediate outcomes}
 
-The expected real-world outcome is intermediate. The interesting empirical questions are then quantitative.
+The expected empirical outcome is intermediate. The principal empirical questions are therefore quantitative.
 
 \begin{itemize}[leftmargin=*]
 \item \emph{What is the typical value of $\rho$ across models and benchmarks?} A consistent value of $\rho$ around $0.5$ across Llama-2-7B, Llama-2-13B, Mistral-7B, and Gemma-2-9B is a meaningful summary of the field.
@@ -530,14 +530,14 @@ The expected real-world outcome is intermediate. The interesting empirical quest
 
 \subsection{Choice of the token-coded set $T$}
 
-The selection of $T$ is a methodological choice with non-trivial effect. Three options span the design space.
+The selection of $T$ is a methodological choice with non-trivial effect. Three options span the design space, as follows.
 \begin{itemize}[leftmargin=*]
 \item \emph{Curated lists.} A short manually compiled list of honest- and deceptive-coded words, optionally extended by morphological variants. Advantage: interpretability. Disadvantage: sensitive to authorial bias and to lexical idiosyncrasy.
 \item \emph{Statistical extraction.} Take the top-$k$ tokens by mean log-probability ratio between deceptive and honest contexts on a held-out corpus. Advantage: replicable. Disadvantage: $T$ depends on the corpus.
 \item \emph{Probe-derived.} Train a logistic regression to predict the honesty label from the unembedding direction and take the top-$k$ tokens by classifier-coefficient magnitude. Advantage: directly targets the readout-aligned linear structure. Disadvantage: depends on probe regularization.
 \end{itemize}
 
-We report results across all three constructions and use the cross-set stability $\sigma_T$ as a robustness measure. A finding that depends on a single $T$ choice is weak.
+We report results across all three constructions and use the cross-set stability $\sigma_T$ as a robustness measure. A finding that depends on a single choice of $T$ should be regarded as weakly supported.
 
 \subsection{RMSNorm linearization}
 
@@ -550,7 +550,7 @@ For models using full LayerNorm rather than RMSNorm, the relevant subspace is sh
 J_{\text{LN}, \gamma}(z) \;=\; \frac{1}{\sigma(z')}\diag(\gamma)\left(I_d - \frac{1}{d}\1\1^\top - \frac{z'(z')^\top}{d\,\sigma(z')^2}\right),
 \label{eq:lnjacobian}
 \end{equation}
-with $z' := z - d^{-1}(\1^\top z)\1$ the centered residual. The centering operator $I_d - d^{-1}\1\1^\top$ has a one-dimensional kernel along $\1$, so the all-ones direction is in the kernel of $J_{\text{LN}, \gamma}(z)$ for every $z$. This is a real but small effect for our construction; the projection $\PTperp$ remains well-defined and the only practical change is to project against $\WU \cdot J_{\text{LN}, \gamma}(z^\star)[T,:]$.
+with $z' := z - d^{-1}(\1^\top z)\1$ the centered residual. The centering operator $I_d - d^{-1}\1\1^\top$ has a one-dimensional kernel along $\1$, so the all-ones direction is in the kernel of $J_{\text{LN}, \gamma}(z)$ for every $z$. This is a real but small effect for the present construction; the projection $\PTperp$ remains well-defined, and the only practical change is to project against $\WU \cdot J_{\text{LN}, \gamma}(z^\star)[T,:]$.
 
 \subsection{Single-layer assumption}
 
@@ -562,7 +562,7 @@ By Proposition~\ref{prop:offT}, the projected vector $\vperp$ can shift logits o
 
 \subsection{Semantic scope of the test statistic}
 
-The statistic $\rho$ measures the fraction of $\vdec$'s behavioral effect surviving token-conditional readout suppression. Interpretive claims about the upstream representation require independent evidence: out-of-distribution generalization, transfer across model scales, and identification of the downstream circuits that consume the indirect-path contribution.
+The statistic $\rho$ measures the fraction of $\vdec$'s behavioral effect surviving token-conditional readout suppression. Interpretive claims about the upstream representation require independent evidence, including out-of-distribution generalization, transfer across model scales, and identification of the downstream circuits that consume the indirect-path contribution.
 
 \section{Conclusion}\label{sec:conclusion}
 
