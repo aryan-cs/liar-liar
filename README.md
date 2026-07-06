@@ -2,9 +2,9 @@
 
 > **Liar, Liar: Beyond Vocabulary Suppression.** A causal test of whether honesty steering manipulates an upstream representation or merely tilts the readout against deception-coded tokens, via token-conditional unembedding orthogonalization.
 >
-> [Read the paper (live PDF)](https://aryan-cs.github.io/liar-liar/main.pdf) · [Read the proof (PDF)](docs/proof.pdf) · [License: CC BY-NC-ND 4.0](LICENSE) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
+> [Read the paper (live PDF)](https://aryan-cs.github.io/liar-liar/paper.pdf) · [Read the proof (PDF)](docs/proof.pdf) · [License: CC BY-NC-ND 4.0](LICENSE) · [Source on GitHub](https://github.com/aryan-cs/liar-liar)
 
-This repository hosts the paper, the formal apparatus, the experimental pipeline, and the results for a project on whether representation-engineering steering vectors for honesty actually manipulate an upstream concept or merely tilt the readout against a small lexicon of behavior-coded tokens. The paper is `docs/main.pdf`; the mathematical machinery is in `docs/proof.tex` (compiled to `docs/proof.pdf`); the original experimental program is preserved in `PLAN.md`.
+This repository hosts the paper, the formal apparatus, the experimental pipeline, and the results for a project on whether representation-engineering steering vectors for honesty actually manipulate an upstream concept or merely tilt the readout against a small lexicon of behavior-coded tokens. The paper is `docs/paper.pdf`; the mathematical machinery is in `docs/proof.tex` (compiled to `docs/proof.pdf`); the original experimental program is preserved in `PLAN.md`.
 
 **The experiments are complete, and the answer is a double dissociation.** On Llama-3-8B-Instruct: the popular contrastive (CAA) honesty vector shifts honesty-coded *words* by over a logit without improving truthfulness at any coherent steering strength, and its apparent benchmark gains arise only after generation has collapsed (held-out perplexity 69x baseline) — a regime where the naive analysis also fabricates a confident "deep effect" verdict. The mass-mean vector improves truthfulness for real (test ΔMC2 +0.073, 95% CI [+0.038, +0.108], at perplexity ratio 1.15), and that gain survives certified excision of its entire direct vocabulary readout: ρ = 0.95 [0.79, 1.13], indistinguishable from random-subspace controls, stable from 16 to 1024 excised directions, and intact under paraphrase (ρ_OOD = 0.97). Where honesty steering works it is not vocabulary suppression, and where it is vocabulary-level it does not work.
 
@@ -92,7 +92,7 @@ liar-liar/
 ├── PLAN.md                    ← original experimental program (the executed subset is in the paper)
 ├── docs/                      ← served by GitHub Pages (aryan-cs.github.io/liar-liar/)
 │   ├── main.tex               ← the paper source
-│   ├── main.pdf               ← compiled paper (→ /main.pdf on Pages)
+│   ├── paper.pdf              ← compiled paper (→ /paper.pdf on Pages)
 │   ├── sections/              ← one .tex per section
 │   ├── tables/                ← auto-generated table bodies + number macros
 │   ├── proof.tex              ← formal apparatus (LaTeX source)
@@ -121,7 +121,7 @@ liar-liar/
 ## How to read the documents
 
 1. **[README.md](README.md)** *(this file)*. Orientation.
-2. **[docs/main.pdf](docs/main.pdf)**. The paper: the broken-instrument demonstration, the two-family decomposition, the depth verdict, and the lens evidence, with all numbers generated from the artifacts in this repository.
+2. **[docs/paper.pdf](docs/paper.pdf)**. The paper: the broken-instrument demonstration, the two-family decomposition, the depth verdict, and the lens evidence, with all numbers generated from the artifacts in this repository.
 3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus: the impossibility of the global formulation, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work positioning, and the limitations.
 4. **[PLAN.md](PLAN.md)**. The original experimental program, preserved as designed; the executed subset and the deviations from it are documented in the paper's setup section.
 
@@ -180,7 +180,7 @@ The construction is operational. $\rho$ measures the proportion of a steering ve
 
 ## Citation
 
-The paper is at [docs/main.pdf](docs/main.pdf). Until a preprint number exists, please cite the repository.
+The paper is at [docs/paper.pdf](docs/paper.pdf). Until a preprint number exists, please cite the repository.
 
 ```
 @misc{gupta2026liarliar,
