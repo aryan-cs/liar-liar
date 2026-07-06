@@ -110,6 +110,7 @@ liar-liar/
 │   ├── stage3_recal.py        ← paraphrase OOD + lens
 │   ├── stage4_recal.py        ← analysis, figures, tables, paper number macros
 │   └── probe_faithfulness.py  ← broken-instrument evidence (norms, PPL, generations)
+├── supplement/                ← machine-readable prompt/response records and schema
 ├── figures/                   ← generated figures
 └── results/                   ← per-question results and summary_recal.json
 ```
@@ -123,7 +124,8 @@ liar-liar/
 1. **[README.md](README.md)** *(this file)*. Orientation.
 2. **[docs/paper.pdf](docs/paper.pdf)**. The paper: the broken-instrument demonstration, the two-family decomposition, the depth verdict, and the lens evidence, with all numbers generated from the artifacts in this repository.
 3. **[docs/proof.pdf](docs/proof.pdf)**. The formal apparatus: the impossibility of the global formulation, the token-conditional construction, the RMSNorm correction, the rank-one variant, the direct-versus-indirect path decomposition, the depth statistic, the minimum-norm characterization, the prior-work positioning, and the limitations.
-4. **[PLAN.md](PLAN.md)**. The original experimental program, preserved as designed; the executed subset and the deviations from it are documented in the paper's setup section.
+4. **[supplement/README.md](supplement/README.md)**. The JSONL prompt/response records, schemas, deterministic example-selection rule, and provenance limitations.
+5. **[PLAN.md](PLAN.md)**. The original experimental program, preserved as designed; the executed subset and the deviations from it are documented in the paper's setup section.
 
 The load-bearing sections of the proof are **§4** (Token-Conditional Orthogonalization), which defines the construction, and **§6** (Direct-Versus-Indirect Path Decomposition), which justifies the depth statistic. §3 shows why the construction must be token-conditional; §9 positions the work against the closest prior projections.
 

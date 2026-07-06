@@ -16,6 +16,14 @@
 \usepackage{booktabs}
 \usepackage{titlesec}
 
+% 20 CSS pixels at 96 dpi = 15 big points at 72 bp/in.  Use exact,
+% non-stretching separation between the comparison table and body text.
+\newlength{\paperfloattextsep}
+\setlength{\paperfloattextsep}{15bp}
+\setlength{\textfloatsep}{\paperfloattextsep}
+\setlength{\intextsep}{\paperfloattextsep}
+\setlength{\floatsep}{\paperfloattextsep}
+
 \hypersetup{
   colorlinks=true,
   linkcolor=black!70,

@@ -33,7 +33,7 @@
 \usepackage{microtype}
 \usepackage{amsmath, amssymb, bm}
 \usepackage{graphicx, subcaption}
-\usepackage{booktabs, array}
+\usepackage{booktabs, array, tabularx}
 \usepackage{enumitem}
 
 % -- Links (after natbib) --
@@ -45,6 +45,15 @@
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
+% 20 CSS pixels at 96 dpi = 15 big points at 72 bp/in.  Keep this
+% fixed (no stretch/shrink) above and below every table/figure float.
+\newlength{\paperfloattextsep}
+\setlength{\paperfloattextsep}{15bp}
+\setlength{\textfloatsep}{\paperfloattextsep}
+\setlength{\intextsep}{\paperfloattextsep}
+\setlength{\floatsep}{\paperfloattextsep}
+\setlength{\dbltextfloatsep}{\paperfloattextsep}
+\setlength{\dblfloatsep}{\paperfloattextsep}
 
 % -- Caption spacing --
 \usepackage{caption}

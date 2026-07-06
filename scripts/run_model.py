@@ -182,7 +182,8 @@ def main():
         (OUT_A / "calibration.json").write_text(json.dumps(
             {"base_nll": base_nll, "base_mc2": base_mc2, "gate": COHERENCE_GATE, "grid": calibration}, indent=2))
 
-        cfg = {"model_id": model_id, "name": name, "gate": COHERENCE_GATE, "seed": SEED,
+        cfg = {"model_id": model_id, "model_revision": lm.model_revision,
+               "name": name, "gate": COHERENCE_GATE, "seed": SEED,
                "n_layers": L, "layer_grid": layer_grid, "aligned_ks": ALIGNED_KS,
                "rand_k": RAND_K, "families": {}}
         for fam in families:

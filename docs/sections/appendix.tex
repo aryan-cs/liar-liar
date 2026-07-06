@@ -2,7 +2,7 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
-The appendix collects the full experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), CAA evaluated at every coherent operating point (\ref{app:caagrid}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), worked examples of the truthfulness shift (\ref{app:examples}), and qualitative generations at every operating point (\ref{app:generations}).
+The appendix collects the experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), CAA evaluated at every coherent operating point (\ref{app:caagrid}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), mechanically selected examples of the truthfulness shift (\ref{app:examples}), and compact aggregate generation evidence (\ref{app:generations}). The complete prompt--response record is supplied as machine-readable JSONL rather than typeset as a transcript dump.
 
 \section{Coherence calibration grid}\label{app:calibration}
 
@@ -93,7 +93,7 @@ Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two re
 
 \section{Reproducibility}\label{app:repro}
 
-\paragraph{Model and precision.} Llama-3-8B-Instruct (\texttt{NousResearch/Meta-Llama-3-8B-Instruct}), bfloat16 forward passes, float64 projections and certificates. Forward passes do not enforce kernel determinism, so per-question scores vary at the third decimal place across reruns; every reported interval is substantially wider than this variation.
+\paragraph{Model and precision.} Llama-3-8B-Instruct (\texttt{NousResearch/Meta-Llama-3-8B-Instruct}), bfloat16 forward passes, float64 projections and certificates. The historical run recorded the model identifier but did not pin or preserve the Hub checkpoint revision; the supplementary schema therefore reports the revision as null rather than guessing one. The pipeline now records the resolved Hub commit for future runs. Forward passes do not enforce kernel determinism, so per-question scores vary at the third decimal place across reruns; every reported interval is substantially wider than this variation.
 
 \paragraph{Data splits.} TruthfulQA MC (817 questions), seeded shuffle: 120 validation (operating-point selection), 200 mass-mean statement construction, 497 held-out test. CAA vectors from 256 Alpaca instructions under honest/deceptive system prompts; 96 disjoint instructions for the coherence gate; the remaining 48 for the statistical token set. The 256 CAA instructions, re-rendered without a system prompt, also calibrate the effective unembedding. Vector-construction and evaluation prompts are disjoint.
 
@@ -105,12 +105,30 @@ Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two re
 
 \section{What the truthfulness effect looks like}\label{app:examples}
 
-The behavioral effect is a shift in probability mass and is not observable in a single greedy sample; the following examples make it concrete. Each example below is a held-out TruthfulQA question on which the unsteered model places almost all of its probability on a \falseans{false (superstition) answer}; mass-mean steering transfers the mass to the \trueans{true answer}; and the projected vector $v^{\perp}$, with its entire direct vocabulary readout removed, transfers it to a comparable extent. MC2 is precisely this quantity, namely the fraction of probability mass on the true answers. These are the questions from which the depth statistic is constructed: the gain (false $\to$ true) and its persistence under projection (the same gain with the vocabulary channel removed) are observable on a per-question basis.
+The behavioral effect is a shift in probability mass and is not observable in a single greedy sample; the following examples make it concrete without hand-picking cases. We first restrict to held-out questions with baseline MC2 below $0.5$ for which both mass-mean $v$ and projected mass-mean $v^{\perp}$ improve MC2 by at least $0.10$. Among those eligible questions, the displayed records are the ones nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, with dataset index as the tie-break. MC2 is the probability mass on true answers; the examples therefore show the range of substantive joint improvements and their persistence after the direct vocabulary readout is removed. The rule and selected records are also serialized in the supplement.
 
 \input{tables/examples}
 
-\section{Qualitative generations: coherence at the two operating points}\label{app:generations}
+\section{Qualitative generation evidence and supplement}\label{app:generations}
 
-These transcripts are intended to demonstrate \emph{coherence} rather than truthfulness. Greedy completions (first 400 characters) under each intervention, on honesty-eliciting prompts outside the evaluation data, are tagged with a coherence badge. At the naive operating point, the setting a validation-MC2-maximizing sweep selects, generation has collapsed entirely into repetitive fragments (shown in \textcolor{badRed}{red}); at the coherence-gated operating points both vectors leave the model fluent. The three fluent responses are \emph{not} intended to be distinguishable by inspection, as that difference constitutes the statistical MC2 effect of Appendix~\ref{app:examples}; the purpose here is solely to show that the naive setting's benchmark gain coexists with a degradation that the benchmark cannot detect (Section~\ref{sec:broken}). Full transcripts ship with the artifacts.
+The paper does not typeset all 40 prompts and 160 responses. Table~\ref{tab:generation-comparison} gives one compact, outcome-independent comparison: it uses the first serialized record from each source artifact, selected before inspecting any response. The historical 40-prompt coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations, but not projected mass-mean generations. The latter exists in the separate 250-question free-generation record, so the table presents two explicitly labeled prompt panels rather than implying a five-way same-prompt experiment that was never run.
 
-\input{tables/generations}
+\begin{table}[h]
+\centering
+\small
+\input{tables/generation_comparison}
+\caption{Compact qualitative comparison. The first panel shows the baseline, collapsed naive CAA, and coherent CAA responses for the first stored coherence-probe prompt. The second shows mass-mean and projected mass-mean on the first stored free-generation record. Newlines are rendered as ordinary whitespace; no literal escape sequences are printed.}
+\label{tab:generation-comparison}
+\end{table}
+
+Aggregate evidence is reported over every prompt rather than inferred from excerpts. The coherence probe uses 40 fixed prompts spanning social pressure, admission of ignorance, common misconceptions, model self-report, and value-laden honesty. Duplicate 4-gram rate is the fraction of lowercased word 4-grams that repeat within a response; entropy is empirical unigram entropy in bits per word, averaged across prompts. Perplexity is measured on the 96 held-out calibration instructions, and coherence means a ratio no greater than $1.5$. The free-generation score is the mean probability of ``Yes'' from the same checkpoint run \emph{unsteered} as a reference-grounded judge on 250 held-out TruthfulQA questions; it is an intervention-independent self-judge, not a separately trained or human judge.
+
+\begin{table}[h]
+\centering
+\small
+\input{tables/generation_metrics}
+\caption{Aggregate generation evidence. PPL ratio, duplicate 4-gram rate, and entropy use all 40 coherence-probe prompts; projected conditions were not run in that probe and are marked ``---''. Judged truthfulness and question-bootstrap 95\% intervals use all 250 free-generation questions; the naive collapsed condition was not run in that evaluation.}
+\label{tab:generation-metrics}
+\end{table}
+
+The coherence probe uses greedy decoding (sampling disabled, 120 new-token limit); the free-generation evaluation uses greedy decoding with a 64-token limit. The model identifier is \texttt{NousResearch/Meta-Llama-3-8B-Instruct}; as noted in Appendix~\ref{app:repro}, the historical run did not preserve a checkpoint revision. Every full decoded coherence-probe response is released as one record per prompt and condition in \texttt{supplement/qualitative\_generations.jsonl}. The normalized free-generation record is in \texttt{supplement/free\_generation.jsonl}; its source pipeline historically retained at most 400 response characters, and the schema records that limit explicitly. Standard JSON newline escapes decode back to real line breaks. The camera-ready artifact is linked from the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{repository supplement directory}; the same directory can be uploaded without that link for anonymous review.

@@ -194,7 +194,8 @@ def main() -> None:
          "grid": calibration}, indent=2))
 
     # --- select operating point per family: max coherent val_mc2_delta ---
-    config = {"model_id": model_id, "gate": COHERENCE_GATE, "seed": SEED,
+    config = {"model_id": model_id, "model_revision": lm.model_revision,
+              "gate": COHERENCE_GATE, "seed": SEED,
               "aligned_ks": ALIGNED_KS, "rand_k": RAND_K, "families": {}}
     for fam in families:
         cand = [r for r in calibration if r["family"] == fam and r["coherent"]]

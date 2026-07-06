@@ -18,6 +18,7 @@ class LoadedModel:
     n_layers: int
     d_model: int
     vocab_size: int
+    model_revision: str | None
 
 
 def load_model(
@@ -62,6 +63,7 @@ def load_model(
         n_layers=cfg.num_hidden_layers,
         d_model=cfg.hidden_size,
         vocab_size=cfg.vocab_size,
+        model_revision=getattr(cfg, "_commit_hash", None),
     )
 
 

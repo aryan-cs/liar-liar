@@ -1,5 +1,6 @@
 """Stage 4 (recalibrated, Mac-side): aggregate the two-family depth results,
-compute the discriminating statistics, and emit figures + tables.
+compute the discriminating statistics, and emit figures, tables, and the
+machine-readable generation supplement.
 
 The decisive test is rho(aligned) vs rho(random): if removing the
 unembedding-aligned subspace kills the steering effect more than removing a
@@ -12,7 +13,10 @@ from zero -- we report its CI and refuse to interpret rho otherwise.
 from __future__ import annotations
 
 import json
+import math
+import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -32,8 +36,10 @@ from liar.plotting import (  # noqa: E402
 
 RC = ROOT / "artifacts" / "recal"
 RES = ROOT / "results" / "recal"
+DATA = ROOT / "data"
 FIG = ROOT / "figures"
 TAB = ROOT / "docs" / "tables"
+SUPP = ROOT / "supplement"
 
 N_BOOT = 10_000
 SEED = 0
@@ -845,66 +851,304 @@ def _tex_escape(s: str) -> str:
     return re.sub(r"([A-Za-z0-9]{14})(?=[A-Za-z0-9])", r"\1\\allowbreak{}", s)
 
 
+def _word_metrics(text: str) -> tuple[float, float]:
+    """Duplicate 4-gram rate and empirical unigram entropy (bits/word)."""
+    words = re.findall(r"[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)?", text.lower())
+    grams = [tuple(words[i:i + 4]) for i in range(max(0, len(words) - 3))]
+    duplicate_rate = 1.0 - len(set(grams)) / len(grams) if grams else 0.0
+    counts = Counter(words)
+    n_words = len(words)
+    entropy = (-sum((n / n_words) * math.log2(n / n_words) for n in counts.values())
+               if n_words else 0.0)
+    return duplicate_rate, entropy
+
+
+def _excerpt(text: str, limit: int = 180) -> str:
+    """A compact, whitespace-normalized LaTeX excerpt without literal ``\\n``."""
+    compact = " ".join(text.split())
+    clipped = len(compact) > limit
+    if clipped:
+        compact = compact[:limit].rsplit(" ", 1)[0]
+    return _tex_escape(compact) + (r"\,\ldots" if clipped else "")
+
+
+def _write_jsonl(path: Path, rows: list[dict]) -> None:
+    path.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n"
+                            for row in rows))
+
+
 def make_generations(probe):
-    """Appendix table of greedy generations, with a coherence badge per row so
-    the reader can see at a glance which setting has collapsed."""
+    """Emit compact generation evidence and machine-readable supplementary data.
+
+    The historical qualitative probe contains four conditions.  Projected
+    mass-mean generations were recorded only by the separate 250-question
+    free-generation run, so the comparison presents those as a second panel
+    instead of implying a nonexistent five-way same-prompt experiment.
+    """
+    cfg = json.loads((RC / "config.json").read_text())
     pc = probe.get("conditions", {})
-    naive_ppl = pc.get("naive/dec", {}).get("ppl_ratio")
-    gdec_ppl = pc.get("gated/dec", {}).get("ppl_ratio")
-    gmm_ppl = pc.get("gated/mm", {}).get("ppl_ratio")
-    badge_ok = lambda ppl: f"\\okbadge{{coherent, PPL {ppl:.2f}$\\times$}}" if ppl else r"\okbadge{coherent}"
-    badge_bad = lambda ppl: f"\\badbadge{{incoherent, PPL {ppl:.0f}$\\times$}}" if ppl else r"\badbadge{incoherent}"
-    labels = [
-        ("baseline", "baseline (no intervention)", r"\okbadge{coherent}", False),
-        ("naive/dec", "CAA at the naive operating point "
-         f"($\\ell{{=}}{pc.get('naive/dec', {}).get('layer', 10)}$, "
-         f"$\\alpha{{=}}{pc.get('naive/dec', {}).get('alpha', 8):g}$)", badge_bad(naive_ppl), True),
-        ("gated/dec", "CAA at the gated operating point", badge_ok(gdec_ppl), False),
-        ("gated/mm", "mass-mean at the gated operating point", badge_ok(gmm_ppl), False),
+    generations = probe["generations"]
+    prompts = list(generations["baseline"].keys())
+    gate = float(cfg["gate"])
+
+    # Aggregate fluency evidence over every one of the 40 fixed probe prompts.
+    probe_metrics = {}
+    for key, responses in generations.items():
+        vals = [_word_metrics(response) for response in responses.values()]
+        probe_metrics[key] = {
+            "duplicate_4gram_rate": float(np.mean([v[0] for v in vals])),
+            "word_entropy_bits": float(np.mean([v[1] for v in vals])),
+        }
+
+    tqa = json.loads((DATA / "truthfulqa_mc.json").read_text())
+    freegen = load_jsonl(RES / "freegen.jsonl")
+    judge_keys = {
+        "baseline": "score_baseline",
+        "gated/dec": "score_dec_v_dec",
+        "projected/dec": "score_dec_v_perp",
+        "gated/mm": "score_mm_v_dec",
+        "projected/mm": "score_mm_v_perp",
+    }
+    judge_stats = {}
+    judge_rng = np.random.default_rng(SEED)
+    for key, score_key in judge_keys.items():
+        vals = np.array([row[score_key] for row in freegen if score_key in row], dtype=float)
+        if len(vals):
+            judge_stats[key] = boot_mean(vals, judge_rng)
+
+    # One compact table: the first serialized prompt in each source artifact is
+    # selected before looking at any response or outcome.
+    comparison = [
+        r"\begin{tabularx}{\textwidth}{@{}p{0.24\textwidth}>{\raggedright\arraybackslash}X@{}}",
+        r"\toprule",
+        r"condition & recorded response excerpt \\",
+        r"\midrule",
+        (r"\multicolumn{2}{@{}l@{}}{\emph{Coherence probe prompt 1: "
+         + _tex_escape(prompts[0]) + r"}} \\"),
     ]
-    prompts = list(probe["generations"]["baseline"].keys())
-    out = [r"\noindent\okbadge{coherent} = model stays fluent \quad "
-           r"\badbadge{incoherent} = generation has collapsed (the benchmark still rewards it). \\[4pt]"]
-    for p in prompts:
-        out.append(f"\\paragraph{{Prompt.}} \\emph{{{_tex_escape(p)}}}")
-        out.append("\\begin{description}[leftmargin=1.2em, itemsep=3pt]\\raggedright")
-        for key, lab, badge, broken in labels:
-            g = probe["generations"].get(key, {}).get(p, "")
-            g = _tex_escape(g[:400]) + (r"\,\ldots" if len(g) > 400 else "")
-            body = f"\\textcolor{{badRed}}{{{g}}}" if broken else g
-            out.append(f"\\item[{lab}\\,{badge}:] {{\\small\\texttt{{{body}}}}}")
-        out.append("\\end{description}")
-    (TAB / "generations.tex").write_text("\n".join(out) + "\n")
-    print(f"[stage4r] wrote tables/generations.tex ({len(prompts)} prompts)")
+    probe_rows = [
+        ("baseline", "baseline"),
+        ("naive/dec", "naive CAA (collapsed)"),
+        ("gated/dec", "coherent CAA"),
+    ]
+    for key, label in probe_rows:
+        body = _excerpt(generations[key][prompts[0]])
+        if key == "naive/dec":
+            body = f"\\textcolor{{badRed}}{{{body}}}"
+        comparison.append(f"{label} & \\small\\texttt{{{body}}}" + r" \\")
+
+    if freegen:
+        first = freegen[0]
+        question = tqa["rows"][first["idx"]]["question"]
+        comparison.extend([
+            r"\midrule",
+            (r"\multicolumn{2}{@{}l@{}}{\emph{Free-generation record 1: "
+             + _tex_escape(question) + r"}} \\"),
+            ("mass-mean & \\small\\texttt{" + _excerpt(first["gen_mm_v_dec"])
+             + "}" + r" \\"),
+            ("projected mass-mean $v^{\\perp}$ & \\small\\texttt{"
+             + _excerpt(first["gen_mm_v_perp"]) + "}" + r" \\"),
+        ])
+    comparison.extend([r"\bottomrule", r"\end{tabularx}"])
+    (TAB / "generation_comparison.tex").write_text("\n".join(comparison) + "\n")
+
+    metric_rows = [
+        ("baseline", "baseline", 1.0),
+        ("naive CAA", "naive/dec", pc.get("naive/dec", {}).get("ppl_ratio")),
+        ("coherent CAA", "gated/dec", pc.get("gated/dec", {}).get("ppl_ratio")),
+        ("projected CAA $v^{\\perp}$", "projected/dec", None),
+        ("mass-mean", "gated/mm", pc.get("gated/mm", {}).get("ppl_ratio")),
+        ("projected mass-mean $v^{\\perp}$", "projected/mm", None),
+    ]
+    metrics = [
+        r"\begin{tabular}{@{}lcccc@{}}",
+        r"\toprule",
+        r"condition & PPL ratio & duplicate 4-grams & entropy & judged truthful [95\% CI] \\",
+        r"\midrule",
+    ]
+    for label, key, ppl in metric_rows:
+        pm = probe_metrics.get(key)
+        ppl_s = f"{ppl:.2f}" if ppl is not None else "---"
+        dup_s = f"{100 * pm['duplicate_4gram_rate']:.1f}\\%" if pm else "---"
+        ent_s = f"{pm['word_entropy_bits']:.2f}" if pm else "---"
+        js = judge_stats.get(key)
+        judge_s = f"{js[0]:.3f} [{js[1]:.3f}, {js[2]:.3f}]" if js else "---"
+        metrics.append(f"{label} & {ppl_s} & {dup_s} & {ent_s} & {judge_s}" + r" \\")
+    metrics.extend([r"\bottomrule", r"\end{tabular}"])
+    (TAB / "generation_metrics.tex").write_text("\n".join(metrics) + "\n")
+
+    # Normalize the full 40-prompt qualitative record to one JSON object per
+    # prompt/condition.  JSON escapes embedded newlines once, as required by
+    # JSONL; parsing recovers the original full decoded response.
+    strata = (
+        (0, 8, "honesty-under-social-pressure"),
+        (8, 12, "admitting-ignorance"),
+        (12, 32, "common-misconceptions"),
+        (32, 36, "model-self-report"),
+        (36, 40, "value-laden-honesty"),
+    )
+
+    def category(i: int) -> str:
+        return next(name for start, end, name in strata if start <= i < end)
+
+    probe_condition_meta = {
+        "baseline": {"label": "baseline", "layer": None, "alpha": 0.0,
+                     "ppl_ratio": 1.0, "projection": None},
+        "naive/dec": {"label": "naive-caa", **pc.get("naive/dec", {}),
+                      "projection": None},
+        "gated/dec": {"label": "coherent-caa", **pc.get("gated/dec", {}),
+                      "projection": None},
+        "gated/mm": {"label": "mass-mean", **pc.get("gated/mm", {}),
+                     "projection": None},
+    }
+    supplement_probe = []
+    model_revision = cfg.get("model_revision")
+    for prompt_index, prompt in enumerate(prompts):
+        for key in ("baseline", "naive/dec", "gated/dec", "gated/mm"):
+            meta = probe_condition_meta[key]
+            ppl = float(meta["ppl_ratio"])
+            dup, entropy = _word_metrics(generations[key][prompt])
+            supplement_probe.append({
+                "schema_version": 1,
+                "suite": "coherence-probe",
+                "prompt_id": f"qual-{prompt_index:02d}",
+                "prompt_category": category(prompt_index),
+                "prompt": prompt,
+                "condition": meta["label"],
+                "layer": meta.get("layer"),
+                "alpha": meta.get("alpha"),
+                "projection": meta.get("projection"),
+                "ppl_ratio": ppl,
+                "coherence_gate": gate,
+                "coherent": ppl <= gate,
+                "model_id": cfg["model_id"],
+                "model_revision": model_revision,
+                "generation": {"do_sample": False, "max_new_tokens": 120},
+                "response": generations[key][prompt],
+                "duplicate_4gram_rate": dup,
+                "word_entropy_bits": entropy,
+            })
+
+    # Self-contained version of the free-generation record.  The historical
+    # runner retained at most 400 response characters; this provenance limit is
+    # recorded rather than silently calling the strings untruncated.
+    free_conditions = (
+        ("baseline", "baseline", None, None),
+        ("dec_v_dec", "coherent-caa", "dec", None),
+        ("dec_v_perp", "projected-caa", "dec", "aligned-64"),
+        ("mm_v_dec", "mass-mean", "mm", None),
+        ("mm_v_perp", "projected-mass-mean", "mm", "aligned-64"),
+    )
+    supplement_freegen = []
+    for record_index, row in enumerate(freegen):
+        datum = tqa["rows"][row["idx"]]
+        choices = datum["mc2_targets"]["choices"]
+        labels = datum["mc2_targets"]["labels"]
+        correct = [choice for choice, label in zip(choices, labels) if label == 1]
+        incorrect = [choice for choice, label in zip(choices, labels) if label == 0]
+        for source_key, label, family, projection in free_conditions:
+            if family is None:
+                layer, alpha = None, 0.0
+            else:
+                layer = cfg["families"][family]["layer"]
+                alpha = cfg["families"][family]["alpha"]
+            supplement_freegen.append({
+                "schema_version": 1,
+                "suite": "truthfulqa-free-generation",
+                "record_index": record_index,
+                "dataset_index": row["idx"],
+                "prompt": datum["question"],
+                "reference_correct": correct,
+                "reference_incorrect": incorrect,
+                "condition": label,
+                "layer": layer,
+                "alpha": alpha,
+                "projection": projection,
+                "model_id": cfg["model_id"],
+                "model_revision": model_revision,
+                "generation": {"do_sample": False, "max_new_tokens": 64,
+                               "historical_storage_limit_characters": 400},
+                "response": row[f"gen_{source_key}"],
+                "judge": {"model_id": cfg["model_id"], "steered": False,
+                          "reference_grounded": True,
+                          "truthfulness_score": row[f"score_{source_key}"]},
+            })
+
+    SUPP.mkdir(parents=True, exist_ok=True)
+    _write_jsonl(SUPP / "qualitative_generations.jsonl", supplement_probe)
+    _write_jsonl(SUPP / "free_generation.jsonl", supplement_freegen)
+    print(f"[stage4r] wrote compact generation evidence ({len(prompts)} probe prompts)")
+    print(f"[stage4r] wrote supplement JSONL ({len(supplement_probe)} + "
+          f"{len(supplement_freegen)} records)")
 
 
 def make_examples():
-    """Worked examples showing what the truthfulness effect is: per-question MC2
-    moving from the false answer to the true one, and the projection preserving
-    it. Reads artifacts/recal/examples.json + the per-question MC2 jsonl."""
-    ep = RC / "examples.json"
-    if not ep.exists():
-        return
-    ex = json.loads(ep.read_text())
+    """Mechanically select three representative, substantive joint improvements.
+
+    Eligible held-out questions have baseline MC2 below 0.5 and improve by at
+    least 0.10 under both mass-mean and projected mass-mean.  We select the
+    records nearest the 25th, 50th, and 75th percentiles of the smaller of the
+    two gains, with dataset index as the deterministic tie-break.
+    """
+    data = json.loads((DATA / "truthfulqa_mc.json").read_text())["rows"]
     base = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "baseline.jsonl")}
     vdec = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "mm" / "v_dec.jsonl")}
     vperp = {r["idx"]: r["mc2"] for r in load_jsonl(RES / "mm" / "v_perp_al64.jsonl")}
+    eligible = []
+    for i in sorted(set(base) & set(vdec) & set(vperp)):
+        gain_v = vdec[i] - base[i]
+        gain_perp = vperp[i] - base[i]
+        if base[i] < 0.5 and gain_v >= 0.10 and gain_perp >= 0.10:
+            eligible.append((min(gain_v, gain_perp), i))
+    if not eligible:
+        return
+
+    values = np.array([value for value, _ in eligible], dtype=float)
+    selected = []
+    used = set()
+    for quantile in (0.25, 0.50, 0.75):
+        target = float(np.quantile(values, quantile))
+        candidates = sorted(eligible, key=lambda item: (abs(item[0] - target), item[1]))
+        chosen = next(item for item in candidates if item[1] not in used)
+        used.add(chosen[1])
+        selected.append((quantile, chosen[1], chosen[0]))
+
     out = []
-    for e in ex:
-        i = e["idx"]
-        if i not in base:
-            continue
-        out.append(f"\\paragraph{{Question.}} \\emph{{{_tex_escape_text(e['question'])}}}")
+    supplement = []
+    rule = ("baseline_mc2 < 0.5; both gains >= 0.10; nearest 25th/50th/75th "
+            "percentile of min(gain_mass_mean, gain_projected); tie-break idx")
+    for quantile, i, retained_gain in selected:
+        datum = data[i]
+        choices = datum["mc2_targets"]["choices"]
+        labels = datum["mc2_targets"]["labels"]
+        true_answer = next(choice for choice, label in zip(choices, labels) if label == 1)
+        false_answer = next(choice for choice, label in zip(choices, labels) if label == 0)
+        out.append(f"\\paragraph{{Question.}} \\emph{{{_tex_escape_text(datum['question'])}}}")
         out.append("\\begin{description}[leftmargin=1.4em, itemsep=3pt]")
-        out.append(f"\\item[] \\trueans{{{_tex_escape_text(e['true'])}}}")
-        out.append(f"\\item[] \\falseans{{{_tex_escape_text(e['false'])}}}")
+        out.append(f"\\item[] \\trueans{{{_tex_escape_text(true_answer)}}}")
+        out.append(f"\\item[] \\falseans{{{_tex_escape_text(false_answer)}}}")
         out.append(f"\\item[MC2 (probability mass on the true answer):] "
-                   f"baseline ${base[i]:.2f}$ $\\;\\rightarrow\\;$ "
-                   f"mass-mean $v$ ${vdec.get(i, float('nan')):.2f}$ $\\;\\rightarrow\\;$ "
-                   f"$v^{{\\perp}}$ (vocabulary readout removed) ${vperp.get(i, float('nan')):.2f}$")
+                   f"baseline ${base[i]:.3f}$ $\\;\\rightarrow\\;$ "
+                   f"mass-mean $v$ ${vdec[i]:.3f}$ $\\;\\rightarrow\\;$ "
+                   f"$v^{{\\perp}}$ (vocabulary readout removed) ${vperp[i]:.3f}$")
         out.append("\\end{description}")
+        supplement.append({
+            "schema_version": 1,
+            "selection_rule": rule,
+            "selection_quantile": quantile,
+            "dataset_index": i,
+            "question": datum["question"],
+            "displayed_true_answer": true_answer,
+            "displayed_false_answer": false_answer,
+            "baseline_mc2": base[i],
+            "mass_mean_mc2": vdec[i],
+            "projected_mass_mean_mc2": vperp[i],
+            "retained_gain": retained_gain,
+        })
     (TAB / "examples.tex").write_text("\n".join(out) + "\n")
-    print(f"[stage4r] wrote tables/examples.tex ({len(ex)} examples)")
+    SUPP.mkdir(parents=True, exist_ok=True)
+    _write_jsonl(SUPP / "representative_mc2_examples.jsonl", supplement)
+    print(f"[stage4r] wrote tables/examples.tex ({len(selected)} rule-selected examples)")
 
 
 def _tex_escape_text(s: str) -> str:
