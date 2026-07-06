@@ -14,6 +14,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from liar.plotting import FAMILY_COLOR, FAMILY_MARKER, GRID, INK, MUTED, TURBO  # noqa: E402
+
 RES = ROOT / "results"
 ART = ROOT / "artifacts"
 FIG = ROOT / "figures"
@@ -27,7 +29,6 @@ MODELS = [
     ("recal_qwen", "recal_qwen", "Qwen2.5-7B-Instruct"),
     ("recal_llama2", "recal_llama2", "Llama-2-7B-chat"),
 ]
-GREEN_D, BLUE_D, GRAY = "#2E9E57", "#2F8FCC", "#8C8C8C"
 FAM_LABEL = {"dec": "CAA", "mm": "mass-mean"}
 
 
@@ -154,7 +155,9 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams.update({"font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False,
-                         "figure.dpi": 200, "savefig.bbox": "tight", "legend.frameon": False})
+                         "figure.dpi": 200, "savefig.bbox": "tight", "legend.frameon": False,
+                         "axes.grid": True, "grid.color": GRID, "grid.alpha": 0.72,
+                         "grid.linewidth": 0.5, "axes.labelcolor": INK, "text.color": INK})
     # short x-tick labels
     SHORT = {"Llama-3-8B-Instruct": "Llama-3-8B", "Mistral-7B-Instruct-v0.3": "Mistral-7B",
              "Qwen2.5-7B-Instruct": "Qwen2.5-7B", "Llama-2-7B-chat": "Llama-2-7B"}
@@ -171,7 +174,8 @@ def main():
                                    gridspec_kw={"width_ratios": [1.55, 1.0]})
 
     # --- panel (a): the effect itself, delta MC2 per model per family ---
-    for fam, col, off in (("dec", BLUE_D, -0.13), ("mm", GREEN_D, 0.13)):
+    for fam, off in (("dec", -0.13), ("mm", 0.13)):
+        col = FAMILY_COLOR[fam]
         ys, los, his, xs = [], [], [], []
         for i, (_, _, st) in enumerate(present):
             if fam not in st:
@@ -180,9 +184,10 @@ def main():
             xs.append(i + off); ys.append(e["delta"])
             los.append(e["delta_ci"][0]); his.append(e["delta_ci"][1])
         ys = np.array(ys); los = np.array(los); his = np.array(his); xs = np.array(xs)
-        axL.errorbar(xs, ys, yerr=[ys - los, his - ys], fmt="o", color=col, capsize=3,
+        axL.errorbar(xs, ys, yerr=[ys - los, his - ys], fmt=FAMILY_MARKER[fam],
+                     color=col, capsize=3,
                      ms=6, lw=1.4, label=FAM_LABEL[fam])
-    axL.axhline(0, ls="-", color="0.3", lw=0.8)
+    axL.axhline(0, ls="-", color=TURBO["anchor"], alpha=0.4, lw=0.8)
     axL.set_xticks(x); axL.set_xticklabels(short, fontsize=7, rotation=18, ha="right")
     axL.set_ylabel(r"truthfulness gain $\Delta$MC2")
     axL.set_title("(a) Steering effect across models", fontsize=8.5)
@@ -197,15 +202,16 @@ def main():
             rlo.append(e["rho_ci"][0]); rhi.append(e["rho_ci"][1])
             rlab.append(short[i])
     rx = np.array(rx); ry = np.array(ry); rlo = np.array(rlo); rhi = np.array(rhi)
-    axR.axhspan(0, 1, color=GREEN_D, alpha=0.06)
-    axR.errorbar(rx, ry, yerr=[ry - rlo, rhi - ry], fmt="o", color=GREEN_D, capsize=3,
+    axR.axhspan(0, 1, color=FAMILY_COLOR["mm"], alpha=0.07)
+    axR.errorbar(rx, ry, yerr=[ry - rlo, rhi - ry], fmt=FAMILY_MARKER["mm"],
+                 color=FAMILY_COLOR["mm"], capsize=3,
                  ms=7, lw=1.5)
-    axR.axhline(1, ls=":", color="0.4", lw=0.9)
-    axR.axhline(0, ls=":", color="0.4", lw=0.9)
+    axR.axhline(1, ls=":", color=TURBO["anchor"], alpha=0.4, lw=0.9)
+    axR.axhline(0, ls=":", color=TURBO["anchor"], alpha=0.4, lw=0.9)
     axR.text(0.02, 1.0, "all downstream", transform=axR.get_yaxis_transform(),
-             fontsize=6.5, va="bottom", ha="left", color="0.35")
+             fontsize=6.5, va="bottom", ha="left", color=INK)
     axR.text(0.02, 0.0, "all readout", transform=axR.get_yaxis_transform(),
-             fontsize=6.5, va="bottom", ha="left", color="0.35")
+             fontsize=6.5, va="bottom", ha="left", color=INK)
     axR.set_xticks(rx); axR.set_xticklabels(rlab, fontsize=7, rotation=18, ha="right")
     axR.set_xlim(-0.6, max(len(rx) - 0.4, 0.6))
     axR.set_ylim(-0.1, 1.45)

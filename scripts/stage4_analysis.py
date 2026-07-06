@@ -21,13 +21,19 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from liar.plotting import TURBO  # noqa: E402
+
 S1 = ROOT / "artifacts" / "stage1"
 S2 = ROOT / "results" / "stage2"
 S3 = ROOT / "results" / "stage3"
 FIG = ROOT / "figures"
 TAB = ROOT / "docs" / "paper" / "tables"
 
-PALETTE = ["#63FBC5", "#00B6EB", "#8000FF", "#FF0000", "#FFB360", "#D6DD81"]
+# Legacy pipeline: keep its overwrite-capable outputs on the same real Turbo map.
+PALETTE = [
+    TURBO["selected"], TURBO["perp"], TURBO["caa"],
+    TURBO["anchor"], TURBO["mass_mean"], TURBO["parallel"],
+]
 N_BOOT = 10_000
 SEED = 0
 

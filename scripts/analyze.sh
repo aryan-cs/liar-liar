@@ -5,4 +5,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 bash scripts/fetch_results.sh
 .venv/bin/python scripts/stage4_recal.py
+.venv/bin/python scripts/stage6_multi.py
 bash scripts/build_paper.sh

@@ -20,17 +20,21 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from liar.plotting import (  # noqa: E402
+    FAMILY_COLOR,
+    FAMILY_MARKER,
+    GRID,
+    INK,
+    MUTED,
+    NEUTRAL,
+    TURBO,
+)
+
 RC = ROOT / "artifacts" / "recal"
 RES = ROOT / "results" / "recal"
 FIG = ROOT / "figures"
 TAB = ROOT / "docs" / "tables"
 
-# Four-colour palette (base pastels) and their darker line shades.
-GREEN, GREEN_D = "#8DF0A8", "#2E9E57"
-BLUE, BLUE_D = "#8DD2F0", "#2F8FCC"
-RED, RED_D = "#F08D96", "#CC4F5B"
-ORANGE, ORANGE_D = "#F0C88D", "#C0902E"
-PALETTE = [GREEN, BLUE, RED, ORANGE, GREEN_D, BLUE_D]
 N_BOOT = 10_000
 SEED = 0
 FAM_LABEL = {"dec": "CAA", "mm": "mass-mean"}
@@ -251,13 +255,12 @@ def main() -> None:
     print("[stage4r] complete")
 
 
-FAM_COLOR = {"dec": BLUE_D, "mm": GREEN_D}      # CAA blue, mass-mean green
-FAM_FILL = {"dec": BLUE, "mm": GREEN}           # light pastel band fills
-COL_PAR = ORANGE_D       # parallel component
-COL_RAND = "#8C8C8C"     # random controls (neutral gray)
-COL_GATE = RED_D         # coherence gate / incoherent region
-COL_VDEC = "#1A1A1A"     # the unprojected vector in per-condition plots
-COL_PERP = BLUE_D        # the projected vector in lens/scatter (vs vdec ink)
+FAM_COLOR = FAMILY_COLOR
+COL_PAR = TURBO["parallel"]  # warm end of Turbo: parallel component
+COL_RAND = TURBO["anchor"]   # subordinate via alpha + open-diamond marker
+COL_GATE = TURBO["gate"]     # deep red end of Turbo: incoherent region
+COL_VDEC = TURBO["anchor"]   # violet start of Turbo: unprojected vector
+COL_PERP = TURBO["perp"]     # bright-blue Turbo sample: projected vector
 
 CONDITION_ROWS = [
     ("v_dec", r"$v$ (unprojected)"),
@@ -289,7 +292,8 @@ def make_figures(summary, calib, cfg, certs):
         "font.size": 8.5, "axes.titlesize": 9.5, "axes.labelsize": 8.5,
         "axes.spines.top": False, "axes.spines.right": False,
         "figure.dpi": 200, "savefig.bbox": "tight",
-        "axes.grid": True, "grid.alpha": 0.22, "grid.linewidth": 0.5,
+        "axes.grid": True, "grid.color": GRID, "grid.alpha": 0.72, "grid.linewidth": 0.5,
+        "axes.labelcolor": INK, "text.color": INK,
         "legend.frameon": False, "xtick.labelsize": 7.5, "ytick.labelsize": 7.5,
     })
     rng = np.random.default_rng(SEED)
@@ -303,15 +307,21 @@ def make_figures(summary, calib, cfg, certs):
         layers = sorted({r["layer"] for r in grid})
         op = cfg["families"][fam]
         ax_p, ax_m = axes[0][ci_], axes[1][ci_]
-        for layer, ls in zip(layers, ["-", "--"]):
+        for layer in layers:
             g = sorted([r for r in grid if r["layer"] == layer], key=lambda r: r["alpha"])
             al = [r["alpha"] for r in g]
             col = FAM_COLOR[fam]
+            is_selected_layer = layer == op["layer"]
+            ls = "-" if is_selected_layer else "--"
+            marker_face = col if is_selected_layer else "white"
+            line_width = 1.6 if is_selected_layer else 1.2
             ax_p.plot(al, [r["nll_ratio"] for r in g], ls, marker="o", ms=3.5,
-                      color=col, alpha=1.0 if layer == op["layer"] else 0.45,
+                      color=col, markerfacecolor=marker_face, markeredgecolor=col,
+                      markeredgewidth=0.8, alpha=1.0, lw=line_width,
                       label=f"layer {layer}")
             ax_m.plot(al, [r["val_mc2_delta"] for r in g], ls, marker="o", ms=3.5,
-                      color=col, alpha=1.0 if layer == op["layer"] else 0.45)
+                      color=col, markerfacecolor=marker_face, markeredgecolor=col,
+                      markeredgewidth=0.8, alpha=1.0, lw=line_width)
             for r in g:
                 if not r["coherent"]:
                     ax_m.plot(r["alpha"], r["val_mc2_delta"], "x", color=COL_GATE,
@@ -321,9 +331,10 @@ def make_figures(summary, calib, cfg, certs):
         ax_p.axhspan(cfg["gate"], ax_p.get_ylim()[1] * 20, color=COL_GATE, alpha=0.06, lw=0)
         ax_p.text(0.55, cfg["gate"] * 1.12, "incoherent (gate 1.5)", fontsize=6.8, color=COL_GATE)
         opr = [r for r in grid if r["layer"] == op["layer"] and r["alpha"] == op["alpha"]][0]
-        ax_m.plot(op["alpha"], opr["val_mc2_delta"], "*", color="#1A1A1A", ms=13, zorder=6,
+        ax_m.plot(op["alpha"], opr["val_mc2_delta"], "*", color=TURBO["selected"],
+                  mec=COL_VDEC, mew=0.9, ms=13, zorder=6,
                   label="selected operating point")
-        ax_m.axhline(0, ls=":", color="gray", lw=0.8)
+        ax_m.axhline(0, ls=":", color=COL_RAND, alpha=0.45, lw=0.8)
         ax_p.set_title(FAM_LABEL[fam])
         ax_m.set_xlabel(r"steering strength $\alpha$")
         if ci_ == 0:
@@ -348,16 +359,16 @@ def make_figures(summary, calib, cfg, certs):
                 continue
             m, lo, hi = _delta_ci(base, rows, rng)
             if cond == "v_dec":
-                col, mfc, ms_ = COL_VDEC, COL_VDEC, 5.5
+                col, mfc, ms_, marker, alpha = COL_VDEC, COL_VDEC, 5.5, "o", 1.0
             elif cond.startswith("v_rand"):
-                col, mfc, ms_ = COL_RAND, "white", 4.5
+                col, mfc, ms_, marker, alpha = COL_RAND, "white", 4.7, "D", 0.55
             elif cond == "v_par_al64":
-                col, mfc, ms_ = COL_PAR, COL_PAR, 5
+                col, mfc, ms_, marker, alpha = COL_PAR, COL_PAR, 5.2, "^", 1.0
             else:
-                col, mfc, ms_ = FAM_COLOR[fam], "white", 5
-            ax.errorbar(m, y, xerr=[[m - lo], [hi - m]], fmt="o", color=col,
-                        mfc=mfc, mew=1.3, ms=ms_, capsize=2.4, lw=1.3)
-        ax.axvline(0, ls=":", color="gray", lw=1.0)
+                col, mfc, ms_, marker, alpha = FAM_COLOR[fam], "white", 5, "o", 1.0
+            ax.errorbar(m, y, xerr=[[m - lo], [hi - m]], fmt=marker, color=col,
+                        mfc=mfc, mew=1.3, ms=ms_, capsize=2.4, lw=1.3, alpha=alpha)
+        ax.axvline(0, ls=":", color=COL_RAND, alpha=0.45, lw=1.0)
         ax.set_title(FAM_LABEL[fam])
         ax.set_xlabel(r"$\Delta$MC2 vs. baseline (95% CI)")
     axes[0].set_yticks(ylocs)
@@ -378,7 +389,8 @@ def make_figures(summary, calib, cfg, certs):
             pts.append(c.get("rho", np.nan))
             lo.append(c.get("rho_ci", [np.nan, np.nan])[0])
             hi.append(c.get("rho_ci", [np.nan, np.nan])[1])
-        ax.plot(ALIGNED_KS, pts, "o-", color=col, ms=4.5, lw=1.5, zorder=4,
+        ax.plot(ALIGNED_KS, pts, color=col, marker=FAMILY_MARKER[fam], ls="-",
+                ms=4.5, lw=1.5, zorder=4,
                 label=r"$v^{\perp}$ aligned-$k$")
         ax.fill_between(ALIGNED_KS, lo, hi, color=col, alpha=0.16, lw=0)
         rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
@@ -386,10 +398,11 @@ def make_figures(summary, calib, cfg, certs):
         if rr:
             ax.errorbar([64], [np.mean(rr)],
                         yerr=[[np.mean(rr) - min(rr)], [max(rr) - np.mean(rr)]],
-                        fmt="D", color=COL_RAND, ms=5, capsize=3, lw=1.2, zorder=5,
+                        fmt="D", color=COL_RAND, mfc="white", alpha=0.55,
+                        ms=5, capsize=3, lw=1.2, zorder=5,
                         label="random-64 (3 seeds)")
-        ax.axhline(1, ls=":", color="gray", lw=0.9)
-        ax.axhline(0, ls=":", color="gray", lw=0.9)
+        ax.axhline(1, ls=":", color=COL_RAND, alpha=0.45, lw=0.9)
+        ax.axhline(0, ls=":", color=COL_RAND, alpha=0.45, lw=0.9)
         ax.set_xscale("log")
         ax.set_xticks(ALIGNED_KS)
         ax.set_xticklabels([str(k) for k in ALIGNED_KS])
@@ -399,7 +412,7 @@ def make_figures(summary, calib, cfg, certs):
         if fam == "dec":
             ax.set_ylabel(r"depth statistic $\rho$ (MC2)")
             ax.text(0.5, 0.06, "denominator not significant:\n$\\rho$ not interpretable",
-                    transform=ax.transAxes, fontsize=7.2, color="#666666", ha="center")
+                    transform=ax.transAxes, fontsize=7.2, color=INK, ha="center")
         ax.legend(fontsize=7, loc="upper left")
     fig.savefig(FIG / "rho_curve.pdf")
     plt.close(fig)
@@ -407,29 +420,29 @@ def make_figures(summary, calib, cfg, certs):
     # ---- Figure: component decomposition + paraphrase OOD, with CIs ----
     fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9))
     ax = axes[0]
-    comps = [("v_dec", r"$v$", None), ("v_perp_al64", r"$v^{\perp}$", None),
-             ("v_par_al64", r"$v^{\parallel}$", COL_PAR)]
+    comps = [("v_dec", r"$v$", ""), ("v_perp_al64", r"$v^{\perp}$", "//"),
+             ("v_par_al64", r"$v^{\parallel}$", "xx")]
     width = 0.34
     for fi, fam in enumerate(fams):
         fdir = RES / fam
         xs = np.arange(len(comps)) + (fi - 0.5) * width
-        for (cond, _, over), x in zip(comps, xs):
+        for (cond, _, hatch), x in zip(comps, xs):
             rows = load_jsonl(fdir / f"{cond}.jsonl")
             if not rows:
                 continue
             m, lo, hi = _delta_ci(base, rows, rng)
-            col = over or FAM_COLOR[fam]
-            ax.bar(x, m, width=width * 0.92, color=col,
-                   alpha=0.85 if cond != "v_par_al64" else 0.65,
+            col = FAM_COLOR[fam]
+            ax.bar(x, m, width=width * 0.92, color=col, hatch=hatch,
+                   edgecolor=INK, linewidth=0.35, alpha=0.88,
                    label=FAM_LABEL[fam] if cond == "v_dec" else None)
-            ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor="#1A1A1A",
+            ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor=INK,
                         capsize=2.5, lw=1.1)
-    ax.axhline(0, color="gray", lw=0.8)
+    ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
     ax.set_xticks(np.arange(len(comps)))
     ax.set_xticklabels([lab for _, lab, _ in comps])
     ax.set_ylabel(r"$\Delta$MC2 (95% CI)")
     ax.set_title("component decomposition (aligned-64)")
-    ax.legend(fontsize=7, loc="lower left")
+    ax.legend(fontsize=7, loc="lower right")
 
     ax = axes[1]
     pbase = load_jsonl(RES / "para_baseline.jsonl")
@@ -442,19 +455,20 @@ def make_figures(summary, calib, cfg, certs):
                 continue
             m, lo, hi = _delta_ci(pbase, rows, rng)
             ax.bar(xpos, m, width=0.7, color=FAM_COLOR[fam],
-                   alpha=0.85 if cond == "para_v_dec" else 0.55)
+                   hatch="" if cond == "para_v_dec" else "//",
+                   edgecolor=INK, linewidth=0.35, alpha=0.88)
             ax.errorbar(xpos, m, yerr=[[m - lo], [hi - m]], fmt="none",
-                        ecolor="#1A1A1A", capsize=2.5, lw=1.1)
+                        ecolor=INK, capsize=2.5, lw=1.1)
             labels.append(lab)
             xs.append(xpos)
             xpos += 1
         xpos += 0.7
-    ax.axhline(0, color="gray", lw=0.8)
+    ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
     ax.set_xticks(xs)
     ax.set_xticklabels(labels, fontsize=8.5)
     for fi, fam in enumerate(fams):
         ax.text(fi * 2.7 + 0.5, 1.0, FAM_LABEL[fam], transform=ax.get_xaxis_transform(),
-                ha="center", va="bottom", fontsize=8, color=FAM_COLOR[fam], clip_on=False)
+                ha="center", va="bottom", fontsize=8, color=INK, clip_on=False)
     ax.set_ylabel(r"$\Delta$MC2 on paraphrases (95% CI)")
     ax.set_title("out-of-distribution (paraphrases)", pad=16)
     fig.subplots_adjust(wspace=0.32)
@@ -465,21 +479,26 @@ def make_figures(summary, calib, cfg, certs):
     if "mm" in fams:
         fig, axes = plt.subplots(1, 2, figsize=(6.4, 3.0), sharey=True, sharex=True)
         bmap = {r["idx"]: r["mc2"] for r in base}
-        # both panels are the mass-mean family: use the unprojected-vector ink and the
-        # mass-mean green, not COL_PERP (= CAA blue), which would misread as the CAA family
+        # Both panels are one family, so color encodes intervention condition.
         for ax, cond, lab, col in (
             (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", COL_VDEC),
-            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", GREEN_D),
+            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", COL_PERP),
         ):
             rows = load_jsonl(RES / "mm" / f"{cond}.jsonl")
             xs = np.array([bmap[r["idx"]] for r in rows if r["idx"] in bmap])
             ys = np.array([r["mc2"] for r in rows if r["idx"] in bmap])
-            ax.plot([0, 1], [0, 1], color="gray", lw=0.9, ls=":", zorder=1)
-            ax.scatter(xs, ys, s=7, color=col, alpha=0.35, lw=0, zorder=2)
+            ax.plot([0, 1], [0, 1], color=COL_RAND, alpha=0.45, lw=0.9, ls=":", zorder=1)
+            if cond == "v_dec":
+                ax.scatter(xs, ys, s=6, color=col, alpha=0.48, lw=0, zorder=2)
+            else:
+                ax.scatter(xs, ys, s=8, facecolors="none", edgecolors=col,
+                           alpha=1.0, linewidths=0.55, zorder=2)
             d = ys - xs
             ax.text(0.03, 0.93, f"mean $\\Delta$MC2 = {d.mean():+.3f}\n"
                     f"{(d > 0).mean() * 100:.0f}% of questions improve",
-                    transform=ax.transAxes, fontsize=7.5, va="top")
+                    transform=ax.transAxes, fontsize=7.5, va="top", zorder=4,
+                    bbox={"facecolor": "white", "edgecolor": "none",
+                          "alpha": 0.88, "pad": 1.4})
             ax.set_xlabel("baseline MC2 (per question)")
             ax.set_title(lab, fontsize=8.5)
             ax.set_xlim(0, 1)
@@ -497,25 +516,27 @@ def make_figures(summary, calib, cfg, certs):
         fig, axes = plt.subplots(1, len(lens["families"]), figsize=(6.6, 2.9), squeeze=False)
         b = lens["baseline"].numpy()
         cols = {"v_dec": COL_VDEC, "v_perp_al64": COL_PERP, "v_par_al64": COL_PAR}
-        labs = {"v_dec": r"$v$ (unprojected)", "v_perp_al64": r"$v^{\perp}$ aligned-64",
-                "v_par_al64": r"$v^{\parallel}$ aligned-64"}
+        styles = {"v_dec": "-", "v_perp_al64": "--", "v_par_al64": "-."}
+        labs = {"v_dec": r"$v$", "v_perp_al64": r"$v^{\perp}$",
+                "v_par_al64": r"$v^{\parallel}$"}
         for ax, fam in zip(axes[0], lens["families"]):
             for name, tr in lens["families"][fam].items():
                 d = tr.numpy() - b
                 m = d.mean(1)
                 se = d.std(1) / np.sqrt(d.shape[1])
                 xs = np.arange(len(m))
-                ax.plot(xs, m, color=cols.get(name, "gray"), lw=1.5, label=labs.get(name, name))
-                ax.fill_between(xs, m - 2 * se, m + 2 * se, color=cols.get(name, "gray"),
+                ax.plot(xs, m, color=cols.get(name, NEUTRAL), ls=styles.get(name, "-"),
+                        lw=1.7, label=labs.get(name, name))
+                ax.fill_between(xs, m - 2 * se, m + 2 * se, color=cols.get(name, NEUTRAL),
                                 alpha=0.16, lw=0)
             ls_ = lens["layer_star"][fam]
-            ax.axvline(ls_, ls="--", color="gray", lw=0.9)
-            ax.text(ls_ + 0.4, ax.get_ylim()[1] * 0.92, r"$\ell^{*}$", fontsize=8, color="gray")
-            ax.axhline(0, ls=":", color="gray", lw=0.7)
+            ax.axvline(ls_, ls="--", color=COL_RAND, alpha=0.45, lw=0.9)
+            ax.text(ls_ + 0.4, ax.get_ylim()[1] * 0.92, r"$\ell^{*}$", fontsize=8, color=MUTED)
+            ax.axhline(0, ls=":", color=COL_RAND, alpha=0.45, lw=0.7)
             ax.set_title(FAM_LABEL[fam])
             ax.set_xlabel("layer")
         axes[0][0].set_ylabel("honest-shift at $T$ (logits)\nrelative to baseline")
-        axes[0][0].legend(fontsize=7, loc="upper right")
+        axes[0][0].legend(fontsize=7, loc="upper left")
         fig.savefig(FIG / "lens_resynthesis.pdf")
         plt.close(fig)
 
@@ -531,9 +552,10 @@ def make_figures(summary, calib, cfg, certs):
                 vals = [eta_data[fam].get(ro, {}).get(comp, np.nan) for fam in fams]
                 cols_ = [FAM_COLOR[fam] for fam in fams]
                 ax.bar(xlocs + (j - 0.5) * w, vals, width=w * 0.92,
-                       color=cols_, alpha=0.85 if comp == "delta_vdec" else 0.5,
+                       color=cols_, hatch="" if comp == "delta_vdec" else "//",
+                       edgecolor=INK, linewidth=0.35, alpha=0.88,
                        label=(r"$v$" if comp == "delta_vdec" else r"$v^{\perp}$"))
-            ax.axhline(0, color="gray", lw=0.8)
+            ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
             ax.set_xticks(xlocs)
             ax.set_xticklabels([FAM_LABEL[fam] for fam in fams])
             ax.set_title(title, fontsize=8.5)
