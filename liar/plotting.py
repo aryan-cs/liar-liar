@@ -1,8 +1,10 @@
 """Shared publication styling for Matplotlib figures.
 
-The fixed positions span the full rainbow while keeping semantic roles stable
-across every figure generator.  Axes and grids remain neutral; subdued anchor
-violet is reused for baselines and random-control reference marks.
+CAA and mass-mean use a fixed sky-purple pair so family identity remains
+distinct from outcome or quality.  The remaining fixed positions span the
+``turbo`` rainbow while keeping intervention and state roles stable across
+every figure generator.  Axes and grids remain neutral; subdued anchor violet
+is reused for baselines and random-control reference marks.
 
 The NeurIPS paper uses Nimbus Roman, the Times-compatible face selected by the
 venue style, with Computer Modern mathematics.  Matplotlib's Times face has
@@ -56,11 +58,11 @@ PAPER_FONT_RC = {
 
 TURBO_POSITIONS = {
     "anchor": 0.00,      # deep violet: unprojected vector / dark anchor
-    "caa": 0.10,         # blue: CAA family
+    "cool_accent": 0.10,  # legacy cool categorical accent
     "perp": 0.18,        # bright blue: projected-vector condition
     "positive": 0.40,    # green: fill-only positive emphasis
     "selected": 0.60,    # yellow: selected operating point
-    "mass_mean": 0.78,   # orange: mass-mean family
+    "warm_accent": 0.78,  # legacy warm categorical accent
     "parallel": 0.88,    # warm red: parallel component
     "gate": 0.98,        # deep red: incoherent region / rejection mark
 }
@@ -77,5 +79,8 @@ MUTED = "#6F768A"
 GRID = "#E1E3EA"
 NEUTRAL = "#7A828F"
 
-FAMILY_COLOR = {"dec": TURBO["caa"], "mm": TURBO["mass_mean"]}
+FAMILY_COLOR = {
+    "dec": "#56B4E9",  # sky: CAA
+    "mm": "#AA3377",   # purple: mass-mean
+}
 FAMILY_MARKER = {"dec": "o", "mm": "s"}

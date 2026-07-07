@@ -21,7 +21,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from liar.plotting import PAPER_FONT_RC, TURBO  # noqa: E402
+from liar.plotting import FAMILY_COLOR, PAPER_FONT_RC, TURBO  # noqa: E402
 
 S1 = ROOT / "artifacts" / "stage1"
 S2 = ROOT / "results" / "stage2"
@@ -29,11 +29,14 @@ S3 = ROOT / "results" / "stage3"
 FIG = ROOT / "figures"
 TAB = ROOT / "docs" / "paper" / "tables"
 
-# Legacy pipeline: keep its overwrite-capable outputs on the same real Turbo map.
+# Legacy pipeline: keep condition-level accents on the real Turbo map. Family
+# identity in the current pipeline comes from the shared sky-purple pairing.
 PALETTE = [
-    TURBO["selected"], TURBO["perp"], TURBO["caa"],
-    TURBO["anchor"], TURBO["mass_mean"], TURBO["parallel"],
+    TURBO["selected"], TURBO["perp"], TURBO["cool_accent"],
+    TURBO["anchor"], TURBO["warm_accent"], TURBO["parallel"],
 ]
+CAA_COLOR = FAMILY_COLOR["dec"]
+MM_COLOR = FAMILY_COLOR["mm"]
 N_BOOT = 10_000
 SEED = 0
 
@@ -239,8 +242,8 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         pts.append(e["rho_mc2"])
         los.append(e["rho_mc2_ci"][0])
         his.append(e["rho_mc2_ci"][1])
-    ax.fill_between(ks, los, his, color=PALETTE[1], alpha=0.18, lw=0)
-    ax.plot(ks, pts, "o-", color=PALETTE[1], label=r"$v^{\bot}$ aligned-$k$")
+    ax.fill_between(ks, los, his, color=CAA_COLOR, alpha=0.18, lw=0)
+    ax.plot(ks, pts, "o-", color=CAA_COLOR, label=r"$v^{\bot}$ aligned-$k$")
     # random projections at k=64
     rand = [summary["conditions"][f"v_rand_s{s}"]["rho_mc2"] for s in (0, 1, 2)
             if f"v_rand_s{s}" in summary["conditions"]]
@@ -280,9 +283,9 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         [summary["conditions"][c]["mc2_ci"][1] - summary["conditions"][c]["mc2"] for c in conds],
     ])
     colors = [PALETTE[0] if c == "baseline" else
-              PALETTE[3] if c == "v_dec" else
+              MM_COLOR if c == "v_mm" else
               PALETTE[5] if c.startswith("v_rand") or c == "v_par_al64" else
-              PALETTE[1] for c in conds]
+              CAA_COLOR for c in conds]
     ax.bar(xs, vals, yerr=errs, color=colors, width=0.7, capsize=2,
            error_kw={"lw": 0.8})
     ax.axhline(summary["conditions"]["baseline"]["mc2"], ls=":", color="gray", lw=0.8)
@@ -328,7 +331,7 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         x = eta["v_dec"][readout] - base
         y = eta["v_perp_al64"][readout] - base
         ok = ~np.isnan(x) & ~np.isnan(y)
-        ax_.scatter(x[ok], y[ok], s=6, alpha=0.5, color=PALETTE[2], edgecolors="none")
+        ax_.scatter(x[ok], y[ok], s=6, alpha=0.5, color=CAA_COLOR, edgecolors="none")
         lim = max(abs(x[ok]).max(), abs(y[ok]).max()) * 1.05
         ax_.plot([-lim, lim], [-lim, lim], ls=":", color="gray", lw=0.8)
         ax_.axhline(0, ls=":", color="gray", lw=0.5)
