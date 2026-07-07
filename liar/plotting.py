@@ -17,6 +17,7 @@ from __future__ import annotations
 from matplotlib import colormaps, font_manager
 from matplotlib.colors import to_hex
 from matplotlib.font_manager import FontProperties
+from matplotlib.patches import Rectangle
 
 
 PAPER_SERIF_CANDIDATES = (
@@ -78,9 +79,43 @@ INK = "#1F2430"
 MUTED = "#6F768A"
 GRID = "#E1E3EA"
 NEUTRAL = "#7A828F"
+HATCH_COLOR = "#FFFFFF"
 
 FAMILY_COLOR = {
     "dec": "#56B4E9",  # sky: CAA
     "mm": "#AA3377",   # purple: mass-mean
 }
 FAMILY_MARKER = {"dec": "o", "mm": "s"}
+
+
+def add_white_hatch_overlay(ax, bars, hatch: str) -> None:
+    """Overlay white vector hatches without replacing a bar's dark keyline."""
+    if not hatch:
+        return
+    for bar in bars:
+        overlay = Rectangle(
+            (bar.get_x(), bar.get_y()),
+            bar.get_width(),
+            bar.get_height(),
+            facecolor="none",
+            edgecolor=HATCH_COLOR,
+            linewidth=0,
+            hatch=hatch,
+            label="_nolegend_",
+            zorder=bar.get_zorder() + 0.1,
+        )
+        overlay.set_in_layout(False)
+        ax.add_patch(overlay)
+        outline = Rectangle(
+            (bar.get_x(), bar.get_y()),
+            bar.get_width(),
+            bar.get_height(),
+            facecolor="none",
+            edgecolor=bar.get_edgecolor(),
+            linewidth=bar.get_linewidth(),
+            alpha=bar.get_alpha(),
+            label="_nolegend_",
+            zorder=bar.get_zorder() + 0.2,
+        )
+        outline.set_in_layout(False)
+        ax.add_patch(outline)

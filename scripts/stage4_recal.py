@@ -28,11 +28,13 @@ from liar.plotting import (  # noqa: E402
     FAMILY_COLOR,
     FAMILY_MARKER,
     GRID,
+    HATCH_COLOR,
     INK,
     MUTED,
     NEUTRAL,
     PAPER_FONT_RC,
     TURBO,
+    add_white_hatch_overlay,
 )
 
 RC = ROOT / "artifacts" / "recal"
@@ -443,9 +445,10 @@ def make_figures(summary, calib, cfg, certs):
                 continue
             m, lo, hi = _delta_ci(base, rows, rng)
             col = FAM_COLOR[fam]
-            ax.bar(x, m, width=width * 0.92, color=col, hatch=hatch,
-                   edgecolor=INK, linewidth=0.35, alpha=0.88,
-                   label=FAM_LABEL[fam] if cond == "v_dec" else None)
+            bars = ax.bar(x, m, width=width * 0.92, color=col,
+                          edgecolor=INK, linewidth=0.35, alpha=0.88,
+                          label=FAM_LABEL[fam] if cond == "v_dec" else None)
+            add_white_hatch_overlay(ax, bars, hatch)
             ax.errorbar(x, m, yerr=[[m - lo], [hi - m]], fmt="none", ecolor=INK,
                         capsize=2.5, lw=1.1)
     ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
@@ -465,9 +468,10 @@ def make_figures(summary, calib, cfg, certs):
             if not rows or not pbase:
                 continue
             m, lo, hi = _delta_ci(pbase, rows, rng)
-            ax.bar(xpos, m, width=0.7, color=FAM_COLOR[fam],
-                   hatch="" if cond == "para_v_dec" else "//",
-                   edgecolor=INK, linewidth=0.35, alpha=0.88)
+            hatch = "" if cond == "para_v_dec" else "//"
+            bars = ax.bar(xpos, m, width=0.7, color=FAM_COLOR[fam],
+                          edgecolor=INK, linewidth=0.35, alpha=0.88)
+            add_white_hatch_overlay(ax, bars, hatch)
             ax.errorbar(xpos, m, yerr=[[m - lo], [hi - m]], fmt="none",
                         ecolor=INK, capsize=2.5, lw=1.1)
             labels.append(lab)
@@ -562,16 +566,32 @@ def make_figures(summary, calib, cfg, certs):
             for j, comp in enumerate(("delta_vdec", "delta_vperp")):
                 vals = [eta_data[fam].get(ro, {}).get(comp, np.nan) for fam in fams]
                 cols_ = [FAM_COLOR[fam] for fam in fams]
-                ax.bar(xlocs + (j - 0.5) * w, vals, width=w * 0.92,
-                       color=cols_, hatch="" if comp == "delta_vdec" else "//",
-                       edgecolor=INK, linewidth=0.35, alpha=0.88,
-                       label=(r"$v$" if comp == "delta_vdec" else r"$v^{\bot}$"))
+                hatch = "" if comp == "delta_vdec" else "//"
+                bars = ax.bar(xlocs + (j - 0.5) * w, vals, width=w * 0.92,
+                              color=cols_, edgecolor=INK, linewidth=0.35,
+                              alpha=0.88)
+                add_white_hatch_overlay(ax, bars, hatch)
             ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
             ax.set_xticks(xlocs)
             ax.set_xticklabels([FAM_LABEL[fam] for fam in fams])
             ax.set_title(title, fontsize=8.5)
             ax.set_ylabel(r"$\Delta\eta$ (logits)")
-        axes[0].legend(fontsize=7, title="injected", title_fontsize=7)
+        from matplotlib.legend_handler import HandlerTuple
+        from matplotlib.patches import Patch
+        legend_fill = FAM_COLOR["dec"]
+        solid_handle = Patch(facecolor=legend_fill, edgecolor=INK, linewidth=0.35)
+        hatched_handle = (
+            Patch(facecolor=legend_fill, edgecolor=INK, linewidth=0.35),
+            Patch(facecolor="none", edgecolor=HATCH_COLOR, linewidth=0, hatch="//"),
+        )
+        axes[0].legend(
+            [solid_handle, hatched_handle],
+            [r"$v$", r"$v^{\bot}$"],
+            handler_map={tuple: HandlerTuple(ndivide=1)},
+            fontsize=7,
+            title="injected",
+            title_fontsize=7,
+        )
         fig.tight_layout()
         fig.savefig(FIG / "eta_decomposition.pdf")
         plt.close(fig)
