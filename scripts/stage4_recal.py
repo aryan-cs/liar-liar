@@ -31,6 +31,7 @@ from liar.plotting import (  # noqa: E402
     INK,
     MUTED,
     NEUTRAL,
+    PAPER_FONT_RC,
     TURBO,
 )
 
@@ -268,16 +269,19 @@ COL_GATE = TURBO["gate"]     # deep red end of Turbo: incoherent region
 COL_VDEC = TURBO["anchor"]   # violet start of Turbo: unprojected vector
 COL_PERP = TURBO["perp"]     # bright-blue Turbo sample: projected vector
 
+# Matplotlib's Computer Modern map renders the visually equivalent ``\bot``
+# and ``\Vert`` glyphs from CMSY; its ``\perp``/``\parallel`` aliases fall
+# back to STIX and would reintroduce a second math typeface into the figures.
 CONDITION_ROWS = [
     ("v_dec", r"$v$ (unprojected)"),
-    ("v_perp_al16", r"$v^{\perp}$ aligned-16"),
-    ("v_perp_al64", r"$v^{\perp}$ aligned-64"),
-    ("v_perp_al256", r"$v^{\perp}$ aligned-256"),
-    ("v_perp_al1024", r"$v^{\perp}$ aligned-1024"),
-    ("v_perp_cur", r"$v^{\perp}$ curated"),
-    ("v_perp_stat", r"$v^{\perp}$ statistical"),
-    ("v_perp_al64_nm", r"$v^{\perp}$ al-64, norm-matched"),
-    ("v_par_al64", r"$v^{\parallel}$ aligned-64"),
+    ("v_perp_al16", r"$v^{\bot}$ aligned-16"),
+    ("v_perp_al64", r"$v^{\bot}$ aligned-64"),
+    ("v_perp_al256", r"$v^{\bot}$ aligned-256"),
+    ("v_perp_al1024", r"$v^{\bot}$ aligned-1024"),
+    ("v_perp_cur", r"$v^{\bot}$ curated"),
+    ("v_perp_stat", r"$v^{\bot}$ statistical"),
+    ("v_perp_al64_nm", r"$v^{\bot}$ al-64, norm-matched"),
+    ("v_par_al64", r"$v^{\Vert}$ aligned-64"),
     ("v_rand_s0", "random-64, seed 0"),
     ("v_rand_s1", "random-64, seed 1"),
     ("v_rand_s2", "random-64, seed 2"),
@@ -295,6 +299,7 @@ def make_figures(summary, calib, cfg, certs):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     plt.rcParams.update({
+        **PAPER_FONT_RC,
         "font.size": 8.5, "axes.titlesize": 9.5, "axes.labelsize": 8.5,
         "axes.spines.top": False, "axes.spines.right": False,
         "figure.dpi": 200, "savefig.bbox": "tight",
@@ -397,7 +402,7 @@ def make_figures(summary, calib, cfg, certs):
             hi.append(c.get("rho_ci", [np.nan, np.nan])[1])
         ax.plot(ALIGNED_KS, pts, color=col, marker=FAMILY_MARKER[fam], ls="-",
                 ms=4.5, lw=1.5, zorder=4,
-                label=r"$v^{\perp}$ aligned-$k$")
+                label=r"$v^{\bot}$ aligned-$k$")
         ax.fill_between(ALIGNED_KS, lo, hi, color=col, alpha=0.16, lw=0)
         rr = [f["conditions"][f"v_rand_s{s}"]["rho"] for s in range(3)
               if f"v_rand_s{s}" in f["conditions"]]
@@ -426,8 +431,8 @@ def make_figures(summary, calib, cfg, certs):
     # ---- Figure: component decomposition + paraphrase OOD, with CIs ----
     fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.9))
     ax = axes[0]
-    comps = [("v_dec", r"$v$", ""), ("v_perp_al64", r"$v^{\perp}$", "//"),
-             ("v_par_al64", r"$v^{\parallel}$", "xx")]
+    comps = [("v_dec", r"$v$", ""), ("v_perp_al64", r"$v^{\bot}$", "//"),
+             ("v_par_al64", r"$v^{\Vert}$", "xx")]
     width = 0.34
     for fi, fam in enumerate(fams):
         fdir = RES / fam
@@ -455,7 +460,7 @@ def make_figures(summary, calib, cfg, certs):
     xs, labels = [], []
     xpos = 0
     for fam in fams:
-        for cond, lab in (("para_v_dec", r"$v$"), ("para_v_perp_al64", r"$v^{\perp}$")):
+        for cond, lab in (("para_v_dec", r"$v$"), ("para_v_perp_al64", r"$v^{\bot}$")):
             rows = load_jsonl(RES / fam / f"{cond}.jsonl")
             if not rows or not pbase:
                 continue
@@ -488,7 +493,7 @@ def make_figures(summary, calib, cfg, certs):
         # Both panels are one family, so color encodes intervention condition.
         for ax, cond, lab, col in (
             (axes[0], "v_dec", r"mass-mean $v$ (unprojected)", COL_VDEC),
-            (axes[1], "v_perp_al64", r"mass-mean $v^{\perp}$ aligned-64", COL_PERP),
+            (axes[1], "v_perp_al64", r"mass-mean $v^{\bot}$ aligned-64", COL_PERP),
         ):
             rows = load_jsonl(RES / "mm" / f"{cond}.jsonl")
             xs = np.array([bmap[r["idx"]] for r in rows if r["idx"] in bmap])
@@ -523,8 +528,8 @@ def make_figures(summary, calib, cfg, certs):
         b = lens["baseline"].numpy()
         cols = {"v_dec": COL_VDEC, "v_perp_al64": COL_PERP, "v_par_al64": COL_PAR}
         styles = {"v_dec": "-", "v_perp_al64": "--", "v_par_al64": "-."}
-        labs = {"v_dec": r"$v$", "v_perp_al64": r"$v^{\perp}$",
-                "v_par_al64": r"$v^{\parallel}$"}
+        labs = {"v_dec": r"$v$", "v_perp_al64": r"$v^{\bot}$",
+                "v_par_al64": r"$v^{\Vert}$"}
         for ax, fam in zip(axes[0], lens["families"]):
             for name, tr in lens["families"][fam].items():
                 d = tr.numpy() - b
@@ -560,7 +565,7 @@ def make_figures(summary, calib, cfg, certs):
                 ax.bar(xlocs + (j - 0.5) * w, vals, width=w * 0.92,
                        color=cols_, hatch="" if comp == "delta_vdec" else "//",
                        edgecolor=INK, linewidth=0.35, alpha=0.88,
-                       label=(r"$v$" if comp == "delta_vdec" else r"$v^{\perp}$"))
+                       label=(r"$v$" if comp == "delta_vdec" else r"$v^{\bot}$"))
             ax.axhline(0, color=COL_RAND, alpha=0.45, lw=0.8)
             ax.set_xticks(xlocs)
             ax.set_xticklabels([FAM_LABEL[fam] for fam in fams])
@@ -935,7 +940,7 @@ def make_generations(probe):
         body = _excerpt(generations[key][prompts[0]])
         if key == "naive/dec":
             body = f"\\textcolor{{badRed}}{{{body}}}"
-        comparison.append(f"{label} & \\small\\texttt{{{body}}}" + r" \\")
+        comparison.append(f"{label} & {body}" + r" \\")
 
     if freegen:
         first = freegen[0]
@@ -944,10 +949,9 @@ def make_generations(probe):
             r"\midrule",
             (r"\multicolumn{2}{@{}l@{}}{\emph{Free-generation record 1: "
              + _tex_escape(question) + r"}} \\"),
-            ("mass-mean & \\small\\texttt{" + _excerpt(first["gen_mm_v_dec"])
-             + "}" + r" \\"),
-            ("projected mass-mean $v^{\\perp}$ & \\small\\texttt{"
-             + _excerpt(first["gen_mm_v_perp"]) + "}" + r" \\"),
+            ("mass-mean & " + _excerpt(first["gen_mm_v_dec"]) + r" \\"),
+            ("projected mass-mean $v^{\\perp}$ & "
+             + _excerpt(first["gen_mm_v_perp"]) + r" \\"),
         ])
     comparison.extend([r"\bottomrule", r"\end{tabularx}"])
     (TAB / "generation_comparison.tex").write_text("\n".join(comparison) + "\n")
@@ -1280,11 +1284,13 @@ def make_appendix_tables(summary, certs, cfg, calib):
 
     # --- C. curated + spillover lexicon ---
     def _ttoken(s):
-        # T1/Times cannot render non-Latin glyphs; show a readable placeholder
+        # Keep token strings in the paper's serif face so the appendix tables
+        # share one typographic system. T1/Times cannot render non-Latin
+        # glyphs, so those retain a readable placeholder.
         if all(ord(c) < 0x250 for c in s):
-            return f"\\texttt{{{_tex_escape(s)}}}"
+            return f"\\textrm{{{_tex_escape(s)}}}"
         kind = "non-Latin" if any(ord(c) > 0x2FF for c in s) else "diacritic"
-        return f"\\texttt{{[{kind}]}}"
+        return f"\\textrm{{[{kind}]}}"
 
     def surfaces(d, n=None):
         items = [s.strip() for s in d.keys()]

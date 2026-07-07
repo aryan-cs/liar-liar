@@ -1,13 +1,57 @@
-"""Shared publication-figure colors sampled from Matplotlib's ``turbo`` map.
+"""Shared publication styling for Matplotlib figures.
 
 The fixed positions span the full rainbow while keeping semantic roles stable
 across every figure generator.  Axes and grids remain neutral; subdued anchor
 violet is reused for baselines and random-control reference marks.
+
+The NeurIPS paper uses Nimbus Roman, the Times-compatible face selected by the
+venue style, with Computer Modern mathematics.  Matplotlib's Times face has
+the same publication typography and metrics; the fallbacks keep regeneration
+portable when that exact system font is unavailable.  TrueType embedding
+avoids the Type 3 glyphs produced by Matplotlib's default PDF configuration.
 """
 from __future__ import annotations
 
-from matplotlib import colormaps
+from matplotlib import colormaps, font_manager
 from matplotlib.colors import to_hex
+from matplotlib.font_manager import FontProperties
+
+
+PAPER_SERIF_CANDIDATES = (
+    "Nimbus Roman No9 L",
+    "Nimbus Roman",
+    "Times",
+    "Times New Roman",
+    "TeX Gyre TermesX",
+    "TeX Gyre Termes",
+    "Liberation Serif",
+)
+
+
+def _resolve_paper_serif() -> str:
+    """Select a Times-compatible face without silently falling back to DejaVu."""
+    for family in PAPER_SERIF_CANDIDATES:
+        try:
+            font_manager.findfont(FontProperties(family=family), fallback_to_default=False)
+        except ValueError:
+            continue
+        return family
+    raise RuntimeError(
+        "No Times-compatible serif font is installed; install Nimbus Roman, "
+        "Times, TeX Gyre Termes, or Liberation Serif before making figures."
+    )
+
+
+PAPER_SERIF = _resolve_paper_serif()
+
+PAPER_FONT_RC = {
+    "font.family": "serif",
+    "font.serif": [PAPER_SERIF],
+    "mathtext.fontset": "cm",
+    "mathtext.default": "it",
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+}
 
 
 TURBO_POSITIONS = {

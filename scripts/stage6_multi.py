@@ -14,7 +14,15 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from liar.plotting import FAMILY_COLOR, FAMILY_MARKER, GRID, INK, MUTED, TURBO  # noqa: E402
+from liar.plotting import (  # noqa: E402
+    FAMILY_COLOR,
+    FAMILY_MARKER,
+    GRID,
+    INK,
+    MUTED,
+    PAPER_FONT_RC,
+    TURBO,
+)
 
 RES = ROOT / "results"
 ART = ROOT / "artifacts"
@@ -154,10 +162,13 @@ def main():
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    plt.rcParams.update({"font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False,
-                         "figure.dpi": 200, "savefig.bbox": "tight", "legend.frameon": False,
-                         "axes.grid": True, "grid.color": GRID, "grid.alpha": 0.72,
-                         "grid.linewidth": 0.5, "axes.labelcolor": INK, "text.color": INK})
+    plt.rcParams.update({
+        **PAPER_FONT_RC,
+        "font.size": 8.5, "axes.spines.top": False, "axes.spines.right": False,
+        "figure.dpi": 200, "savefig.bbox": "tight", "legend.frameon": False,
+        "axes.grid": True, "grid.color": GRID, "grid.alpha": 0.72,
+        "grid.linewidth": 0.5, "axes.labelcolor": INK, "text.color": INK,
+    })
     # short x-tick labels
     SHORT = {"Llama-3-8B-Instruct": "Llama-3-8B", "Mistral-7B-Instruct-v0.3": "Mistral-7B",
              "Qwen2.5-7B-Instruct": "Qwen2.5-7B", "Llama-2-7B-chat": "Llama-2-7B"}

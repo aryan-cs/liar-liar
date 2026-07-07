@@ -4,7 +4,10 @@
 \usepackage[margin=1in]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
+% Match the Times-compatible Nimbus Roman typography used by the paper's
+% NeurIPS style; Computer Modern remains the math face in both documents.
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\sfdefault}{phv}
 \usepackage{microtype}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{mathtools}

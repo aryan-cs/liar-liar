@@ -21,7 +21,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from liar.plotting import TURBO  # noqa: E402
+from liar.plotting import PAPER_FONT_RC, TURBO  # noqa: E402
 
 S1 = ROOT / "artifacts" / "stage1"
 S2 = ROOT / "results" / "stage2"
@@ -43,12 +43,14 @@ CONDS_MAIN = [
     "v_perp_al64_nm", "v_rand_s0", "v_rand_s1", "v_rand_s2", "v_mm",
 ]
 
+# ``\bot``/``\Vert`` use the Computer Modern symbols that visually match the
+# paper's ``\perp``/``\parallel`` notation without Matplotlib's STIX fallback.
 LABELS = {
     "baseline": "baseline", "v_dec": r"$v_{\mathrm{dec}}$",
-    "v_perp_al16": r"$v^{\perp}$ al-16", "v_perp_al64": r"$v^{\perp}$ al-64",
-    "v_perp_al256": r"$v^{\perp}$ al-256", "v_perp_al1024": r"$v^{\perp}$ al-1024",
-    "v_perp_cur": r"$v^{\perp}$ curated", "v_perp_stat": r"$v^{\perp}$ statistical",
-    "v_par_al64": r"$v^{\parallel}$ al-64", "v_perp_al64_nm": r"$v^{\perp}$ al-64 (nm)",
+    "v_perp_al16": r"$v^{\bot}$ al-16", "v_perp_al64": r"$v^{\bot}$ al-64",
+    "v_perp_al256": r"$v^{\bot}$ al-256", "v_perp_al1024": r"$v^{\bot}$ al-1024",
+    "v_perp_cur": r"$v^{\bot}$ curated", "v_perp_stat": r"$v^{\bot}$ statistical",
+    "v_par_al64": r"$v^{\Vert}$ al-64", "v_perp_al64_nm": r"$v^{\bot}$ al-64 (nm)",
     "v_rand_s0": "rand-64 s0", "v_rand_s1": "rand-64 s1", "v_rand_s2": "rand-64 s2",
     "v_mm": r"$v_{\mathrm{mm}}$",
 }
@@ -223,6 +225,7 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
     import matplotlib.pyplot as plt
 
     plt.rcParams.update({
+        **PAPER_FONT_RC,
         "font.size": 9, "axes.spines.top": False, "axes.spines.right": False,
         "figure.dpi": 150, "savefig.bbox": "tight",
     })
@@ -237,7 +240,7 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         los.append(e["rho_mc2_ci"][0])
         his.append(e["rho_mc2_ci"][1])
     ax.fill_between(ks, los, his, color=PALETTE[1], alpha=0.18, lw=0)
-    ax.plot(ks, pts, "o-", color=PALETTE[1], label=r"$v^{\perp}$ aligned-$k$")
+    ax.plot(ks, pts, "o-", color=PALETTE[1], label=r"$v^{\bot}$ aligned-$k$")
     # random projections at k=64
     rand = [summary["conditions"][f"v_rand_s{s}"]["rho_mc2"] for s in (0, 1, 2)
             if f"v_rand_s{s}" in summary["conditions"]]
@@ -332,7 +335,7 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         ax_.axvline(0, ls=":", color="gray", lw=0.5)
         ax_.set_xlabel(r"$\eta$ shift under $v_{\mathrm{dec}}$")
         ax_.set_title(title, fontsize=8.5)
-    axes[0].set_ylabel(r"$\eta$ shift under $v^{\perp}$ al-64")
+    axes[0].set_ylabel(r"$\eta$ shift under $v^{\bot}$ al-64")
     fig.savefig(FIG / "eta_scatter.pdf")
     plt.close(fig)
 
