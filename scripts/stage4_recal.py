@@ -357,6 +357,11 @@ def make_figures(summary, calib, cfg, certs):
         ax_p.legend(fontsize=7, loc="upper left")
         if ci_ == 0:
             ax_m.legend(fontsize=7, loc="upper left")
+    # Marker size is measured in display points and is not included in data
+    # autoscaling.  Reserve enough headroom for the selected star at the
+    # maximum-alpha / maximum-delta mass-mean operating point.
+    for ax_m in axes[1]:
+        ax_m.margins(x=0.10, y=0.12)
     fig.align_ylabels()
     fig.savefig(FIG / "calibration.pdf")
     plt.close(fig)
