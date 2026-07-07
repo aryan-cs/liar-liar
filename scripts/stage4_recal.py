@@ -1154,7 +1154,7 @@ def make_examples():
         out.append(f"\\item[MC2 (probability mass on the true answer):] "
                    f"baseline ${base[i]:.3f}$ $\\;\\rightarrow\\;$ "
                    f"mass-mean $v$ ${vdec[i]:.3f}$ $\\;\\rightarrow\\;$ "
-                   f"$v^{{\\perp}}$ (vocabulary readout removed) ${vperp[i]:.3f}$")
+                   f"$v^{{\\perp}}$ (aligned-64 readout excised) ${vperp[i]:.3f}$")
         out.append("\\end{description}")
         supplement.append({
             "schema_version": 1,

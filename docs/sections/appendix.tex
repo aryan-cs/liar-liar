@@ -2,7 +2,7 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
-The appendix collects the experimental record behind the main results: the complete calibration grid (\ref{app:calibration}), the zero-direct-effect certificates for every family and token set (\ref{app:certificates}), the token-set constructions (\ref{app:tokens}), the full per-condition table with MC1 and MC2 and the MC1 robustness check (\ref{app:fullmatrix}), CAA evaluated at every coherent operating point (\ref{app:caagrid}), the word-level decomposition (\ref{app:eta}), reproducibility details (\ref{app:repro}), mechanically selected examples of the truthfulness shift (\ref{app:examples}), and compact aggregate generation evidence (\ref{app:generations}). The complete prompt--response record is supplied as machine-readable JSONL rather than typeset as a transcript dump.
+The appendix follows the logic of the claim. Sections~\ref{app:calibration}--\ref{app:tokens} establish that the comparison is well posed: they show why coherence gating is necessary, certify that projection removes the intended direct readout, and document what each token set contains. Sections~\ref{app:fullmatrix}--\ref{app:eta} then test whether the conclusion survives alternative scoring, every coherent CAA operating point, and a word-level decomposition. Sections~\ref{app:repro}--\ref{app:generations} make the result reproducible and inspectable through the full experimental record, mechanically selected examples, and aggregate generation evidence. All available prompt--response records are supplied as machine-readable JSONL rather than typeset as a transcript dump.
 
 \section{Coherence calibration grid}\label{app:calibration}
 
@@ -40,7 +40,7 @@ One property of the aligned-$k$ sets merits explicit statement, as it strengthen
 \begin{minipage}{\textwidth}
 \input{tables/app_lexicon}
 \end{minipage}
-\caption{Curated and spillover token surface forms (the full curated and spillover sets).}
+\caption{Full curated and spillover token surface forms. Apparent duplicate strings distinguish tokenizer forms with and without a leading space; spillover forms are held out of every projection.}
 \label{tab:app_lexicon}
 \end{table}
 
@@ -58,7 +58,7 @@ The data-defined sets are listed in Table~\ref{tab:app_decoded}. The statistical
 
 \section{Full per-condition results with MC1}\label{app:fullmatrix}
 
-Table~\ref{tab:app_fullmatrix} extends the headline matrix (Table~\ref{tab:matrix}) with MC1 deltas, MC2 deltas, and the MC1-based depth statistic, all with 95\% bootstrap intervals. The depth verdict does not depend on the scoring rule: for the mass-mean vector, $\rho$ on the exact-match MC1 metric is $\MmRhoAlSixtyFourMcOne$ \MmRhoAlSixtyFourMcOneCI{} at aligned-64, consistent within bootstrap error with the MC2 value ($\MmRhoAlSixtyFour$). The CAA family's $\rho$ (MC1) column is blank wherever its denominator interval contains zero, following the same refusal-to-interpret rule used in the main text.
+With the operating points, projection, and token sets established, we next ask whether the depth verdict survives changes in scoring and operating-point choice. The first check changes the scoring rule: Table~\ref{tab:app_fullmatrix} extends the headline matrix (Table~\ref{tab:matrix}) with MC1 deltas, MC2 deltas, and the MC1-based depth statistic, all with 95\% bootstrap intervals. The depth verdict does not depend on the scoring rule: for the mass-mean vector, $\rho$ on the exact-match MC1 metric is $\MmRhoAlSixtyFourMcOne$ \MmRhoAlSixtyFourMcOneCI{} at aligned-64, consistent within bootstrap error with the MC2 value ($\MmRhoAlSixtyFour$). The CAA family's $\rho$ (MC1) column is blank wherever its denominator interval contains zero, following the same refusal-to-interpret rule used in the main text.
 
 \begin{table}[h]
 \centering
@@ -82,7 +82,7 @@ The headline CAA numbers are at the validation-selected operating point. To rule
 
 \section{Word-level decomposition}\label{app:eta}
 
-Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two readouts. On the curated readout (whose direct path the projection removes), the projected vector $\vperp$ preserves or exceeds the unprojected vector's word-shift for both families. This is the mechanism underlying the per-prompt ratios in Section~\ref{sec:lens}: the word-level effect is reconstructed downstream rather than read off the injected direction. On the spillover readout (never projected out), the same pattern holds at smaller magnitude. For the mass-mean vector both spillover bars are negative, a small depression of the spillover contrast that the projection preserves; this is why its spillover ratio is read as corroborative rather than load-bearing in the main text.
+The robustness checks above establish that the depth verdict does not hinge on a scoring rule or a single operating point. We now turn from robustness to mechanism: Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two readouts. On the curated readout (whose direct path the projection removes), the projected vector $\vperp$ preserves or exceeds the unprojected vector's word-shift for both families. This is the mechanism underlying the per-prompt ratios in Section~\ref{sec:lens}: the word-level effect is reconstructed downstream rather than read off the injected direction. On the spillover readout (never projected out), the same pattern holds at smaller magnitude. For the mass-mean vector both spillover bars are negative, a small depression of the spillover contrast that the projection preserves; this is why its spillover ratio is read as corroborative rather than load-bearing in the main text.
 
 \begin{figure}[h]
 \centering
@@ -92,6 +92,8 @@ Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two re
 \end{figure}
 
 \section{Reproducibility}\label{app:repro}
+
+The remainder turns from interpreting the effect to making its evidentiary record reproducible and inspectable. We first specify the model, data, resampling, tokenization, and pipeline needed to reconstruct the reported results.
 
 \paragraph{Model and precision.} Llama-3-8B-Instruct (\texttt{NousResearch/Meta-Llama-3-8B-Instruct}), bfloat16 forward passes, float64 projections and certificates. The historical run recorded the model identifier but did not pin or preserve the Hub checkpoint revision; the supplementary schema therefore reports the revision as null rather than guessing one. The pipeline now records the resolved Hub commit for future runs. Forward passes do not enforce kernel determinism, so per-question scores vary at the third decimal place across reruns; every reported interval is substantially wider than this variation.
 
@@ -105,13 +107,13 @@ Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two re
 
 \section{What the truthfulness effect looks like}\label{app:examples}
 
-The behavioral effect is a shift in probability mass and is not observable in a single greedy sample; the following examples make it concrete without hand-picking cases. We first restrict to held-out questions with baseline MC2 below $0.5$ for which both mass-mean $v$ and projected mass-mean $v^{\perp}$ improve MC2 by at least $0.10$. Among those eligible questions, the displayed records are the ones nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, with dataset index as the tie-break. MC2 is the probability mass on true answers; the examples therefore show the range of substantive joint improvements and their persistence after the direct vocabulary readout is removed. The rule and selected records are also serialized in the supplement.
+The behavioral effect is a shift in probability mass and is not observable in a single greedy sample; the following examples make it concrete without hand-picking cases. We first restrict to held-out questions with baseline MC2 below $0.5$ for which both mass-mean $v$ and projected mass-mean $v^{\perp}$ improve MC2 by at least $0.10$. Among those eligible questions, the displayed records are the ones nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, with dataset index as the tie-break. MC2 is the probability mass on true answers; the examples therefore show the range of substantive joint improvements and their persistence after aligned-64 direct-readout excision. The rule and selected records are also serialized in the supplement.
 
 \input{tables/examples}
 
 \section{Qualitative generation evidence and supplement}\label{app:generations}
 
-The paper does not typeset all 40 prompts and 160 responses. Table~\ref{tab:generation-comparison} gives one compact, outcome-independent comparison: it uses the first serialized record from each source artifact, selected before inspecting any response. The historical 40-prompt coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations, but not projected mass-mean generations. The latter exists in the separate 250-question free-generation record, so the table presents two explicitly labeled prompt panels rather than implying a five-way same-prompt experiment that was never run.
+Rather than typeset all 40 prompts and 160 responses, we use excerpts to expose the qualitative failure mode and aggregate metrics to test whether it recurs. Table~\ref{tab:generation-comparison} gives one outcome-independent comparison using the first serialized record from each source artifact, selected before inspecting any response. The coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations, but not projected mass-mean. That condition comes from a separate 250-question free-generation record, so we show two labeled prompt panels rather than imply a five-way same-prompt experiment that was never run.
 
 \begin{table}[h]
 \centering
@@ -120,8 +122,9 @@ The paper does not typeset all 40 prompts and 160 responses. Table~\ref{tab:gene
 \caption{Compact qualitative comparison. The first panel shows the baseline, collapsed naive CAA, and coherent CAA responses for the first stored coherence-probe prompt. The second shows mass-mean and projected mass-mean on the first stored free-generation record. Newlines are rendered as ordinary whitespace; no literal escape sequences are printed.}
 \label{tab:generation-comparison}
 \end{table}
+\FloatBarrier
 
-Aggregate evidence is reported over every prompt rather than inferred from excerpts. The coherence probe uses 40 fixed prompts spanning social pressure, admission of ignorance, common misconceptions, model self-report, and value-laden honesty. Duplicate 4-gram rate is the fraction of lowercased word 4-grams that repeat within a response; entropy is empirical unigram entropy in bits per word, averaged across prompts. Perplexity is measured on the 96 held-out calibration instructions, and coherence means a ratio no greater than $1.5$. The free-generation score is the mean probability of ``Yes'' from the same checkpoint run \emph{unsteered} as a reference-grounded judge on 250 held-out TruthfulQA questions; it is an intervention-independent self-judge, not a separately trained or human judge.
+Table~\ref{tab:generation-metrics} reports the complementary aggregate evidence over every prompt. The coherence probe uses 40 fixed prompts spanning social pressure, admission of ignorance, common misconceptions, model self-report, and value-laden honesty. Duplicate 4-gram rate is the fraction of lowercased word 4-grams that repeat within a response; entropy is mean empirical unigram entropy in bits per word. Perplexity is measured on the 96 held-out calibration instructions, with coherence defined as a ratio no greater than $1.5$. The free-generation score is the mean probability of ``Yes'' from the same checkpoint run \emph{unsteered} as a reference-grounded judge on 250 held-out TruthfulQA questions; it is an intervention-independent self-judge, not a separately trained or human judge.
 
 \begin{table}[h]
 \centering
@@ -130,5 +133,6 @@ Aggregate evidence is reported over every prompt rather than inferred from excer
 \caption{Aggregate generation evidence. PPL ratio, duplicate 4-gram rate, and entropy use all 40 coherence-probe prompts; projected conditions were not run in that probe and are marked ``---''. Judged truthfulness and question-bootstrap 95\% intervals use all 250 free-generation questions; the naive collapsed condition was not run in that evaluation.}
 \label{tab:generation-metrics}
 \end{table}
+\FloatBarrier
 
-The coherence probe uses greedy decoding (sampling disabled, 120 new-token limit); the free-generation evaluation uses greedy decoding with a 64-token limit. The model identifier is \texttt{NousResearch/Meta-Llama-3-8B-Instruct}; as noted in Appendix~\ref{app:repro}, the historical run did not preserve a checkpoint revision. Every full decoded coherence-probe response is released as one record per prompt and condition in \texttt{supplement/qualitative\_generations.jsonl}. The normalized free-generation record is in \texttt{supplement/free\_generation.jsonl}; its source pipeline historically retained at most 400 response characters, and the schema records that limit explicitly. Standard JSON newline escapes decode back to real line breaks. The camera-ready artifact is linked from the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{repository supplement directory}; the same directory can be uploaded without that link for anonymous review.
+A machine-readable audit trail backs both views. The coherence and free-generation probes use greedy decoding with 120- and 64-token limits, respectively. The model is \texttt{NousResearch/Meta-Llama-3-8B-Instruct}; the historical run did not preserve a checkpoint revision (Appendix~\ref{app:repro}). Full coherence-probe responses appear as one record per prompt and condition in \texttt{supplement/qualitative\_generations.jsonl}. The normalized record in \texttt{supplement/free\_generation.jsonl} retains the source pipeline's historical 400-character limit, which its schema records explicitly. Standard JSON newline escapes decode to real line breaks. The camera-ready artifact links the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{repository supplement directory}; the same directory can be uploaded without that link for anonymous review. Thus the excerpts diagnose the failure mode, the aggregates establish its scope, and the JSONL preserves every prompt and retained response record for audit.
