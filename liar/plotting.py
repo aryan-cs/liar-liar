@@ -1,10 +1,11 @@
 """Shared publication styling for Matplotlib figures.
 
 CAA and mass-mean use a fixed sky-purple pair so family identity remains
-distinct from outcome or quality.  The remaining fixed positions span the
-``turbo`` rainbow while keeping intervention and state roles stable across
-every figure generator.  Axes and grids remain neutral; subdued anchor violet
-is reused for baselines and random-control reference marks.
+distinct from outcome or quality.  Multi-series panels within one family use
+dark/base/mid shades of that same root.  The remaining fixed positions span
+the ``turbo`` rainbow while keeping intervention and state roles stable across
+figure generators.  Axes and grids remain neutral; subdued anchor violet is
+reused for baselines and random-control reference marks.
 
 The NeurIPS paper uses Nimbus Roman, the Times-compatible face selected by the
 venue style, with Computer Modern mathematics.  Matplotlib's Times face has
@@ -84,6 +85,13 @@ HATCH_COLOR = "#FFFFFF"
 FAMILY_COLOR = {
     "dec": "#56B4E9",  # sky: CAA
     "mm": "#AA3377",   # purple: mass-mean
+}
+# Same-root line shades for multi-series family panels.  The family base is
+# reserved for the focal projected vector; darker tones keep the remaining
+# trajectories legible on white without introducing a third hue.
+FAMILY_SHADE = {
+    "dec": {"dark": "#2F6380", "base": FAMILY_COLOR["dec"], "mid": "#4187AF"},
+    "mm": {"dark": "#5E1C42", "base": FAMILY_COLOR["mm"], "mid": "#802659"},
 }
 FAMILY_MARKER = {"dec": "o", "mm": "s"}
 

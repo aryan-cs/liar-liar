@@ -21,7 +21,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from liar.plotting import FAMILY_COLOR, PAPER_FONT_RC, TURBO  # noqa: E402
+from liar.plotting import FAMILY_COLOR, FAMILY_SHADE, PAPER_FONT_RC, TURBO  # noqa: E402
 
 S1 = ROOT / "artifacts" / "stage1"
 S2 = ROOT / "results" / "stage2"
@@ -303,7 +303,11 @@ def make_figures(summary, mc2, eta, cfg, certs, rng) -> None:
         lens = torch.load(lens_path, weights_only=True)
         fig, ax = plt.subplots(figsize=(4.2, 3.0))
         base = lens["trajectories"]["baseline"].numpy()
-        colmap = {"v_dec": PALETTE[3], "v_perp_al64": PALETTE[1], "v_par_al64": PALETTE[5]}
+        colmap = {
+            "v_dec": FAMILY_SHADE["dec"]["dark"],
+            "v_perp_al64": FAMILY_SHADE["dec"]["base"],
+            "v_par_al64": FAMILY_SHADE["dec"]["mid"],
+        }
         for name in ("v_dec", "v_perp_al64", "v_par_al64"):
             if name in lens["trajectories"]:
                 tr = lens["trajectories"][name].numpy() - base

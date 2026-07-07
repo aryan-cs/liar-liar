@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT))
 from liar.plotting import (  # noqa: E402
     FAMILY_COLOR,
     FAMILY_MARKER,
+    FAMILY_SHADE,
     GRID,
     HATCH_COLOR,
     INK,
@@ -530,24 +531,46 @@ def make_figures(summary, calib, cfg, certs):
         lens = torch.load(lens_path, weights_only=True)
         fig, axes = plt.subplots(1, len(lens["families"]), figsize=(6.6, 2.9), squeeze=False)
         b = lens["baseline"].numpy()
-        cols = {"v_dec": COL_VDEC, "v_perp_al64": COL_PERP, "v_par_al64": COL_PAR}
+        tones = {"v_dec": "dark", "v_perp_al64": "base", "v_par_al64": "mid"}
         styles = {"v_dec": "-", "v_perp_al64": "--", "v_par_al64": "-."}
         labs = {"v_dec": r"$v$", "v_perp_al64": r"$v^{\bot}$",
                 "v_par_al64": r"$v^{\Vert}$"}
         for ax, fam in zip(axes[0], lens["families"]):
-            for name, tr in lens["families"][fam].items():
+            family_cols = {
+                name: FAMILY_SHADE[fam][tone]
+                for name, tone in tones.items()
+            }
+            order = [name for name in tones if name in lens["families"][fam]]
+            order.extend(name for name in lens["families"][fam] if name not in order)
+            trajectories = {}
+            for name in order:
+                tr = lens["families"][fam][name]
                 d = tr.numpy() - b
                 m = d.mean(1)
                 se = d.std(1) / np.sqrt(d.shape[1])
                 xs = np.arange(len(m))
-                ax.plot(xs, m, color=cols.get(name, NEUTRAL), ls=styles.get(name, "-"),
-                        lw=1.7, label=labs.get(name, name))
-                ax.fill_between(xs, m - 2 * se, m + 2 * se, color=cols.get(name, NEUTRAL),
-                                alpha=0.16, lw=0)
+                trajectories[name] = (xs, m, se)
+            # Confidence bands sit below every trajectory so same-hue overlap
+            # does not muddy or occlude the line encodings.
+            for name in order:
+                xs, m, se = trajectories[name]
+                ax.fill_between(
+                    xs, m - 2 * se, m + 2 * se,
+                    color=family_cols.get(name, NEUTRAL), alpha=0.11, lw=0,
+                    zorder=1,
+                )
+            for name in order:
+                xs, m, _ = trajectories[name]
+                ax.plot(
+                    xs, m,
+                    color=family_cols.get(name, NEUTRAL),
+                    ls=styles.get(name, "-"), lw=1.7,
+                    label=labs.get(name, name), zorder=2,
+                )
             ls_ = lens["layer_star"][fam]
-            ax.axvline(ls_, ls="--", color=COL_RAND, alpha=0.45, lw=0.9)
+            ax.axvline(ls_, ls="--", color=MUTED, alpha=0.55, lw=0.9)
             ax.text(ls_ + 0.4, ax.get_ylim()[1] * 0.92, r"$\ell^{*}$", fontsize=8, color=MUTED)
-            ax.axhline(0, ls=":", color=COL_RAND, alpha=0.45, lw=0.7)
+            ax.axhline(0, ls=":", color=MUTED, alpha=0.55, lw=0.7)
             ax.set_title(FAM_LABEL[fam])
             ax.set_xlabel("layer")
         axes[0][0].set_ylabel("honest-shift at $T$ (logits)\nrelative to baseline")
