@@ -7,6 +7,13 @@
 % load natbib ourselves (below) so the manual bibliography keeps its citation style.
 \usepackage[preprint, nonatbib]{neurips_2023}
 
+% This public copy is a preprint, not an active submission.
+\makeatletter
+\if@preprint
+  \renewcommand{\@noticestring}{Preprint.}
+\fi
+\makeatother
+
 % -- Encoding (neurips_2023 loads the times package for the body font) --
 \usepackage[T1]{fontenc}
 
@@ -42,7 +49,7 @@
 \hypersetup{colorlinks=true, citecolor=primary, linkcolor=primary, urlcolor=primary}
 
 % -- Float control: keep figures inside their sections --
-\usepackage[section]{placeins}
+\usepackage[section,below]{placeins}
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\floatpagefraction}{0.75}
