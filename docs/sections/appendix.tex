@@ -2,11 +2,11 @@
 \section*{Appendix}
 \addcontentsline{toc}{section}{Appendix}
 
-The appendix follows the logic of the claim. Sections~\ref{app:calibration}--\ref{app:tokens} establish that the comparison is well posed: they show why coherence gating is necessary, certify that projection removes the intended direct readout, and document what each token set contains. Sections~\ref{app:fullmatrix}--\ref{app:eta} then test whether the conclusion survives alternative scoring, every coherent CAA operating point, and a word-level decomposition. Sections~\ref{app:repro}--\ref{app:generations} make the result reproducible and inspectable through the full experimental record, mechanically selected examples, and aggregate generation evidence. All available prompt--response records are supplied as machine-readable JSONL rather than typeset as a transcript dump.
+This appendix reports the calibration grid, projection certificates, robustness checks, and reproducibility details. The supplement contains the available prompt--response records as machine-readable JSONL.
 
 \section{Coherence calibration grid}\label{app:calibration}
 
-Table~\ref{tab:app_calibration} is the full $(\text{family}, \ell, \alpha)$ sweep behind the operating-point selection of Section~\ref{sec:setup}. Each row reports the held-out per-token perplexity ratio (the coherence statistic), the validation MC2 improvement, and whether the setting passes the coherence gate (perplexity ratio $\le 1.5$). The selected operating point per family is marked with a star and corresponds to the coherent setting with the largest validation gain. The table exhibits the pattern that motivates the gate. For CAA, validation MC2 continues to increase beyond the gate, into incoherent settings in which perplexity has already diverged (the rows marked ``no''), and an MC2-maximizing sweep would select one of these settings. The mass-mean family remains coherent across nearly the entire grid, so its selected point does not lie at a narrow boundary of the coherent region.
+Table~\ref{tab:app_calibration} reports the full $(\text{family}, \ell, \alpha)$ sweep used for operating-point selection. Each row gives the held-out perplexity ratio, validation MC2 change, and gate verdict. A star marks the coherent setting with the largest validation gain. CAA's validation score continues to rise after perplexity exceeds the gate, whereas mass-mean remains coherent across nearly the entire grid.
 
 \begin{table}[h]
 \centering
@@ -18,21 +18,21 @@ Table~\ref{tab:app_calibration} is the full $(\text{family}, \ell, \alpha)$ swee
 
 \section{Zero-direct-effect certificates}\label{app:certificates}
 
-Table~\ref{tab:app_certificates} certifies the central construction. For each family and token set, $\max_t |(Av)_t|$ is the largest direct logit effect of the \emph{unprojected} vector on the set (per unit $\alpha$), and $\max_t |(Av^{\perp})_t|$ is the same quantity \emph{after} projection. Every after-value is at machine precision ($\le$ \CertWorst{} in float64), against before-values up to \CertPre{} logits, which establishes that the projection removes the direct path to numerical precision rather than approximately. The norm ratio $\|v^{\perp}\|/\|v\|$ quantifies the fraction of the vector removed by projection: removing the 64 aligned directions costs under $5\%$ of the norm, whereas the aligned-1024 set (a quarter of the residual dimension) costs $31$--$34\%$. Per-point transfer of these certificates to individual readout positions is quantified in Section~\ref{sec:method}.
+Table~\ref{tab:app_certificates} reports the largest direct logit effect before and after projection for each family and token set. Every post-projection value is at float64 precision ($\le$ \CertWorst{}), compared with pre-projection values as large as \CertPre{} logits per unit $\alpha$. Aligned-64 reduces the retained vector norm by less than $5\%$; aligned-1024 reduces it by $31$--$34\%$. Section~\ref{sec:method} reports transfer to individual readout positions.
 
 \begin{table}[h]
 \centering
 \small
 \input{tables/app_certificates}
-\caption{Zero-direct-effect certificates. ``before'' is the unprojected vector's max direct effect on the set; ``after'' is the projected vector's. Random-subspace controls are omitted (they do not target the readout). Computed in float64.}
+\caption{Zero-direct-effect certificates in float64. ``before'' and ``after'' are the maximum direct effects on the set for the unprojected and projected vectors. Random controls do not target the readout and are omitted.}
 \label{tab:app_certificates}
 \end{table}
 
 \section{Token-set constructions}\label{app:tokens}
 
-The curated lexicon is a fixed list of honest- and deceptive-coded lemmas expanded to every single-token surface form (case and leading-space variants that the tokenizer maps to one token), deduplicated by token id. The spillover sets are stem-disjoint synonyms held out of every projection, used to test whether word-level effects extend beyond the projected vocabulary. The aligned-$k$ sets are defined per vector as the top-$k$ tokens by $|\WUt^{*}\vdec|$ and are therefore not fixed lists; the statistical sets are the top tokens by system-prompt-contrast logit shift and admit punctuation and fragment tokens, which is why they serve as a control rather than a curated lexicon.
+The curated lexicon expands honest- and deceptive-coded lemmas into single-token case and leading-space variants, deduplicated by token id. Spillover sets contain stem-disjoint synonyms excluded from every projection. Aligned-$k$ contains the top-$k$ tokens by $|\WUt^{*}\vdec|$ for each vector. Statistical sets contain the largest system-prompt-contrast logit shifts and may include punctuation or fragments, so they serve as a data-defined control.
 
-One property of the aligned-$k$ sets merits explicit statement, as it strengthens the result. The tokens with the largest direct effect $|\WUt^{*}\vdec|$ are not honesty-coded words but anomalous high-norm vocabulary items (rare code, markup, and foreign-script fragments), the ``glitch tokens'' whose unembedding rows have outsized norm and therefore dominate $|\WUt^{*}v|$ for nearly any $v$ (Table~\ref{tab:app_decoded}). Two consequences follow. First, the steering vector's single largest direct-readout channel is semantically empty, so it cannot be the carrier of the truthfulness effect, in accordance with the paper's central conclusion regarding depth. Second, the aligned-$k$ projection removes those high-norm directions rather than the honesty vocabulary; the test of whether the honesty \emph{words} themselves are load-bearing is the \emph{curated} projection ($\rho = \MmRhoCur$), which removes precisely the honest- and deceptive-coded surface forms. Both projections, together with the statistical set ($\rho = \MmRhoStat$), yield $\rho \approx 1$, so the conclusion holds whether one excises the vector's largest readout directions or the semantic honesty vocabulary in particular.
+The aligned sets are dominated by high-norm ``glitch tokens,'' including rare code, markup, and foreign-script fragments (Table~\ref{tab:app_decoded}). Aligned projection therefore tests the vector's largest direct-readout channels, while curated projection tests the honesty vocabulary itself. For mass-mean, aligned ($\rho = \MmRhoAlSixtyFour$), curated ($\rho = \MmRhoCur$), and statistical ($\rho = \MmRhoStat$) projections all give $\rho \approx 1$.
 
 \begin{table}[h]
 \centering
@@ -44,7 +44,7 @@ One property of the aligned-$k$ sets merits explicit statement, as it strengthen
 \label{tab:app_lexicon}
 \end{table}
 
-The data-defined sets are listed in Table~\ref{tab:app_decoded}. The statistical set is instructive. Its honest side recovers \texttt{honest}, \texttt{truthful}, \texttt{truth}, \texttt{accurate}, \texttt{fair} (with multilingual and fragment tokens interspersed), whereas its deceptive side does not constitute a lie-lexicon. The deceptive side is dominated by overconfident agreement tokens (\texttt{absolutely}, \texttt{definitely}, \texttt{certainly}, \texttt{sure}, \texttt{yes}): under the deceptive system prompt the model is shifted most strongly toward confident affirmation rather than toward the word \emph{lie}. This observation is the reason the statistical construction serves as a control rather than a curated lexicon, and the reason the depth verdict is reported across all three token-set constructions.
+Table~\ref{tab:app_decoded} lists the data-defined sets. The statistical set's honest side includes \texttt{honest}, \texttt{truthful}, \texttt{truth}, \texttt{accurate}, and \texttt{fair}. Its deceptive side is dominated by confident agreement tokens such as \texttt{absolutely}, \texttt{definitely}, and \texttt{yes}, rather than a lie lexicon. We therefore treat it as a control and report the depth result across all three constructions.
 
 \begin{table}[h]
 \centering
@@ -52,13 +52,13 @@ The data-defined sets are listed in Table~\ref{tab:app_decoded}. The statistical
 \begin{minipage}{\textwidth}
 \input{tables/app_decoded}
 \end{minipage}
-\caption{Decoded data-defined token sets. The statistical set's deceptive side is overconfident-agreement vocabulary, not deception words; the aligned-64 sets (when present) are the tokens each steering vector moves most through the direct readout, i.e.\ exactly what the projection removes.}
+\caption{Decoded data-defined token sets. The statistical set's deceptive side contains confident-agreement vocabulary rather than deception words. Aligned-64 contains the tokens each vector moves most through the direct readout.}
 \label{tab:app_decoded}
 \end{table}
 
 \section{Full per-condition results with MC1}\label{app:fullmatrix}
 
-With the operating points, projection, and token sets established, we next ask whether the depth verdict survives changes in scoring and operating-point choice. The first check changes the scoring rule: Table~\ref{tab:app_fullmatrix} extends the headline matrix (Table~\ref{tab:matrix}) with MC1 deltas, MC2 deltas, and the MC1-based depth statistic, all with 95\% bootstrap intervals. The depth verdict does not depend on the scoring rule: for the mass-mean vector, $\rho$ on the exact-match MC1 metric is $\MmRhoAlSixtyFourMcOne$ \MmRhoAlSixtyFourMcOneCI{} at aligned-64, consistent within bootstrap error with the MC2 value ($\MmRhoAlSixtyFour$). The CAA family's $\rho$ (MC1) column is blank wherever its denominator interval contains zero, following the same refusal-to-interpret rule used in the main text.
+Table~\ref{tab:app_fullmatrix} adds MC1 effects and the MC1 depth statistic to the headline matrix. For mass-mean at aligned-64, MC1 gives $\rho = \MmRhoAlSixtyFourMcOne$ \MmRhoAlSixtyFourMcOneCI{}, consistent with the MC2 estimate ($\MmRhoAlSixtyFour$). CAA ratios are omitted when the denominator interval contains zero.
 
 \begin{table}[h]
 \centering
@@ -70,7 +70,7 @@ With the operating points, projection, and token sets established, we next ask w
 
 \section{CAA at every coherent operating point}\label{app:caagrid}
 
-The headline CAA numbers are at the validation-selected operating point. To rule out that the absence of a truthfulness gain is specific to that point, Table~\ref{tab:app_caagrid} evaluates the CAA vector on the held-out test set at \emph{every} coherent setting of the layer/strength grid (perplexity ratio $\le 1.5$). The largest gain observed at any setting is \CaaGridMaxDelta{} \CaaGridMaxDeltaCI; most settings are statistically indistinguishable from zero, and the validation-selected point is negative. No coherent CAA setting delivers anything approaching the mass-mean effect (\MmTestDelta).
+Table~\ref{tab:app_caagrid} evaluates CAA on the test set at every coherent grid setting. The largest effect is \CaaGridMaxDelta{} \CaaGridMaxDeltaCI; most settings are indistinguishable from zero, and the selected point is negative. No coherent CAA setting approaches the mass-mean effect (\MmTestDelta).
 
 \begin{table}[h]
 \centering
@@ -82,20 +82,18 @@ The headline CAA numbers are at the validation-selected operating point. To rule
 
 \section{Word-level decomposition}\label{app:eta}
 
-The robustness checks above establish that the depth verdict does not hinge on a scoring rule or a single operating point. We now turn from robustness to mechanism: Figure~\ref{fig:eta} decomposes the word-level honest-shift $\eta$ on the two readouts. On the curated readout (whose direct path the projection removes), the projected vector $\vperp$ preserves or exceeds the unprojected vector's word-shift for both families. This is the mechanism underlying the per-prompt ratios in Section~\ref{sec:lens}: the word-level effect is reconstructed downstream rather than read off the injected direction. On the spillover readout (never projected out), the same pattern holds at smaller magnitude. For the mass-mean vector both spillover bars are negative, a small depression of the spillover contrast that the projection preserves; this is why its spillover ratio is read as corroborative rather than load-bearing in the main text.
+Figure~\ref{fig:eta} decomposes the word-level honest shift on the curated and spillover readouts. The aligned-64 projection preserves or increases the curated shift for both families. The unprojected spillover shifts are smaller; for mass-mean, both are slightly negative. We therefore use spillover as supporting evidence rather than as a primary result.
 
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.92\textwidth]{../figures/eta_decomposition.pdf}
-\caption{Change in the word-level honest-shift $\Delta\eta$ (mean $T^{+}$ minus $T^{-}$ logit at the answer position, relative to baseline) under the unprojected vector $v$ and its aligned-64 projection $\vperp$, on the curated readout (left, the one excised) and the spillover readout (right, never excised). Colour encodes family (CAA sky blue, mass-mean purple); hatching identifies the projected vector.}
+\caption{Change in the word-level honest shift $\Delta\eta$ under $v$ and aligned-64 $\vperp$. The projection targets aligned-64; curated and spillover lexicons are evaluation readouts. Colour encodes family (CAA sky blue, mass-mean purple), and hatching identifies the projected vector.}
 \label{fig:eta}
 \end{figure}
 
 \section{Reproducibility}\label{app:repro}
 
-The remainder turns from interpreting the effect to making its evidentiary record reproducible and inspectable. We first specify the model, data, resampling, tokenization, and pipeline needed to reconstruct the reported results.
-
-\paragraph{Model and precision.} Llama-3-8B-Instruct (\texttt{NousResearch/Meta-Llama-3-8B-Instruct}), bfloat16 forward passes, float64 projections and certificates. The historical run recorded the model identifier but did not pin or preserve the Hub checkpoint revision; the supplementary schema therefore reports the revision as null rather than guessing one. The pipeline now records the resolved Hub commit for future runs. Forward passes do not enforce kernel determinism, so per-question scores vary at the third decimal place across reruns; every reported interval is substantially wider than this variation.
+\paragraph{Model and precision.} Llama-3-8B-Instruct (\texttt{NousResearch/Meta-Llama-3-8B-Instruct}), bfloat16 forward passes, float64 projections and certificates. The historical run did not preserve the Hub revision, so the supplement records it as null. The current pipeline records the resolved commit. Forward passes are not kernel-deterministic; rerun differences appear at the third decimal and are smaller than the reported intervals.
 
 \paragraph{Data splits.} TruthfulQA MC (817 questions), seeded shuffle: 120 validation (operating-point selection), 200 mass-mean statement construction, 497 held-out test. CAA vectors from 256 Alpaca instructions under honest/deceptive system prompts; 96 disjoint instructions for the coherence gate; the remaining 48 for the statistical token set. The 256 CAA instructions, re-rendered without a system prompt, also calibrate the effective unembedding. Vector-construction and evaluation prompts are disjoint.
 
@@ -103,36 +101,36 @@ The remainder turns from interpreting the effect to making its evidentiary recor
 
 \paragraph{Tokenization.} MC scoring concatenates prompt and continuation at the id level; this equals tokenizing the joined string for all \BpePairs{} prompt--choice pairs (\BpeMismatches{} mismatches).
 
-\paragraph{Pipeline.} Five checkpointed stages (data, calibration and projection, headline matrix, paraphrase and lens, analysis) plus a faithfulness probe, all with fixed seeds and resume-by-row-count. Code, token lists, certificates, per-question results, and the formal proof are released.
+\paragraph{Pipeline.} The released pipeline checkpoints each stage and uses fixed seeds. It includes the data, projection, headline evaluation, paraphrase, lens, and faithfulness analyses. Code, token lists, certificates, per-question results, and the formal proof are released.
 
 \section{What the truthfulness effect looks like}\label{app:examples}
 
-The behavioral effect is a shift in probability mass and is not observable in a single greedy sample; the following examples make it concrete without hand-picking cases. We first restrict to held-out questions with baseline MC2 below $0.5$ for which both mass-mean $v$ and projected mass-mean $v^{\perp}$ improve MC2 by at least $0.10$. Among those eligible questions, the displayed records are the ones nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, with dataset index as the tie-break. MC2 is the probability mass on true answers; the examples therefore show the range of substantive joint improvements and their persistence after aligned-64 direct-readout excision. The rule and selected records are also serialized in the supplement.
+The examples follow a fixed selection rule. Eligible questions have baseline MC2 below $0.5$ and gains of at least $0.10$ under both mass-mean $v$ and its aligned-64 projection $v^{\perp}$. We display the records nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, breaking ties by dataset index. The selected records span the joint improvements without using response text. The supplement records the rule and selected examples.
 
 \input{tables/examples}
 
 \section{Qualitative generation evidence and supplement}\label{app:generations}
 
-Rather than typeset all 40 prompts and 160 responses, we use excerpts to expose the qualitative failure mode and aggregate metrics to test whether it recurs. Table~\ref{tab:generation-comparison} gives one outcome-independent comparison using the first serialized record from each source artifact, selected before inspecting any response. The coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations, but not projected mass-mean. That condition comes from a separate 250-question free-generation record, so we show two labeled prompt panels rather than imply a five-way same-prompt experiment that was never run.
+Table~\ref{tab:generation-comparison} uses the first serialized record from each source artifact, selected without inspecting the response. The coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations. Projected mass-mean comes from a separate 250-question record, so the table uses two labeled prompt panels.
 
 \begin{table}[h]
 \centering
 \small
 \input{tables/generation_comparison}
-\caption{Compact qualitative comparison. The first panel shows the baseline, collapsed naive CAA, and coherent CAA responses for the first stored coherence-probe prompt. The second shows mass-mean and projected mass-mean on the first stored free-generation record. Newlines are rendered as ordinary whitespace; no literal escape sequences are printed.}
+\caption{Qualitative comparison using the first stored record from each source. The panels separate the coherence probe from the free-generation evaluation. Newlines are rendered as whitespace.}
 \label{tab:generation-comparison}
 \end{table}
 \FloatBarrier
 
-Table~\ref{tab:generation-metrics} reports the complementary aggregate evidence over every prompt. The coherence probe uses 40 fixed prompts spanning social pressure, admission of ignorance, common misconceptions, model self-report, and value-laden honesty. Duplicate 4-gram rate is the fraction of lowercased word 4-grams that repeat within a response; entropy is mean empirical unigram entropy in bits per word. Perplexity is measured on the 96 held-out calibration instructions, with coherence defined as a ratio no greater than $1.5$. The free-generation score is the mean probability of ``Yes'' from the same checkpoint run \emph{unsteered} as a reference-grounded judge on 250 held-out TruthfulQA questions; it is an intervention-independent self-judge, not a separately trained or human judge.
+Table~\ref{tab:generation-metrics} aggregates every prompt. The 40-prompt coherence probe covers social pressure, ignorance, misconceptions, self-report, and value-laden honesty. Within each response, duplicate 4-gram rate is one minus the fraction of unique lowercased word 4-grams, and entropy is empirical unigram Shannon entropy in bits per word. The table averages both metrics across responses. Perplexity uses the 96 held-out calibration instructions. The free-generation score is the mean ``Yes'' probability from the same checkpoint run unsteered as a reference-grounded judge on 250 held-out TruthfulQA questions. It is neither a human nor an independently trained judge.
 
 \begin{table}[h]
 \centering
 \small
 \input{tables/generation_metrics}
-\caption{Aggregate generation evidence. PPL ratio, duplicate 4-gram rate, and entropy use all 40 coherence-probe prompts; projected conditions were not run in that probe and are marked ``---''. Judged truthfulness and question-bootstrap 95\% intervals use all 250 free-generation questions; the naive collapsed condition was not run in that evaluation.}
+\caption{Aggregate generation evidence. PPL ratio, duplicate 4-gram rate, and entropy use all 40 coherence prompts. Conditions not run are marked ``n/a''. Judged truthfulness and 95\% bootstrap intervals use 250 free-generation questions.}
 \label{tab:generation-metrics}
 \end{table}
 \FloatBarrier
 
-A machine-readable audit trail backs both views. The coherence and free-generation probes use greedy decoding with 120- and 64-token limits, respectively. The model is \texttt{NousResearch/Meta-Llama-3-8B-Instruct}; the historical run did not preserve a checkpoint revision (Appendix~\ref{app:repro}). Full coherence-probe responses appear as one record per prompt and condition in \texttt{supplement/qualitative\_generations.jsonl}. The normalized record in \texttt{supplement/free\_generation.jsonl} retains the source pipeline's historical 400-character limit, which its schema records explicitly. Standard JSON newline escapes decode to real line breaks. The camera-ready artifact links the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{repository supplement directory}; the same directory can be uploaded without that link for anonymous review. Thus the excerpts diagnose the failure mode, the aggregates establish its scope, and the JSONL preserves every prompt and retained response record for audit.
+The coherence and free-generation probes use greedy decoding with limits of 120 and 64 tokens. Full coherence responses are in \texttt{supplement/qualitative\_generations.jsonl}; \texttt{supplement/free\_generation.jsonl} preserves the historical 400-character limit and records it in the schema. The public preprint links the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{supplement directory}; an anonymous submission can include the same files without the public link.

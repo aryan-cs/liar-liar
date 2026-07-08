@@ -587,7 +587,7 @@ def make_figures(summary, calib, cfg, certs):
     eta_data = {fam: summary["families"][fam].get("eta", {}) for fam in fams}
     if any(eta_data.values()):
         fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.8), sharey=False)
-        for ax, ro, title in ((axes[0], "curated", "curated readout (projected out)"),
+        for ax, ro, title in ((axes[0], "curated", "curated readout (evaluation only)"),
                               (axes[1], "spillover", "spillover readout (never projected)")):
             xlocs = np.arange(len(fams))
             w = 0.36
@@ -1020,11 +1020,11 @@ def make_generations(probe):
     ]
     for label, key, ppl in metric_rows:
         pm = probe_metrics.get(key)
-        ppl_s = f"{ppl:.2f}" if ppl is not None else "---"
-        dup_s = f"{100 * pm['duplicate_4gram_rate']:.1f}\\%" if pm else "---"
-        ent_s = f"{pm['word_entropy_bits']:.2f}" if pm else "---"
+        ppl_s = f"{ppl:.2f}" if ppl is not None else "n/a"
+        dup_s = f"{100 * pm['duplicate_4gram_rate']:.1f}\\%" if pm else "n/a"
+        ent_s = f"{pm['word_entropy_bits']:.2f}" if pm else "n/a"
         js = judge_stats.get(key)
-        judge_s = f"{js[0]:.3f} [{js[1]:.3f}, {js[2]:.3f}]" if js else "---"
+        judge_s = f"{js[0]:.3f} [{js[1]:.3f}, {js[2]:.3f}]" if js else "n/a"
         metrics.append(f"{label} & {ppl_s} & {dup_s} & {ent_s} & {judge_s}" + r" \\")
     metrics.extend([r"\bottomrule", r"\end{tabular}"])
     (TAB / "generation_metrics.tex").write_text("\n".join(metrics) + "\n")
@@ -1274,7 +1274,7 @@ def make_tables(summary, certs, cfg):
             if not c:
                 continue
             rho = (f"${c['rho']:.2f}$ \\,{{\\scriptsize $[{c['rho_ci'][0]:.2f},\\, {c['rho_ci'][1]:.2f}]$}}"
-                   if "rho" in c else "---")
+                   if "rho" in c else "n/a")
             lines.append(f"{lab[cond]} & ${c['mc2']:.3f}$ & ${c['delta_mc2']:+.3f}$ & {rho} \\\\")
         lines.append(r"\midrule")
     lines[-1] = r"\bottomrule"
@@ -1420,7 +1420,7 @@ def make_appendix_tables(summary, certs, cfg, calib):
             else:
                 e2 = boot_mean(c2 - b2, rng)
                 e1 = boot_mean(c1 - b1, rng)
-            rho1 = "---"
+            rho1 = "n/a"
             if cond != "v_dec" and dec1_significant:
                 rr = boot_ratio(c1 - b1, d_dec1, rng)
                 rho1 = f"${rr[0]:.2f}$"
