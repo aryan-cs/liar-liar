@@ -18,7 +18,7 @@ For a perturbation $\delta z$ at readout point $z$, the first-order logit respon
 J_{\gamma}(z) = \frac{1}{\sigma(z)}\,\diag(\gamma)\!\left(I_d - \frac{z z^{\top}}{d\,\sigma(z)^2}\right),
 \label{eq:effective}
 \end{equation}
-where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Projection against raw $\WU$ rows leaves direct effects through the learned gain and the rank-one term. We instead average $J_{\gamma}$ over the calibration readout points described in Section~\ref{sec:setup} and denote the resulting matrix by $\WUt^{*}$. The zero-direct-effect certificates apply to this average. We separately measure transfer to individual readout points.
+where $\sigma(z) = \sqrt{d^{-1}\|z\|_2^2+\varepsilon}$. Raw $\WU$ rows omit the learned gain and rank-one term, so projecting against them would not isolate the tested path. We instead average $J_{\gamma}$ over the calibration points in Section~\ref{sec:setup} and denote the resulting matrix by $\WUt^{*}$. The certificate is exact for this calibration-defined first-order readout; per-point and nonlinear checks assess transfer to actual model states.
 
 \subsection{Direct and indirect paths}
 
@@ -27,21 +27,21 @@ The effective unembedding separates two routes from an intervention to the logit
 \Delta\bm{\ell} \,=\, \underbrace{\WUt^{*}\, v}_{\text{direct}} \, + \, \underbrace{\WUt^{*} M^{(\ell^{*} \to L)}\, v}_{\text{indirect}} \, + \, O(\|v\|^2).
 \label{eq:decomp}
 \end{equation}
-The direct term acts through the readout; the indirect term passes through downstream computation. Our intervention removes the direct term on a chosen token set while leaving the indirect path available.
+The direct term acts through the readout; the indirect term passes through downstream computation. Projection asks whether a genuine behavioral effect survives after the selected direct route is disabled. Survival shows that this route is not necessary under the tested decomposition; broader token sets and controls determine whether a downstream interpretation is warranted, without identifying the semantic representation involved.
 
 \subsection{Token-conditional orthogonalization}
 
-No nonzero perturbation can be invisible to every token. For each model, $V > d$ and $\WU$ has full column rank, so $\ker(\WU) = \{0\}$ (Proposition~3.1 of the supplementary proof). We therefore restrict the readout to a chosen token set.
+No nonzero perturbation can be invisible to every token. For each model, $V > d$ and $\WU$ has full column rank, so $\ker(\WU) = \{0\}$ (Proposition~3.1 of the supplementary proof). We therefore restrict the readout to a chosen token set. The choice of $T$ defines the scope of the claim: the certificate rules out a direct path through those rows, not through the entire vocabulary.
 
 Fix a selected token set $T \subset \{1,\dots,V\}$ with $k = |T| \ll d$, and let $A = \WUt^{*}[T,:] \in \R^{k \times d}$ be the corresponding rows. With $A^{+}$ the Moore--Penrose pseudoinverse, define
 \begin{equation}
 \PTperp = I_d - A^{+}A, \qquad \vperp = \PTperp\,\vdec, \qquad \vpar = \vdec - \vperp .
 \label{eq:projection}
 \end{equation}
-By construction, $A\,\vperp = 0$, so the projected vector has zero first-order logit contribution at every token in $T$. It is also the vector closest to $\vdec$ in Euclidean norm among those satisfying the constraint (Theorem~8.1 of the supplementary proof, following \citealp{belrose2023leace}). In the calibration-averaged first-order decomposition, substituting $v = \vperp$ into Equation~\ref{eq:decomp} eliminates the direct term on $T$. Any subsequent change in the $T$-restricted logits passes through downstream computation. The same inference applies to benchmark behavior to the extent that $T$ mediates that behavior (Theorem~6.1 of the supplementary proof).
+By construction, $A\,\vperp = 0$, so the projected vector has zero first-order logit contribution at every token in $T$. It is also the vector closest to $\vdec$ in Euclidean norm among those satisfying the constraint (Theorem~8.1 of the supplementary proof, following \citealp{belrose2023leace}). This minimum-change property avoids replacing the vector by an arbitrary intervention. In the calibration-averaged first-order decomposition, substituting $v = \vperp$ into Equation~\ref{eq:decomp} eliminates the direct term on $T$. Any subsequent change in the $T$-restricted logits passes through downstream computation. The same inference applies to benchmark behavior to the extent that $T$ mediates that behavior (Theorem~6.1 of the supplementary proof).
 
 \paragraph{Certificate scope.}
-The certificate is exact for the average effective unembedding. Across the 256 calibration points, the largest residual direct effect on the aligned-64 set is \MmLeakMax{} logits per unit $\alpha$ for mass-mean and \DecLeakMax{} for CAA. Both are below $3\%$ of their unprojected median effects (\MmLeakScale{} and \DecLeakScale{}). Exact RMSNorm replay at the operating point changes an aligned-64 logit by at most \MmNonlinVperpMax{} for projected mass-mean and \DecNonlinVperpMax{} for projected CAA, compared with \MmNonlinVdecMax{} and \DecNonlinVdecMax{} before projection. Higher-order leakage is about $4\%$ and $7\%$ of the removed direct effect, respectively.
+The certificate is exact for the average effective unembedding. Across the 256 calibration points, the largest residual direct effect on the aligned-64 set is \MmLeakMax{} logits per unit $\alpha$ for mass-mean and \DecLeakMax{} for CAA. Both are below $3\%$ of their unprojected median effects (\MmLeakScale{} and \DecLeakScale{}). Exact RMSNorm replay at the operating point changes an aligned-64 logit by at most \MmNonlinVperpMax{} for projected mass-mean and \DecNonlinVperpMax{} for projected CAA, compared with \MmNonlinVdecMax{} and \DecNonlinVdecMax{} before projection. Higher-order leakage is about $4\%$ and $7\%$ of the removed direct effect, respectively. These checks bound approximation error; the guarantee remains averaged, first-order, and token-conditional.
 
 \subsection{The depth statistic}
 
@@ -52,15 +52,15 @@ Let $\beta(v)$ be a benchmark score under intervention $v$ and $\Delta(v) = \bet
 \end{equation}
 Under pure vocabulary suppression, $\rho \approx 0$ once $T$ covers the readout-aligned mass of $\vdec$. Under a pure upstream-concept account, $\rho \approx 1$. Values slightly above $1$ mean that the removed readout component opposed the behavioral effect. We interpret these values like $\rho \approx 1$: the effect is not concentrated in the readout. Only $\rho$ near $0$ supports the suppression account.
 
-The ratio is interpretable only when its denominator is bounded away from zero. We report paired bootstrap confidence intervals and stability $\sigma_T$ across independent constructions of $T$. To measure the associated vocabulary shift, we define the per-prompt honest-shift
+The ratio is interpretable only when its denominator is bounded away from zero; otherwise it divides one noisy estimate by another and cannot support a depth claim. We report paired bootstrap confidence intervals and stability $\sigma_T$ across independent constructions of $T$. To test whether a vocabulary shift survives direct excision, we define the per-prompt honest-shift
 \begin{equation}
 \eta(v) = \big[\mu_{T^{+}}(v) - \mu_{T^{-}}(v)\big] - \big[\mu_{T^{+}}(0) - \mu_{T^{-}}(0)\big],
 \label{eq:eta}
 \end{equation}
-where $\mu_{T^{\pm}}$ is the mean answer-position logit over honest-coded ($T^{+}$) or deceptive-coded ($T^{-}$) tokens. We define $\rho_\eta$ as the ratio of the mean per-question change in $\eta$ under $\vperp$ to that under $\vdec$. It uses the same paired bootstrap as Equation~\ref{eq:rho} and is interpreted only when the denominator's interval excludes zero.
+where $\mu_{T^{\pm}}$ is the mean answer-position logit over honest-coded ($T^{+}$) or deceptive-coded ($T^{-}$) tokens. We define $\rho_\eta$ as the ratio of the mean per-question change in $\eta$ under $\vperp$ to that under $\vdec$. It uses the same paired bootstrap as Equation~\ref{eq:rho} and is interpreted only when the denominator's interval excludes zero. This diagnostic shows whether the word-level contrast survives projection; layerwise trajectories trace its later development. It complements rather than replaces behavioral $\rho$.
 
 \paragraph{Token-set constructions.}
-We construct $T$ in three ways. \emph{Curated} uses 32 honest and 32 deceptive lemmas expanded to single-token surface variants. \emph{Statistical} selects the top 32 tokens per side by mean first-position logit shift between honest and deceptive contexts on held-out prompts. \emph{Aligned-$k$} selects the top $k$ tokens by $|\WUt^{*}\vdec|$, directly targeting the largest readout shifts. Sweeping $k$ measures how $\rho(k)$ changes as more of the direct path is removed.
+We construct $T$ three ways to test distinct suppression accounts. \emph{Curated} uses 32 honest and 32 deceptive lemmas expanded to single-token variants, targeting the semantic vocabulary in the hypothesis. \emph{Statistical} selects the top 32 tokens per side by held-out first-position logit shift between honest and deceptive contexts, targeting vocabulary induced by the prompt contrast. \emph{Aligned-$k$} selects the top $k$ tokens by $|\WUt^{*}\vdec|$, targeting the largest direct shifts without semantic filtering. Agreement across sets guards against dependence on a single definition; sweeping $k$ tests whether the effect weakens as more of the path is removed.
 
 \paragraph{Controls and predictions.}
-Three controls separate aligned excision from a generic perturbation. \emph{Random projection} removes a random $k$-dimensional subspace under three seeds, matching aligned-64 in dimension. \emph{Norm matching} rescales $\vperp$ to $\|\vdec\|$, separating direction from magnitude. \emph{Parallel injection} applies only $\vpar$, the readout-aligned component of rank at most $k$. Vocabulary suppression predicts a selective loss under aligned excision and an effect in $\vpar$. A downstream account predicts that $\vperp$ retains the effect and that aligned excision resembles an equal-rank random projection.
+Each control addresses a simpler explanation for change after projection. \emph{Random projection} removes a random $k$-dimensional subspace under three seeds, providing an equal-rank damage baseline. \emph{Norm matching} rescales $\vperp$ to $\|\vdec\|$, ruling out shrinkage alone. \emph{Parallel injection} applies only $\vpar$, the removed component of rank at most $k$, to test its sufficiency. Vocabulary suppression predicts selective loss under aligned excision and an effect in $\vpar$; a downstream account predicts retention in $\vperp$ and parity with random projection.

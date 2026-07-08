@@ -18,7 +18,7 @@ Table~\ref{tab:app_calibration} reports the full $(\text{family}, \ell, \alpha)$
 
 \section{Zero-direct-effect certificates}\label{app:certificates}
 
-Table~\ref{tab:app_certificates} reports the largest direct logit effect before and after projection for each family and token set. Every post-projection value is at float64 precision ($\le$ \CertWorst{}), compared with pre-projection values as large as \CertPre{} logits per unit $\alpha$. Aligned-64 reduces the retained vector norm by less than $5\%$; aligned-1024 reduces it by $31$--$34\%$. Section~\ref{sec:method} reports transfer to individual readout positions.
+Table~\ref{tab:app_certificates} reports the largest direct logit effect before and after projection for each family and token set. Every post-projection value is at float64 precision ($\le$ \CertWorst{}), compared with pre-projection values as large as \CertPre{} logits per unit $\alpha$. Aligned-64 reduces the retained vector norm by less than $5\%$, so its behavioral comparison does not depend on removing most of the vector. Aligned-1024 reduces the norm by $31$--$34\%$ and tests a much broader readout span. Section~\ref{sec:method} reports transfer to individual readout positions.
 
 \begin{table}[h]
 \centering
@@ -82,7 +82,7 @@ Table~\ref{tab:app_caagrid} evaluates CAA on the test set at every coherent grid
 
 \section{Word-level decomposition}\label{app:eta}
 
-Figure~\ref{fig:eta} decomposes the word-level honest shift on the curated and spillover readouts. The aligned-64 projection preserves or increases the curated shift for both families. The unprojected spillover shifts are smaller; for mass-mean, both are slightly negative. We therefore use spillover as supporting evidence rather than as a primary result.
+Figure~\ref{fig:eta} decomposes the word-level honest shift on the curated and spillover readouts. The aligned-64 projection preserves or increases the curated shift for both families. Because aligned-64, rather than either evaluation lexicon, defines the excision, these comparisons ask whether broader vocabulary shifts remain after targeted readout removal; they do not identify the path to the unexcised tokens. The unprojected spillover shifts are smaller; for mass-mean, both are slightly negative. We therefore use spillover as supporting evidence rather than as a primary result.
 
 \begin{figure}[h]
 \centering
@@ -105,13 +105,13 @@ Figure~\ref{fig:eta} decomposes the word-level honest shift on the curated and s
 
 \section{What the truthfulness effect looks like}\label{app:examples}
 
-The examples follow a fixed selection rule. Eligible questions have baseline MC2 below $0.5$ and gains of at least $0.10$ under both mass-mean $v$ and its aligned-64 projection $v^{\perp}$. We display the records nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, breaking ties by dataset index. The selected records span the joint improvements without using response text. The supplement records the rule and selected examples.
+The examples follow a fixed selection rule. Eligible questions have baseline MC2 below $0.5$ and gains of at least $0.10$ under both mass-mean $v$ and its aligned-64 projection $v^{\perp}$. We display the records nearest the 25th, 50th, and 75th percentiles of $\min\{\Delta(v),\Delta(v^{\perp})\}$, breaking ties by dataset index. The selected records span the joint improvements without using response text. They illustrate the scored probability shift but are not evidence beyond the aggregate result. The supplement records the rule and selected examples.
 
 \input{tables/examples}
 
 \section{Qualitative generation evidence and supplement}\label{app:generations}
 
-Table~\ref{tab:generation-comparison} uses the first serialized record from each source artifact, selected without inspecting the response. The coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations. Projected mass-mean comes from a separate 250-question record, so the table uses two labeled prompt panels.
+Table~\ref{tab:generation-comparison} uses the first serialized record from each source artifact, selected without inspecting the response. The coherence probe contains baseline, naive CAA, coherent CAA, and mass-mean generations. Projected mass-mean comes from a separate 250-question record, so the table uses two labeled prompt panels rather than implying a five-way comparison. The excerpt exposes the collapse mode; Table~\ref{tab:generation-metrics} shows whether the pattern recurs across prompts.
 
 \begin{table}[h]
 \centering
@@ -132,5 +132,7 @@ Table~\ref{tab:generation-metrics} aggregates every prompt. The 40-prompt cohere
 \label{tab:generation-metrics}
 \end{table}
 \FloatBarrier
+
+Across the 40 coherence prompts, naive CAA alone combines extreme perplexity and repetition with low entropy; coherent CAA avoids that collapse but remains more repetitive than baseline. In free generation, CAA and projected CAA score below baseline, while mass-mean and projected mass-mean score above it. This corroborates the coherence-gated behavioral split, but generation-quality metrics were not run for the projected vectors and truthfulness is judged by the unsteered base model rather than a human or independent model.
 
 The coherence and free-generation probes use greedy decoding with limits of 120 and 64 tokens. Full coherence responses are in \texttt{supplement/qualitative\_generations.jsonl}; \texttt{supplement/free\_generation.jsonl} preserves the historical 400-character limit and records it in the schema. The public preprint links the \href{https://github.com/aryan-cs/liar-liar/tree/master/supplement}{supplement directory}; an anonymous submission can include the same files without the public link.
