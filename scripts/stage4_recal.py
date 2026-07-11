@@ -1344,22 +1344,23 @@ def make_appendix_tables(summary, certs, cfg, calib):
         items = [s.strip() for s in d.keys()]
         items = items[:n] if n else items
         return ", ".join(_ttoken(s) for s in items)
+    token_set_gap = r"\\[3pt]"
     lex = []
     lex.append(r"\textbf{Curated honest ($T^{+}$, " + str(len(tok["curated_plus"])) + r" surface forms):} ")
-    lex.append(surfaces(tok["curated_plus"]) + r" \\[3pt]")
+    lex.append(surfaces(tok["curated_plus"]) + " " + token_set_gap)
     lex.append(r"\textbf{Curated deceptive ($T^{-}$, " + str(len(tok["curated_minus"])) + r" forms):} ")
-    lex.append(surfaces(tok["curated_minus"]) + r" \\[3pt]")
+    lex.append(surfaces(tok["curated_minus"]) + " " + token_set_gap)
     lex.append(r"\textbf{Spillover honest (" + str(len(tok["spill_plus"])) + r" forms, never projected out):} ")
-    lex.append(surfaces(tok["spill_plus"]) + r" \\[3pt]")
+    lex.append(surfaces(tok["spill_plus"]) + " " + token_set_gap)
     lex.append(r"\textbf{Spillover deceptive (" + str(len(tok["spill_minus"])) + r" forms):} ")
     lex.append(surfaces(tok["spill_minus"]))
     (TAB / "app_lexicon.tex").write_text("\n".join(lex) + "\n")
 
     # --- C2. decoded data-driven token sets (statistical, aligned-64) ---
     def decoded_block(title, plus, minus, note=""):
-        b = [rf"\textbf{{{title}}}{note} \\[2pt]"]
+        b = [rf"\textbf{{{title}}}{note} " + token_set_gap]
         b.append(r"\emph{honest side:} " +
-                 ", ".join(_ttoken(t) for t in plus) + r" \\[2pt]")
+                 ", ".join(_ttoken(t) for t in plus) + " " + token_set_gap)
         b.append(r"\emph{deceptive side:} " +
                  ", ".join(_ttoken(t) for t in minus))
         return b
@@ -1372,7 +1373,7 @@ def make_appendix_tables(summary, certs, cfg, calib):
             [x["tok"] for x in s["statistical_plus"]],
             [x["tok"] for x in s["statistical_minus"]],
             note=r"")
-        dec.append(r"\\[6pt]")
+        dec.append(token_set_gap)
     ap = RES / "aligned64_decoded.json"
     if ap.exists():
         a = json.loads(ap.read_text())
@@ -1382,8 +1383,12 @@ def make_appendix_tables(summary, certs, cfg, calib):
                     f"Aligned-64 set, {FAM_LABEL[fam]} (the tokens the projection removes)",
                     [x["tok"] for x in a[fam]["plus"]],
                     [x["tok"] for x in a[fam]["minus"]])
-                dec.append(r"\\[6pt]")
+                dec.append(token_set_gap)
     if dec:
+        # Use the same gap between every logical row/block, but never leave a
+        # trailing skip before the table caption.
+        if dec[-1] == token_set_gap:
+            dec.pop()
         (TAB / "app_decoded.tex").write_text("\n".join(dec) + "\n")
 
     # --- D. full per-condition table with MC1 and norm ratio ---

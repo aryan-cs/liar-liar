@@ -202,7 +202,11 @@ def main():
     axL.set_xticks(x); axL.set_xticklabels(short, fontsize=7, rotation=18, ha="right")
     axL.set_ylabel(r"truthfulness gain $\Delta$MC2")
     axL.set_title("(a) Steering effect across models", fontsize=8.5)
-    axL.legend(fontsize=7.5, loc="upper right")
+    # Reserve a label-only band above the highest interval so the legend never
+    # competes with the Llama-2 mass-mean point or its uncertainty whisker.
+    axL.set_ylim(-0.11, 0.18)
+    axL.legend(fontsize=7.5, loc="upper center", ncol=2,
+               borderaxespad=0.4, columnspacing=0.9, handletextpad=0.4)
 
     # --- panel (b): depth rho, mass-mean, only where the effect is significant ---
     rx, ry, rlo, rhi, rlab = [], [], [], [], []
@@ -219,10 +223,16 @@ def main():
                  ms=7, lw=1.5)
     axR.axhline(1, ls=":", color=TURBO["anchor"], alpha=0.4, lw=0.9)
     axR.axhline(0, ls=":", color=TURBO["anchor"], alpha=0.4, lw=0.9)
-    axR.text(0.02, 1.0, "all downstream", transform=axR.get_yaxis_transform(),
-             fontsize=6.5, va="bottom", ha="left", color=INK)
-    axR.text(0.02, 0.0, "all readout", transform=axR.get_yaxis_transform(),
-             fontsize=6.5, va="bottom", ha="left", color=INK)
+    guide_label = {"facecolor": "white", "edgecolor": "none",
+                   "alpha": 0.88, "pad": 0.45}
+    # Center the guide labels between the vertical error bars rather than at
+    # the first x position, where the Llama-3 interval crosses rho=1.
+    axR.text(0.56, 1.01, "all downstream", transform=axR.get_yaxis_transform(),
+             fontsize=6.5, va="bottom", ha="center", color=INK,
+             bbox=guide_label, zorder=5)
+    axR.text(0.56, 0.01, "all readout", transform=axR.get_yaxis_transform(),
+             fontsize=6.5, va="bottom", ha="center", color=INK,
+             bbox=guide_label, zorder=5)
     axR.set_xticks(rx); axR.set_xticklabels(rlab, fontsize=7, rotation=18, ha="right")
     axR.set_xlim(-0.6, max(len(rx) - 0.4, 0.6))
     axR.set_ylim(-0.1, 1.45)

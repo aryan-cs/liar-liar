@@ -30,7 +30,7 @@ FIG = ROOT / "figures"
 TAB = ROOT / "docs" / "paper" / "tables"
 
 # Legacy pipeline: keep condition-level accents on the real Turbo map. Family
-# identity in the current pipeline comes from the shared sky-purple pairing.
+# identity in the current pipeline comes from the shared Turbo blue-red pairing.
 PALETTE = [
     TURBO["selected"], TURBO["perp"], TURBO["cool_accent"],
     TURBO["anchor"], TURBO["warm_accent"], TURBO["parallel"],

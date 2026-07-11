@@ -1,11 +1,12 @@
 """Shared publication styling for Matplotlib figures.
 
-CAA and mass-mean use a fixed sky-purple pair so family identity remains
-distinct from outcome or quality.  Multi-series panels within one family use
-dark/base/mid shades of that same root.  The remaining fixed positions span
-the ``turbo`` rainbow while keeping intervention and state roles stable across
-figure generators.  Axes and grids remain neutral; subdued anchor violet is
-reused for baselines and random-control reference marks.
+CAA and mass-mean use fixed bright samples from the cool and warm arms of
+Matplotlib's ``turbo`` colormap so family identity remains distinct from
+outcome or quality.  Multi-series panels within one family use darker Turbo
+samples from the same arm.  The remaining fixed positions span the Turbo
+rainbow while keeping intervention and state roles stable across figure
+generators.  Axes and grids remain neutral; subdued anchor violet is reused
+for baselines and random-control reference marks.
 
 The NeurIPS paper uses Nimbus Roman, the Times-compatible face selected by the
 venue style, with Computer Modern mathematics.  Matplotlib's Times face has
@@ -82,16 +83,23 @@ GRID = "#E1E3EA"
 NEUTRAL = "#7A828F"
 HATCH_COLOR = "#FFFFFF"
 
-FAMILY_COLOR = {
-    "dec": "#56B4E9",  # sky: CAA
-    "mm": "#AA3377",   # purple: mass-mean
+# Bright family bases and their within-family line shades are sampled directly
+# from Turbo.  The base tones are the focal colors; mid and dark tones remain
+# on the same cool or warm arm and are reinforced by line style and markers.
+FAMILY_TURBO_POSITIONS = {
+    "dec": {"dark": 0.08, "base": 0.20, "mid": 0.14},
+    "mm": {"dark": 0.96, "base": 0.84, "mid": 0.90},
 }
-# Same-root line shades for multi-series family panels.  The family base is
-# reserved for the focal projected vector; darker tones keep the remaining
-# trajectories legible on white without introducing a third hue.
 FAMILY_SHADE = {
-    "dec": {"dark": "#2F6380", "base": FAMILY_COLOR["dec"], "mid": "#4187AF"},
-    "mm": {"dark": "#5E1C42", "base": FAMILY_COLOR["mm"], "mid": "#802659"},
+    family: {
+        tone: _sample_turbo(position)
+        for tone, position in tones.items()
+    }
+    for family, tones in FAMILY_TURBO_POSITIONS.items()
+}
+FAMILY_COLOR = {
+    family: tones["base"]
+    for family, tones in FAMILY_SHADE.items()
 }
 FAMILY_MARKER = {"dec": "o", "mm": "s"}
 

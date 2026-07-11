@@ -43,18 +43,21 @@ The aligned sets are dominated by high-norm ``glitch tokens,'' including rare co
 \caption{Full curated and spillover token surface forms. Apparent duplicate strings distinguish tokenizer forms with and without a leading space; spillover forms are held out of every projection.}
 \label{tab:app_lexicon}
 \end{table}
+\FloatBarrier
 
-Table~\ref{tab:app_decoded} lists the data-defined sets. The statistical set's honest side includes \texttt{honest}, \texttt{truthful}, \texttt{truth}, \texttt{accurate}, and \texttt{fair}. Its deceptive side is dominated by confident agreement tokens such as \texttt{absolutely}, \texttt{definitely}, and \texttt{yes}, rather than a lie lexicon. We therefore treat it as a control and report the depth result across all three constructions.
+Table~\ref{tab:app_decoded} lists the data-defined sets. Because its statistical deceptive side is dominated by confident-agreement tokens rather than deception words, we treat that construction as a control when comparing depth across the three token sets.
 
-\begin{table}[h]
-\centering
+% Unlike the shorter curated list above, this inventory must be allowed to
+% break across a page.  A table/minipage pair would move it wholesale and leave
+% a large blank region.  These skips match the paper-wide 15bp float spacing.
+\par\addvspace{\paperfloattextsep}
+\begingroup
 \small
-\begin{minipage}{\textwidth}
-\input{tables/app_decoded}
-\end{minipage}
-\caption{Decoded data-defined token sets. The statistical set's deceptive side contains confident-agreement vocabulary rather than deception words. Aligned-64 contains the tokens each vector moves most through the direct readout.}
+\noindent\input{tables/app_decoded}\par
+\captionof{table}{Decoded data-defined token sets. Aligned-64 lists the tokens each steering vector moves most through the direct readout; the statistical set is a system-prompt control.}
 \label{tab:app_decoded}
-\end{table}
+\endgroup
+\par\addvspace{\paperfloattextsep}
 
 \section{Full per-condition results with MC1}\label{app:fullmatrix}
 
@@ -87,7 +90,7 @@ Figure~\ref{fig:eta} decomposes the word-level honest shift on the curated and s
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.92\textwidth]{../figures/eta_decomposition.pdf}
-\caption{Change in the word-level honest shift $\Delta\eta$ under $v$ and aligned-64 $\vperp$. The projection targets aligned-64; curated and spillover lexicons are evaluation readouts. Colour encodes family (CAA sky blue, mass-mean purple), and hatching identifies the projected vector.}
+\caption{Change in the word-level honest shift $\Delta\eta$ under $v$ and aligned-64 $\vperp$. The projection targets aligned-64; curated and spillover lexicons are evaluation readouts. Colour encodes family (CAA Turbo blue, mass-mean Turbo red), and hatching identifies the projected vector.}
 \label{fig:eta}
 \end{figure}
 
